@@ -3,7 +3,8 @@
 //! Adds security-related HTTP headers to all responses:
 //! - X-Frame-Options: SAMEORIGIN
 //! - Strict-Transport-Security (HSTS) - only over HTTPS, not for localhost
-//! - Content-Type: text/html; charset=utf-8
+//!
+//! Note: Content-Type is set by Askama template responses automatically.
 
 use axum::{
     body::Body,
