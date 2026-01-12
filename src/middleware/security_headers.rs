@@ -56,15 +56,13 @@ where
         let mut inner = self.inner.clone();
 
         // Check if this is an accepted host (localhost, etc.)
+        // Use full host with port to match PHP behavior (e.g., "defuse:10443")
         let host = req
             .headers()
             .get(header::HOST)
             .and_then(|h| h.to_str().ok())
             .unwrap_or("")
-            .split(':')
-            .next()
-            .unwrap_or("")
-            .to_lowercase();
+            .to_string();
 
         let is_https = req
             .headers()

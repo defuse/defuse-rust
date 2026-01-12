@@ -28,6 +28,8 @@ async fn main() {
         .nest_service("/mainmenu.css", ServeDir::new("static/mainmenu.css"))
         .nest_service("/vimhl.css", ServeDir::new("static/vimhl.css"))
         .nest_service("/print.css", ServeDir::new("static/print.css"))
+        // 404 fallback for unmatched routes
+        .fallback(pages::not_found::handler)
         // Apply middleware layers (outermost first)
         .layer(SecurityHeadersLayer)
         .layer(UrlCanonicalizationLayer);

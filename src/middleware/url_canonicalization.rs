@@ -28,9 +28,14 @@ pub const MASTER_HOST: &str = "defuse.ca";
 
 /// Hosts that bypass redirects (for local development)
 /// These hosts skip host canonicalization AND HTTPS enforcement
+/// Note: Must include port for non-standard ports (e.g., "localhost:3000")
 pub const ACCEPTED_HOSTS: &[&str] = &[
     "localhost",
+    "localhost:3000",
+    "localhost:8080",
     "127.0.0.1",
+    "127.0.0.1:3000",
+    "127.0.0.1:8080",
     "192.168.1.102",
     "defuse.h.defuse.ca",
     "defuse",
@@ -89,7 +94,8 @@ where
                 .unwrap_or("")
                 .to_string();
 
-            // Get host without port for comparison
+            // Get host without port for MASTER_HOST comparison
+            // (MASTER_HOST is "defuse.ca" without port)
             let host_without_port = host.split(':').next().unwrap_or("").to_lowercase();
 
             let is_https = req
@@ -103,7 +109,9 @@ where
             let path = uri.path();
             let query = uri.query();
 
-            let is_accepted_host = is_accepted_host(&host_without_port);
+            // ACCEPTED_HOSTS comparison uses FULL host (with port) to match PHP behavior
+            // e.g., "defuse:10443" must match exactly
+            let is_accepted_host = is_accepted_host(&host);
 
             // Step 1: Host canonicalization
             // If not master host and not an accepted host, redirect to master
@@ -152,20 +160,24 @@ fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
 
     // Parse the path to extract the page name
     let path_without_leading_slash = path.trim_start_matches('/');
+    let path_lower = path_without_leading_slash.to_lowercase();
 
-    // Check for invalid patterns: /.htm or /foo/.htm
-    if path_without_leading_slash == ".htm" || path_without_leading_slash == ".html" {
+    // Check for invalid patterns: /.htm or /foo/.htm (case-insensitive)
+    if path_lower == ".htm" || path_lower == ".html" {
         return None; // Will 404
     }
-    if path_without_leading_slash.ends_with("/.htm") || path_without_leading_slash.ends_with("/.html") {
+    if path_lower.ends_with("/.htm") || path_lower.ends_with("/.html") {
         return None; // Will 404
     }
 
-    // Detect and strip extension
-    let (name_part, _had_htm, had_html) = if path_without_leading_slash.ends_with(".htm") {
-        (path_without_leading_slash.trim_end_matches(".htm"), true, false)
-    } else if path_without_leading_slash.ends_with(".html") {
-        (path_without_leading_slash.trim_end_matches(".html"), false, true)
+    // Detect and strip extension (case-insensitive matching)
+    // .HTM, .Htm, .htm all treated as .htm extension
+    let (name_part, had_htm, had_html) = if path_lower.ends_with(".htm") {
+        // Strip last 4 chars regardless of case
+        (&path_without_leading_slash[..path_without_leading_slash.len() - 4], true, false)
+    } else if path_lower.ends_with(".html") {
+        // Strip last 5 chars regardless of case
+        (&path_without_leading_slash[..path_without_leading_slash.len() - 5], false, true)
     } else {
         (path_without_leading_slash, false, false)
     };
@@ -208,11 +220,12 @@ fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
     }
 
     if !page_info.is_directory {
-        // Non-directory: must have .htm
-        if !path.ends_with(".htm") {
+        // Non-directory: must have .htm (lowercase)
+        // If had .HTM or .Htm etc, redirect to lowercase .htm
+        if !had_htm || !path.ends_with(".htm") {
             return Some(canonical_with_query);
         }
-        // Check case
+        // Check case of the page name part
         if path != canonical.as_str() {
             return Some(canonical_with_query);
         }
@@ -328,5 +341,37 @@ mod tests {
         // so it redirects to the target, not to itself with canonical case
         let result = canonicalize_url("/bh2016", None);
         assert_eq!(result, Some("/side-channel-attacks-on-everyday-applications.htm".to_string()));
+    }
+
+    #[test]
+    fn test_uppercase_htm_extension() {
+        // .HTM should redirect to .htm (case normalization)
+        let result = canonicalize_url("/about.HTM", None);
+        assert_eq!(result, Some("/about.htm".to_string()));
+    }
+
+    #[test]
+    fn test_mixed_case_htm_extension() {
+        // .HtM should redirect to .htm
+        let result = canonicalize_url("/about.HtM", None);
+        assert_eq!(result, Some("/about.htm".to_string()));
+    }
+
+    #[test]
+    fn test_uppercase_html_extension() {
+        // .HTML should redirect to .htm
+        let result = canonicalize_url("/about.HTML", None);
+        assert_eq!(result, Some("/about.htm".to_string()));
+    }
+
+    #[test]
+    fn test_accepted_host_with_port() {
+        // Full host:port should match ACCEPTED_HOSTS entry
+        assert!(is_accepted_host("defuse:10443"));
+        assert!(is_accepted_host("DEFUSE:10443"));
+        // Without port should match entries without port
+        assert!(is_accepted_host("localhost"));
+        // But "defuse" without port should also match "defuse" entry
+        assert!(is_accepted_host("defuse"));
     }
 }
