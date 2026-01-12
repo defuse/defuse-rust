@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<center><h1>Welcome to <a href="/about.htm" style="color: black;">Defuse Security</a></h1></center>
+<div style="padding: 10px; padding-top: 0; width: 800px; margin: 0 auto;">
+
+<p>Please feel free to check out, download, and share some of our free software, services, and research...</p>
+
+<div style="background-image: url('/images/grid.gif'); background-color: #bcfffe; padding: 10px; border: solid black 1px; text-align: center;">
+    <span style="font-size: 12pt; font-weight: bold;">
+        Newest Page: &nbsp;
+        <a href="/concentration-bounds-from-parallel-repetition-theorems.htm">
+            Concentration Bounds from Parallel Repetition Theorems (My Master's Thesis)
+        </a></span>
+</div>
+
+<h2>Top 8 Pages</h2>
+
+<!-- TODO: Implement Upvote::render_list(8, null) -->
+<p><em>Page rankings coming soon...</em></p>
+<a href="/all-pages.htm" style="padding-left: 70px; text-decoration: none;"><b>more pages...</b></a>
+
+<h2>Services</h2>
+<ul>
+    <li><a href="/pastebin.htm"><strong>PIE BIN</strong></a><br />
+        "Pre-Internet Encryption for Text" - A pastebin with client-side (JavaScript) encryption.
+    </li>
+    <li><a href="http://crackstation.net/"><strong>CrackStation.net Hash Cracker</strong></a><br />
+        A HUGE database of precomputed password hashes, rainbow tables, and more.
+    </li>
+    <li><a href="/trent.htm"><strong>TRENT - Trusted Random Entropy</strong></a><br />
+        A trusted third party for doing online drawings, contests, or anything else that needs unbiased random numbers.
+    </li>
+    <li><a href="online-x86-assembler.htm"><strong>Online x86 / x64 Assembler</strong></a><br />
+        Convert any x86 or x64 intel assembly language code into the bytes the CPU executes.
+        Useful for shellcode development and reverse engineering.
+    </li>
+    <li><a href="big-number-calculator.htm"><strong>Big Number Calculator</strong></a><br />
+        A calculator for obtaining the decimal representation of very large numbers.
+    </li>
+</ul>
+
+<h2>Software</h2>
+<ul>
+    <li><a href="/passgen.htm"><strong>Password Generator</strong></a><br />
+        Ultra-random Windows, Linux, and UNIX password generator.
+    </li>
+    <li><a href="/helloworld-cms.htm"><strong>"HelloWorld!" Secure CMS for PHP</strong></a><br />
+        A very lightweight, but very secure, Content Management System for PHP.
+    </li>
+    <li><a href="/php-hash-cracker.htm"><strong>PHP Hash Cracker</strong></a><br />
+        A versatile hash cracking script written in PHP.
+    </li>
+    <li><a href="/backup-verify-script.htm"><strong>Backup Verification Script (Ruby)</strong></a><br />
+        A probabilistic recursive directory comparison tool.
+    </li>
+    <li><a href="/sockstress.htm"><strong>Sockstress</strong></a><br />
+    A C implementation of the sockstress attack discovered in 2008.
+</ul>
+
+<h2>Security Research</h2>
+
+<ul>
+    <li><a href="http://crackstation.net/hashing-security.htm"><strong>How to Hash Passwords (The Right Way)</strong></a><br />
+        A detailed explanation of why passwords need to be hashed, and how to do it right.
+    </li>
+    <li><a href="/password-policy-hall-of-shame.htm"><strong>Password Policy Hall of Shame</strong></a><br />
+        A list of websites that probably aren't hashing their users' passwords.
+    </li>
+    <li><a href="/filesystem-events-ntfs-permissions.htm"><strong>NTFS File System Events Filename Disclosure</strong></a><br />
+        It is possible to view the names of files in protected NTFS folders while they are being created or modified.
+    </li>
+    <li><a href="/onedetection.htm"><strong>PUP Confusion</strong></a><br />
+        Evading antivirus detection using PUPs - Potentially Unwanted Programs.
+    </li>
+</ul>
+
+<p>... we hope you find our pages useful. Thanks for visiting!</p>
+
+</div>
+{% endblock %}
