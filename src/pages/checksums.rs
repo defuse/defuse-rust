@@ -1,7 +1,6 @@
 use askama::Template;
 use askama_axum::IntoResponse;
 use axum::Form;
-use axum::http::HeaderMap;
 use serde::Deserialize;
 
 use md5::Md5;
@@ -19,17 +18,12 @@ const SUPPORTED_ALGORITHMS: &[&str] = &[
 #[derive(Template)]
 #[template(path = "pages/checksums.html")]
 pub struct ChecksumsPage {
-    pub title: &'static str,
+    pub ctx: PageContext,
+    // Page-specific fields
     pub input: String,
     pub normalize: bool,
     pub results: Vec<HashResult>,
     pub supported_algorithms: &'static [&'static str],
-    // Base template context
-    pub is_home: bool,
-    pub client_ip: String,
-    pub dnt_enabled: bool,
-    pub page_hits: u64,
-    pub unique_hits: u64,
 }
 
 pub struct HashResult {
@@ -45,25 +39,18 @@ pub struct ChecksumsForm {
 }
 
 // GET: Show empty form
-pub async fn get(headers: HeaderMap) -> impl IntoResponse {
-    let ctx = PageContext::from_headers(&headers);
+pub async fn get(ctx: PageContext) -> impl IntoResponse {
     ChecksumsPage {
-        title: "Online Text and File Hash Calculator - MD5, SHA1, SHA256, SHA512, WHIRLPOOL Hash Calculator - Defuse Security",
+        ctx,
         input: String::new(),
         normalize: false,
         results: Vec::new(),
         supported_algorithms: SUPPORTED_ALGORITHMS,
-        is_home: ctx.is_home,
-        client_ip: ctx.client_ip,
-        dnt_enabled: ctx.dnt_enabled,
-        page_hits: ctx.page_hits,
-        unique_hits: ctx.unique_hits,
     }
 }
 
 // POST: Calculate hashes and show results
-pub async fn post(headers: HeaderMap, Form(form): Form<ChecksumsForm>) -> impl IntoResponse {
-    let ctx = PageContext::from_headers(&headers);
+pub async fn post(ctx: PageContext, Form(form): Form<ChecksumsForm>) -> impl IntoResponse {
     let normalize = form.normalize.as_deref() == Some("yes");
 
     let data = if normalize {
@@ -75,16 +62,11 @@ pub async fn post(headers: HeaderMap, Form(form): Form<ChecksumsForm>) -> impl I
     let results = compute_hashes(&data);
 
     ChecksumsPage {
-        title: "Online Text and File Hash Calculator - MD5, SHA1, SHA256, SHA512, WHIRLPOOL Hash Calculator - Defuse Security",
+        ctx,
         input: form.data,
         normalize,
         results,
         supported_algorithms: SUPPORTED_ALGORITHMS,
-        is_home: ctx.is_home,
-        client_ip: ctx.client_ip,
-        dnt_enabled: ctx.dnt_enabled,
-        page_hits: ctx.page_hits,
-        unique_hits: ctx.unique_hits,
     }
 }
 

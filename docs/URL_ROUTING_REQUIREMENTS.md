@@ -2,11 +2,13 @@
 
 ## Overview
 
-This document specifies the requirements for the URL routing system that replaces `URLParse.php`. The goal is to maintain identical behavior while providing a clear, maintainable architecture.
+This document specifies the requirements for the URL routing system that replaces `URLParse.php`. The goal is to maintain **identical behavior**.
+
+**Reference:** `defuse.ca/src/libs/URLParse.php` (1,077 lines)
 
 ## Single Source of Truth: The Page Registry
 
-In PHP, the `$PAGE_INFO` array is the single source of truth. In Rust, we will have a similar central registry.
+In PHP, the `$PAGE_INFO` array is the single source of truth. In Rust, we will have a similar central registry in `src/pages/registry.rs`.
 
 ### Adding a New Page (Developer Workflow)
 
@@ -25,41 +27,41 @@ To add a new page, a developer should:
 
 3. **Done** - routing is automatic from the registry
 
-### Page Registry Structure
+---
+
+## Configuration (HARDCODED - matching PHP)
+
+These values are **hardcoded** in the PHP source (lines 77-85) and MUST be hardcoded in Rust:
 
 ```rust
-// src/pages/registry.rs
-
-pub struct PageInfo {
-    /// Template file path (for static pages) or None for dynamic
-    pub template: Option<&'static str>,
-
-    /// Handler module name (for dynamic pages) or None for static
-    pub handler: Option<&'static str>,
-
-    /// Page title (None = use default)
-    pub title: Option<&'static str>,
-
-    /// Meta description (None = use default)
-    pub meta_description: Option<&'static str>,
-
-    /// Meta keywords (None = use default)
-    pub meta_keywords: Option<&'static str>,
-
-    /// Redirect target (if set, this is an alias - takes precedence)
-    pub redirect: Option<&'static str>,
-
-    /// Is this a directory-style URL (ends with /, no .htm)
-    pub is_directory: bool,
-}
-
-pub static PAGE_REGISTRY: &[(&str, PageInfo)] = &[
-    ("", PageInfo { /* home page */ }),
-    ("about", PageInfo { /* about page */ }),
-    ("checksums", PageInfo { /* checksums page */ }),
-    // ... all pages
+const MASTER_HOST: &str = "defuse.ca";
+const ACCEPTED_HOSTS: &[&str] = &[
+    "localhost",
+    "127.0.0.1",          // Added for convenience
+    "192.168.1.102",
+    "defuse.h.defuse.ca",
+    "defuse",
+    "defuse:10443",
 ];
+const FORCE_HTTPS: bool = true;
 ```
+
+**Note:** For local development, requests to `localhost` or other accepted hosts bypass HTTPS enforcement and host canonicalization.
+
+---
+
+## CRITICAL: Single Redirect Optimization
+
+**The PHP code is carefully designed to issue AT MOST ONE redirect per request.**
+
+Each step anticipates the needs of later steps to avoid double redirects:
+- `checkHost()` anticipates HTTPS requirement (line 896)
+- `checkRedirectRequest()` anticipates `.htm` extension (line 966)
+
+The Rust implementation **MUST** maintain this property. When redirecting:
+- Host redirect should use `https://` if FORCE_HTTPS is true
+- Alias redirect should append `.htm` to target (if not a directory)
+- This way, a request like `http://www.defuse.ca/trent` becomes `https://defuse.ca/trustedthirdparty.htm` in ONE redirect, not three.
 
 ---
 
@@ -67,199 +69,262 @@ pub static PAGE_REGISTRY: &[(&str, PageInfo)] = &[
 
 ### Requirement 1: Host Canonicalization
 
-**R1.1** Requests to non-canonical hosts MUST redirect to the master host.
-- Master host: `defuse.ca`
-- Accepted hosts (no redirect): `localhost`, `127.0.0.1`, configured dev hosts
+**R1.1** Requests to non-canonical hosts MUST redirect to master host.
+- Master host: `defuse.ca` (hardcoded)
+- Accepted hosts: see list above (hardcoded)
 - Redirect type: 301 Moved Permanently
 
-**R1.2** Accepted hosts MUST be configurable via environment variable.
-- `ACCEPTED_HOSTS=localhost,127.0.0.1,192.168.1.102`
+**R1.2** When redirecting, ANTICIPATE the HTTPS requirement:
+- If `FORCE_HTTPS == true` OR current request is already HTTPS → use `https://`
+- Otherwise → use `http://`
 
-**R1.3** Master host MUST be configurable via environment variable.
-- `MASTER_HOST=defuse.ca`
+**R1.3** Preserve the full path and query string in redirect.
 
 **Test cases:**
-- [ ] Request to `defuse.ca/page.htm` → no redirect
-- [ ] Request to `www.defuse.ca/page.htm` → 301 to `defuse.ca/page.htm`
-- [ ] Request to `localhost/page.htm` → no redirect (accepted host)
-- [ ] Request to `evil.com/page.htm` → 301 to `defuse.ca/page.htm`
+- [ ] `http://www.defuse.ca/about` → `301 https://defuse.ca/about` (anticipates HTTPS, but NOT .htm - that comes later)
+- [ ] `http://localhost/about` → no redirect (accepted host)
+- [ ] `https://evil.com/page?x=1` → `301 https://defuse.ca/page?x=1`
+- [ ] `http://defuse.ca/page` when already on master → no host redirect (HTTPS redirect may still happen)
 
 ---
 
 ### Requirement 2: HTTPS Enforcement
 
-**R2.1** HTTP requests MUST redirect to HTTPS when `FORCE_HTTPS=true`.
+**R2.1** HTTP requests MUST redirect to HTTPS when `FORCE_HTTPS == true`.
+- Only if host is NOT in accepted hosts
 - Redirect type: 301 Moved Permanently
 
-**R2.2** HTTPS enforcement MUST be bypassed for accepted hosts.
-- This allows local development without TLS
+**R2.2** HTTPS enforcement is SKIPPED for accepted hosts.
+- `http://localhost/...` works without redirect
+- `http://192.168.1.102/...` works without redirect
 
-**R2.3** HTTPS enforcement MUST be configurable via environment variable.
-- `FORCE_HTTPS=true` (default in production)
-- `FORCE_HTTPS=false` (for development)
+**R2.3** This check only triggers if host redirect didn't already happen.
+- Host redirect anticipates HTTPS, so if we redirected for host, we won't redirect again for HTTPS
 
 **Test cases:**
-- [ ] HTTP request with `FORCE_HTTPS=true` → 301 to HTTPS
-- [ ] HTTP request to `localhost` with `FORCE_HTTPS=true` → no redirect
-- [ ] HTTPS request → no redirect
-- [ ] HTTP request with `FORCE_HTTPS=false` → no redirect
+- [ ] `http://defuse.ca/about.htm` → `301 https://defuse.ca/about.htm`
+- [ ] `http://localhost/about.htm` → no redirect (accepted)
+- [ ] `https://defuse.ca/about.htm` → no redirect (already HTTPS)
 
 ---
 
-### Requirement 3: URL Canonicalization
+### Requirement 3: Page Lookup
 
-**R3.1** Page URLs without `.htm` extension MUST redirect to the `.htm` version.
-- `/about` → 301 to `/about.htm`
-- `/checksums` → 301 to `/checksums.htm`
+**R3.1** Page names are matched **case-insensitively** using `strtolower()`.
+- `/About.htm` and `/about.htm` both find page `"about"`
 
-**R3.2** Page URLs with `.htm` extension MUST NOT redirect.
-- `/about.htm` → serve page (no redirect)
+**R3.2** The `.htm` extension is stripped for lookup.
+- `/about.htm` → lookup `"about"`
+- `/about` → lookup `"about"`
 
-**R3.3** Directory-style URLs MUST end with `/` and NOT have `.htm`.
-- `/audits` → 301 to `/audits/`
-- `/audits/` → serve page (no redirect)
-- `/audits/.htm` → 404 (invalid)
+**R3.3** Directory pages (names ending in `/`) are special:
+- `/audits/` → lookup `"audits/"`
+- `/audits` when `"audits"` doesn't exist but `"audits/"` does → lookup `"audits/"`
 
-**R3.4** The home page MUST be served at `/` without `.htm`.
-- `/` → serve home page
-- `/.htm` → 404 (invalid)
-- `/index` → 301 to `/`
-- `/index.htm` → 301 to `/`
-- `/index.html` → 301 to `/`
-- `/index.php` → 301 to `/`
-
-**R3.5** URL matching MUST be case-insensitive.
-- `/About.htm` → 301 to `/about.htm`
-- `/CHECKSUMS.HTM` → 301 to `/checksums.htm`
-
-**R3.6** URL parameters MUST be preserved across redirects.
-- `/about?foo=bar` → 301 to `/about.htm?foo=bar`
+**R3.4** Invalid URLs that should 404:
+- `/.htm` → 404 (empty name + .htm is invalid)
+- `/foo/.htm` → 404 (directory name + .htm is invalid)
+- `/nonexistent` → 404 (not in registry)
 
 **Test cases:**
-- [ ] `/about` → 301 to `/about.htm`
-- [ ] `/about.htm` → 200 OK (serve page)
-- [ ] `/About` → 301 to `/about.htm`
-- [ ] `/audits` → 301 to `/audits/`
-- [ ] `/audits/` → 200 OK (serve page)
-- [ ] `/` → 200 OK (serve home)
-- [ ] `/index` → 301 to `/`
-- [ ] `/index.htm` → 301 to `/`
-- [ ] `/page?x=1` → 301 to `/page.htm?x=1`
+- [ ] `/about.htm` → finds `"about"`
+- [ ] `/About.htm` → finds `"about"`
+- [ ] `/audits/` → finds `"audits/"`
+- [ ] `/audits` (if only `"audits/"` exists) → finds `"audits/"`
+- [ ] `/.htm` → 404
+- [ ] `/foo/.htm` → 404
 
 ---
 
-### Requirement 4: Aliases and Redirects
+### Requirement 4: Alias Resolution (P_RDIR)
 
-**R4.1** Alias URLs MUST redirect to their target URL.
+**R4.1** If a page has `redirect` set, redirect to that target.
 - Redirect type: 301 Moved Permanently
 
-**R4.2** Alias redirects MUST go to the canonical form of the target.
-- `/trent` → 301 to `/trustedthirdparty.htm` (not `/trustedthirdparty`)
+**R4.2** When redirecting, ANTICIPATE the `.htm` extension:
+- If target is empty (`""`) → redirect to `/`
+- If target ends in `/` → redirect to `/{target}`
+- Otherwise → redirect to `/{target}.htm`
 
-**R4.3** Known aliases from PHP site:
+**R4.3** Preserve query parameters.
+
+**R4.4** Known aliases (from PHP $PAGE_INFO):
 ```
-/index, /index.html, /index.php → /
-/key → /contact.htm
-/audits/ → /software-security-auditing.htm
-/trent → /trustedthirdparty.htm
-/passwords, /password, /pass → /passgen.htm
-/pphos → /password-policy-hall-of-shame.htm
-/bh2016, /BH2016 → /side-channel-attacks-on-everyday-applications.htm
-/keyboarddefect → /asuskeyboarddefect.htm
+"index"           → ""                                    (home)
+"index.html"      → ""                                    (home)
+"index.php"       → ""                                    (home)
+"key"             → "contact"
+"audits/"         → "software-security-auditing"
+"trent"           → "trustedthirdparty"
+"passwords"       → "passgen"
+"password"        → "passgen"
+"pass"            → "passgen"
+"pphos"           → "password-policy-hall-of-shame"
+"bh2016"          → "side-channel-attacks-on-everyday-applications"
+"BH2016"          → "side-channel-attacks-on-everyday-applications"
+"keyboarddefect"  → "asuskeyboarddefect"
 ```
 
 **Test cases:**
-- [ ] `/trent` → 301 to `/trustedthirdparty.htm`
-- [ ] `/trent.htm` → 301 to `/trustedthirdparty.htm`
-- [ ] `/passwords` → 301 to `/passgen.htm`
-- [ ] `/key` → 301 to `/contact.htm`
+- [ ] `/trent` → `301 /trustedthirdparty.htm` (anticipates .htm)
+- [ ] `/trent.htm` → `301 /trustedthirdparty.htm` (same result)
+- [ ] `/index` → `301 /`
+- [ ] `/index.html` → `301 /` (this is an alias, NOT a generic .html→.htm rule)
+- [ ] `/index.htm` → `301 /`
+- [ ] `/key?subject=hello` → `301 /contact.htm?subject=hello`
+- [ ] `/audits/` → `301 /software-security-auditing.htm`
 
 ---
 
-### Requirement 5: 404 Handling
+### Requirement 5: Extension Canonicalization
 
-**R5.1** Unknown URLs MUST return HTTP 404 status.
+**R5.1** Non-directory pages without `.htm` MUST redirect.
+- `/about` → `301 /about.htm`
 
-**R5.2** 404 responses MUST render a custom 404 page.
+**R5.2** Directory pages without trailing `/` MUST redirect.
+- `/audits` → `301 /audits/` (when `"audits/"` exists)
 
-**R5.3** The 404 page MUST use the standard site template (header, nav, footer).
+**R5.3** Home page is served at `/` with NO extension.
+- `/` → serve home page (no redirect)
+- `/?foo=bar` → serve home page with query params
+
+**R5.4** Query parameters MUST be preserved.
+- `/about?x=1` → `301 /about.htm?x=1`
+
+**R5.5** Case differences redirect to **canonical case** from registry.
+- The registry defines the canonical form (e.g., `"checksums"` or `"BH2016"`)
+- `/About.htm` → `301 /about.htm` (registry has `"about"`)
+- `/CHECKSUMS.HTM` → `301 /checksums.htm` (registry has `"checksums"`)
+- `/bh2016` → `301 /BH2016.htm` (if registry defines `"BH2016"`)
+
+**R5.6** `.html` extension MUST redirect to `.htm` (improvement over PHP).
+- `/about.html` → `301 /about.htm`
+- `/checksums.html` → `301 /checksums.htm`
+- Note: This is a Rust improvement - PHP would 404 on these URLs
+
+**R5.7** Already-canonical URLs do NOT redirect.
+- `/about.htm` → serve page (200)
+- `/audits/` → serve page (200)
 
 **Test cases:**
-- [ ] `/nonexistent` → 404 with custom page
-- [ ] `/nonexistent.htm` → 404 with custom page
-- [ ] Response includes proper 404 HTTP status code
+- [ ] `/about` → `301 /about.htm`
+- [ ] `/about.htm` → 200 (no redirect)
+- [ ] `/About.htm` → `301 /about.htm`
+- [ ] `/about.html` → `301 /about.htm` (new: .html → .htm)
+- [ ] `/audits` → `301 /audits/`
+- [ ] `/audits/` → 200 (no redirect)
+- [ ] `/` → 200 (no redirect)
+- [ ] `/about?x=1&y=2` → `301 /about.htm?x=1&y=2`
 
 ---
 
-### Requirement 6: Security Headers
+### Requirement 6: 404 Handling
 
-**R6.1** All responses MUST include `X-Frame-Options: SAMEORIGIN`.
+**R6.1** Unknown URLs return HTTP 404 status.
 
-**R6.2** HTTPS responses MUST include HSTS header.
+**R6.2** 404 responses render a custom 404 page using standard template.
+
+**Test cases:**
+- [ ] `/nonexistent` → 404
+- [ ] `/nonexistent.htm` → 404
+- [ ] `/.htm` → 404
+- [ ] `/foo/.htm` → 404
+
+---
+
+### Requirement 7: Security Headers
+
+**R7.1** All responses include `X-Frame-Options: SAMEORIGIN`.
+
+**R7.2** HTTPS responses to non-accepted hosts include HSTS:
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
-- HSTS MUST NOT be sent over HTTP
-- HSTS MUST NOT be sent to localhost/accepted hosts
-
-**R6.3** All responses MUST include `Content-Type: text/html; charset=utf-8`.
+- NOT sent over HTTP (would be ignored anyway)
+- NOT sent to localhost/accepted hosts
 
 **Test cases:**
-- [ ] Response includes `X-Frame-Options: SAMEORIGIN`
-- [ ] HTTPS response includes HSTS header
-- [ ] HTTP response does NOT include HSTS header
-- [ ] Localhost response does NOT include HSTS header
+- [ ] Any response has `X-Frame-Options: SAMEORIGIN`
+- [ ] HTTPS to defuse.ca has HSTS header
+- [ ] HTTP response has NO HSTS header
+- [ ] HTTPS to localhost has NO HSTS header
 
 ---
 
-### Requirement 7: Metadata Defaults
+### Requirement 8: Metadata Defaults
 
-**R7.1** Pages without explicit title MUST use default.
-- Default: `"Defuse Security Research and Development"`
-
-**R7.2** Pages without explicit meta description MUST use default.
-- Default: `"Defuse Security. Home of PIE Bin, TRENT, and more..."`
-
-**R7.3** Pages without explicit meta keywords MUST use default.
-- Default: `"defuse security, encryption, privacy, programming, code, research"`
+**R8.1** Default title: `"Defuse Security Research and Development"`
+**R8.2** Default meta description: `"Defuse Security. Home of PIE Bin, TRENT, and more..."`
+**R8.3** Default meta keywords: `"defuse security, encryption, privacy, programming, code, research"`
 
 ---
 
-## Processing Order
+## Processing Order (based on PHP, with improvements)
 
-The URL processing MUST happen in this exact order:
+```
+1. checkHost()
+   - If host != master_host AND host not in accepted_hosts:
+     → 301 redirect to master_host
+     → Use https:// if FORCE_HTTPS or already HTTPS (ANTICIPATION)
+     → Include full path and query string
 
-1. **Host check** → redirect if not master/accepted host
-2. **HTTPS check** → redirect if HTTP and FORCE_HTTPS (unless accepted host)
-3. **Lowercase URL** → for case-insensitive matching
-4. **Lookup page** → find in registry
-5. **Alias check** → if P_RDIR set, redirect to target (in canonical form)
-6. **Extension check** → redirect to `.htm` or `/` as appropriate
-7. **Serve page** → render template/call handler
+2. checkHTTPS()
+   - If FORCE_HTTPS AND not HTTPS AND host not in accepted_hosts:
+     → 301 redirect to https://
 
-If any step issues a redirect, subsequent steps are skipped.
+3. getPageArrayKey()
+   - Strip .htm or .html suffix if present (store which was found)
+   - Convert path to lowercase for lookup
+   - If ".htm" or ".html" was on a name ending in "/" → return 404
+   - Look up in PAGE_REGISTRY (case-insensitive)
+   - If not found, try appending "/" and look up again
+   - Return (canonical_page_name, lookup_key) or None
+
+4. If page not found → 404
+
+5. checkRedirectRequest()
+   - If page has redirect target:
+     → 301 redirect to target
+     → Append .htm if target doesn't end in "/" (ANTICIPATION)
+     → Preserve query params
+
+6. ensureCanonicalURL()
+   - If directory page and URL doesn't end in "/":
+     → 301 redirect with trailing /
+   - If non-directory page and URL doesn't end in ".htm":
+     → 301 redirect with .htm
+   - If URL had .html extension:
+     → 301 redirect to .htm
+   - If URL case differs from CANONICAL case in registry:
+     → 301 redirect to canonical case (e.g., /bh2016 → /BH2016.htm)
+
+7. Serve the page
+```
 
 ---
 
-## Environment Variables Summary
+## Important Notes
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MASTER_HOST` | `defuse.ca` | Canonical hostname |
-| `ACCEPTED_HOSTS` | `localhost,127.0.0.1` | Hosts that skip redirects |
-| `FORCE_HTTPS` | `true` | Require HTTPS (bypassed for accepted hosts) |
-| `LISTEN_ADDR` | `127.0.0.1:3000` | Server bind address |
+1. **`.html` → `.htm` redirect IS supported** (improvement over PHP) - Unlike PHP which would 404 on `/about.html`, the Rust implementation redirects to `/about.htm`. This is a user-friendly addition.
+
+2. **Configuration is HARDCODED** - Do not use environment variables for MASTER_HOST, ACCEPTED_HOSTS, or FORCE_HTTPS. Match the PHP behavior exactly.
+
+3. **Single redirect is essential** - Test that complex cases like `http://www.defuse.ca/trent` result in exactly ONE 301 redirect.
+
+4. **Case canonicalization uses registry** - URLs redirect to match the canonical case defined in the registry, not just lowercase. If the registry defines `"BH2016"`, then `/bh2016` redirects to `/BH2016.htm`.
 
 ---
 
 ## Implementation Checklist
 
-- [ ] Create `src/pages/registry.rs` with PageInfo struct and PAGE_REGISTRY
-- [ ] Create `src/middleware/url_canonicalization.rs`
-- [ ] Implement host canonicalization (R1)
-- [ ] Implement HTTPS enforcement (R2)
-- [ ] Implement URL canonicalization (R3)
-- [ ] Implement aliases/redirects (R4)
-- [ ] Implement 404 handling (R5)
-- [ ] Implement security headers (R6)
-- [ ] Implement metadata defaults (R7)
-- [ ] Add all test cases
-- [ ] Migrate all pages from PHP $PAGE_INFO to Rust registry
+- [ ] Hardcode MASTER_HOST, ACCEPTED_HOSTS, FORCE_HTTPS constants
+- [ ] Implement host canonicalization with HTTPS anticipation
+- [ ] Implement HTTPS enforcement (skip for accepted hosts)
+- [ ] Implement page lookup (case-insensitive, strip .htm and .html)
+- [ ] Implement alias resolution with .htm anticipation
+- [ ] Implement extension canonicalization (.htm / trailing /)
+- [ ] Implement .html → .htm redirect (improvement over PHP)
+- [ ] Implement case normalization (redirect to canonical case from registry)
+- [ ] Implement 404 handling with custom page
+- [ ] Implement security headers (X-Frame-Options, HSTS)
+- [ ] **Verify single-redirect property** (integration tests)
+- [ ] Port all pages from PHP $PAGE_INFO
+- [ ] Add integration tests for ALL test cases above

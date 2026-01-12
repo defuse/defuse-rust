@@ -2,7 +2,10 @@ use axum::{routing::get, Router};
 use tower_http::services::ServeDir;
 
 mod context;
+mod middleware;
 mod pages;
+
+use middleware::{SecurityHeadersLayer, UrlCanonicalizationLayer};
 
 #[tokio::main]
 async fn main() {
@@ -11,13 +14,11 @@ async fn main() {
 
     let listen_addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_string());
 
-    // Build router
+    // Build router with middleware
     let app = Router::new()
-        // Pages
+        // Pages - these are the canonical URLs that get served
         .route("/", get(pages::home::get))
-        .route("/checksums", get(pages::checksums::get).post(pages::checksums::post))
         .route("/checksums.htm", get(pages::checksums::get).post(pages::checksums::post))
-        .route("/about", get(pages::about::get))
         .route("/about.htm", get(pages::about::get))
         // Static files at original URLs (matching PHP site structure)
         .nest_service("/images", ServeDir::new("static/images"))
@@ -26,7 +27,10 @@ async fn main() {
         .nest_service("/main.css", ServeDir::new("static/main.css"))
         .nest_service("/mainmenu.css", ServeDir::new("static/mainmenu.css"))
         .nest_service("/vimhl.css", ServeDir::new("static/vimhl.css"))
-        .nest_service("/print.css", ServeDir::new("static/print.css"));
+        .nest_service("/print.css", ServeDir::new("static/print.css"))
+        // Apply middleware layers (outermost first)
+        .layer(SecurityHeadersLayer)
+        .layer(UrlCanonicalizationLayer);
 
     println!("Listening on http://{}", listen_addr);
 

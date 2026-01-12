@@ -1,8 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>{{ title }}</title>
-<meta name="description" content="{% block meta_description %}Defuse Security Research and Development{% endblock %}" />
+<title>{{ ctx.title }}</title>
+<meta name="description" content="{% block meta_description %}{{ ctx.description }}{% endblock %}" />
 <meta name="keywords" content="{% block meta_keywords %}defuse security, encryption, privacy, programming, code, research{% endblock %}" />
 <meta name="google-site-verification" content="LjgndE9fyTkxbPz8aMFyJQFSS3cQiXIrYchE_b2VXlg" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -18,7 +18,7 @@
 	</style>
 <![endif]-->
 </head>
-<body {% if is_home %}style="background:white;" {% endif %}>
+<body {% if ctx.is_home %}style="background:white;" {% endif %}>
 <div id="wrap">
 
 <!-- This menuing system was made by Steve Gibson at GRC.COM
@@ -224,7 +224,7 @@
 <div id="undergrad"></div>
 <![endif]-->
 
-{% if is_home %}
+{% if ctx.is_home %}
 <div id="contenthome">
 {% else %}
 <div id="content">
@@ -232,7 +232,7 @@
 {% block content %}{% endblock %}
 </div>
 </div> <!-- Wrap -->
-{% if !is_home %}
+{% if !ctx.is_home %}
 <div id="footerwrapper">
 <div id="footerborder"></div>
 <div id="footer">
@@ -241,11 +241,11 @@
 <table>
     <tr>
         <th>Your IP:</th>
-        <td>{{ client_ip }}</td>
+        <td>{{ ctx.client_ip }}</td>
     </tr>
     <tr>
         <th>DNT Header:&nbsp;&nbsp;&nbsp;</th>
-        {% if dnt_enabled %}
+        {% if ctx.dnt_enabled %}
         <td><span style="color: #00FF00">Enabled</span></td>
         {% else %}
         <td>Disabled</td>
@@ -257,11 +257,11 @@
 <table>
     <tr>
         <th>Page Hits:</th>
-        <td>{{ page_hits }}</td>
+        <td>{{ ctx.page_hits }}</td>
     </tr>
     <tr>
         <th>Unique Hits:</th>
-        <td>{{ unique_hits }}</td>
+        <td>{{ ctx.unique_hits }}</td>
     </tr>
 </table>
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0; vertical-align: bottom;" src="/images/cc-by-sa.png" /></a>
