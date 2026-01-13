@@ -81,7 +81,7 @@ macro_rules! alias {
 }
 
 /// Helper macro for defining regular pages
-/// Required: slug, title, description, keywords, hit_id, upvote
+/// Required: slug, title, description, keywords, legacy_hit_count_id, upvote
 /// Optional: no_cache (defaults to false)
 macro_rules! page {
     (
@@ -89,7 +89,7 @@ macro_rules! page {
         title: $title:expr,
         description: $description:expr,
         keywords: $keywords:expr,
-        hit_id: $hit_id:expr,
+        legacy_hit_count_id: $legacy_hit_count_id:expr,
         upvote: $upvote:expr $(,)?
     ) => {
         PageInfo {
@@ -97,7 +97,7 @@ macro_rules! page {
             title: $title,
             description: $description,
             keywords: $keywords,
-            legacy_hit_count_id: $hit_id,
+            legacy_hit_count_id: $legacy_hit_count_id,
             redirect: None,
             no_cache: false,
             upvote: $upvote,
@@ -108,7 +108,7 @@ macro_rules! page {
         title: $title:expr,
         description: $description:expr,
         keywords: $keywords:expr,
-        hit_id: $hit_id:expr,
+        legacy_hit_count_id: $legacy_hit_count_id:expr,
         upvote: $upvote:expr,
         no_cache: $no_cache:expr $(,)?
     ) => {
@@ -117,7 +117,7 @@ macro_rules! page {
             title: $title,
             description: $description,
             keywords: $keywords,
-            legacy_hit_count_id: $hit_id,
+            legacy_hit_count_id: $legacy_hit_count_id,
             redirect: None,
             no_cache: $no_cache,
             upvote: $upvote,
@@ -184,7 +184,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "",
             description: "",
             keywords: "",
-            hit_id: "pages/home.html",
+            legacy_hit_count_id: "pages/home.html",
             upvote: None,
         },
 
@@ -199,7 +199,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "About - Defuse Security",
             description: "About Defuse Security.",
             keywords: "",
-            hit_id: "pages/about.html",
+            legacy_hit_count_id: "pages/about.html",
             upvote: None,
         },
         page! {
@@ -207,7 +207,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Defuse Security's Contact Information",
             description: "Defuse Security's contact information.",
             keywords: "",
-            hit_id: "pages/contact.html",
+            legacy_hit_count_id: "pages/contact.html",
             upvote: None,
         },
         alias!("key" => "contact"),
@@ -218,7 +218,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Online Text and File Hash Calculator - MD5, SHA1, SHA256, SHA512, WHIRLPOOL Hash Calculator - Defuse Security",
             description: "Online Hash Tool. Calculate hash of file or text. MD5, SHA1, SHA256, SHA512 and more...",
             keywords: "",
-            hit_id: "pages/services/checksums.php",
+            legacy_hit_count_id: "pages/services/checksums.php",
             upvote: Some(UpvoteConfig {
                 id: "onlinechecksums",
                 category: "defuse_pages",
@@ -231,7 +231,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Encrypted Pastebin - Keep your data private and secure! - Defuse Security",
             description: "An Encrypted, Anonymous, Secure, and PRIVATE Pastebin.",
             keywords: "",
-            hit_id: "pages/services/pastebin.php",
+            legacy_hit_count_id: "pages/services/pastebin.php",
             upvote: None,
         },
         page! {
@@ -239,7 +239,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "TRENT - FREE Third party Drawing Service - Defuse Security",
             description: "TRENT, the trusted random number generator for contests and drawings.",
             keywords: "",
-            hit_id: "pages/services/trustedthirdparty.php",
+            legacy_hit_count_id: "pages/services/trustedthirdparty.php",
             upvote: None,
         },
         alias!("trent" => "trustedthirdparty"),
@@ -248,7 +248,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Online Big Number Calculator",
             description: "Calculate enormous mathematical equations from within your browser.",
             keywords: "",
-            hit_id: "pages/services/big-number-calculator.php",
+            legacy_hit_count_id: "pages/services/big-number-calculator.php",
             upvote: None,
         },
         page! {
@@ -256,7 +256,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Online x86 and x64 Intel Instruction Assembler",
             description: "Easily find out which bytes your x86 ASM instructions assemble to.",
             keywords: "",
-            hit_id: "pages/services/online-x86-assembler.php",
+            legacy_hit_count_id: "pages/services/online-x86-assembler.php",
             upvote: None,
         },
         page! {
@@ -264,7 +264,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Online HTML Sanitizer Tool - htmlspecialchars - Defuse Security",
             description: "Convert text containing special characters into proper HTML.",
             keywords: "",
-            hit_id: "pages/services/html-sanitize.php",
+            legacy_hit_count_id: "pages/services/html-sanitize.php",
             upvote: None,
         },
         page! {
@@ -272,7 +272,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Software Security Auditing",
             description: "Get your software audited for security bugs.",
             keywords: "",
-            hit_id: "pages/services/software-security-auditing.html",
+            legacy_hit_count_id: "pages/services/software-security-auditing.html",
             upvote: None,
         },
         page! {
@@ -280,7 +280,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Send a Message to the Future (Digital Time Capsule)",
             description: "Save a message that will become readable after quantum computers are built.",
             keywords: "",
-            hit_id: "pages/services/quantum-computer-time-capsule.php",
+            legacy_hit_count_id: "pages/services/quantum-computer-time-capsule.php",
             upvote: None,
         },
 
@@ -290,7 +290,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Secure Windows & Linux Password Generator - Defuse Security",
             description: "A secure random password generator for Windows, Linux and Macintosh.",
             keywords: "",
-            hit_id: "pages/software/passgen.php",
+            legacy_hit_count_id: "pages/software/passgen.php",
             upvote: None,
             no_cache: true, // SECURITY: Prevent browsers from caching generated passwords
         },
@@ -302,7 +302,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Secure and Light CMS for PHP - Defuse Security",
             description: "A lightweight, ultra-secure CMS for PHP",
             keywords: "",
-            hit_id: "pages/software/helloworld-cms.html",
+            legacy_hit_count_id: "pages/software/helloworld-cms.html",
             upvote: None,
         },
         page! {
@@ -310,7 +310,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Salted Hash Cracking PHP Script - Defuse Security",
             description: "Dictionary hash cracking PHP scripts (supports LOTS of hash types!!)",
             keywords: "",
-            hit_id: "pages/software/php-hash-cracker.html",
+            legacy_hit_count_id: "pages/software/php-hash-cracker.html",
             upvote: None,
         },
         page! {
@@ -318,7 +318,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Script for Comparing Folders and Validating Backups",
             description: "A command-line script for verifying backups by comparing two folders in Linux",
             keywords: "",
-            hit_id: "pages/software/backup-verify-script.html",
+            legacy_hit_count_id: "pages/software/backup-verify-script.html",
             upvote: None,
         },
         page! {
@@ -326,7 +326,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Sockstress Denial of Service Tool & Source Code - Defuse Security",
             description: "A C implementation of the sockstress attack from 2008.",
             keywords: "",
-            hit_id: "pages/software/sockstress.html",
+            legacy_hit_count_id: "pages/software/sockstress.html",
             upvote: None,
         },
 
@@ -336,7 +336,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Password Policy Hall of SHAME - Defuse Security",
             description: "List of websites and services that impose password restrictions.",
             keywords: "",
-            hit_id: "pages/research/password-policy-hall-of-shame.php",
+            legacy_hit_count_id: "pages/research/password-policy-hall-of-shame.php",
             upvote: None,
         },
         alias!("pphos" => "password-policy-hall-of-shame"),
@@ -345,7 +345,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Side-Channel Attacks on Everyday Applications (Black Hat 2016)",
             description: "Data and code for my paper applying FLUSH+RELOAD to break privacy.",
             keywords: "",
-            hit_id: "pages/research/side-channel-attacks-on-everyday-applications.html",
+            legacy_hit_count_id: "pages/research/side-channel-attacks-on-everyday-applications.html",
             upvote: None,
         },
         // BH2016 is the canonical case - case-insensitive lookup handles "bh2016" automatically
@@ -355,7 +355,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Concentration Bounds from Parallel Repetition Theorems",
             description: "My master's thesis.",
             keywords: "",
-            hit_id: "pages/research/concentration-bounds-from-parallel-repetition-theorems.html",
+            legacy_hit_count_id: "pages/research/concentration-bounds-from-parallel-repetition-theorems.html",
             upvote: None,
         },
         page! {
@@ -363,7 +363,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines",
             description: "Proving Gödel's second incompleteness theorem in a simpler way using Turing machines.",
             keywords: "godel, second incompleteness theorem, simple proof, turing machines, computability",
-            hit_id: "pages/research/godel-second-incompleteness-theorem-by-turing-machines.html",
+            legacy_hit_count_id: "pages/research/godel-second-incompleteness-theorem-by-turing-machines.html",
             upvote: None,
         },
         page! {
@@ -371,7 +371,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "A Plausible Reason It's So Hard To Prove P!=NP",
             description: "Attempting to show why P!=NP is hard to prove using hash functions.",
             keywords: "p versus np, hard to prove, hash functions, language collisions",
-            hit_id: "pages/research/plausible-reason-p-noteq-np-is-hard-to-prove.html",
+            legacy_hit_count_id: "pages/research/plausible-reason-p-noteq-np-is-hard-to-prove.html",
             upvote: None,
         },
         page! {
@@ -379,7 +379,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Blind Birthday Attack",
             description: "Birthday attack without seeing the values.",
             keywords: "birthday attack, blind, double hmac, cryptography",
-            hit_id: "pages/research/blind-birthday-attack.php",
+            legacy_hit_count_id: "pages/research/blind-birthday-attack.php",
             upvote: Some(UpvoteConfig {
                 id: "blindbirthdayattack",
                 category: "defuse_pages",
@@ -395,7 +395,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "EncFS Security Audit",
             description: "Security audit of the EncFS encrypted filesystem.",
             keywords: "",
-            hit_id: "pages/audits/encfs.html",
+            legacy_hit_count_id: "pages/audits/encfs.html",
             upvote: None,
         },
         page! {
@@ -403,7 +403,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "eCryptfs Security Audit",
             description: "Security audit of the eCryptfs encrypted filesystem.",
             keywords: "",
-            hit_id: "pages/audits/ecryptfs.html",
+            legacy_hit_count_id: "pages/audits/ecryptfs.html",
             upvote: None,
         },
         page! {
@@ -411,7 +411,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "ZeroBin Security Audit",
             description: "Security audit of the ZeroBin Zero-Knowledge Pastebin",
             keywords: "",
-            hit_id: "pages/audits/zerobin.html",
+            legacy_hit_count_id: "pages/audits/zerobin.html",
             upvote: None,
         },
         page! {
@@ -419,7 +419,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "PEFS Security Audit",
             description: "Security audit of the PEFS encrypted filesystem.",
             keywords: "",
-            hit_id: "pages/audits/pefs.html",
+            legacy_hit_count_id: "pages/audits/pefs.html",
             upvote: None,
         },
         page! {
@@ -427,7 +427,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Hash0 Security Audit",
             description: "Security audit of the Hash0 password system",
             keywords: "",
-            hit_id: "pages/audits/hash0.html",
+            legacy_hit_count_id: "pages/audits/hash0.html",
             upvote: None,
         },
         page! {
@@ -435,7 +435,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Gocryptfs Security Audit",
             description: "Security audit of the gocryptfs encrypted filesystem",
             keywords: "",
-            hit_id: "pages/audits/gocryptfs.html",
+            legacy_hit_count_id: "pages/audits/gocryptfs.html",
             upvote: None,
         },
 
@@ -445,7 +445,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Honestyware - The right way to sell software.",
             description: "Honestyware is a revolutionary way to sell software that embraces piracy.",
             keywords: "",
-            hit_id: "pages/misc/honestyware.html",
+            legacy_hit_count_id: "pages/misc/honestyware.html",
             upvote: None,
         },
         page! {
@@ -453,7 +453,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Reading List - Defuse Security",
             description: "Everything I have read so far.",
             keywords: "",
-            hit_id: "pages/misc/reading-list.html",
+            legacy_hit_count_id: "pages/misc/reading-list.html",
             upvote: None,
         },
         page! {
@@ -461,7 +461,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "My .vimrc - Defuse Security",
             description: "My Vim configuration file",
             keywords: "",
-            hit_id: "pages/misc/vimrc.html",
+            legacy_hit_count_id: "pages/misc/vimrc.html",
             upvote: None,
         },
         page! {
@@ -469,7 +469,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Transparency Report",
             description: "",
             keywords: "",
-            hit_id: "pages/misc/transparency.html",
+            legacy_hit_count_id: "pages/misc/transparency.html",
             upvote: None,
         },
         page! {
@@ -477,7 +477,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "The Universe is Made of Cheese - A Formal Proof",
             description: "A logical proof that the universe consists entirely of cheese.",
             keywords: "",
-            hit_id: "pages/misc/the-universe-is-made-of-cheese.html",
+            legacy_hit_count_id: "pages/misc/the-universe-is-made-of-cheese.html",
             upvote: None,
         },
         page! {
@@ -485,7 +485,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Fractal Zoom",
             description: "A psychedelic short story.",
             keywords: "fractal zoom, short story, sci-fi, psychedelic",
-            hit_id: "pages/misc/fractal-zoom.html",
+            legacy_hit_count_id: "pages/misc/fractal-zoom.html",
             upvote: None,
         },
         page! {
@@ -493,7 +493,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Advice to Aspiring Computer Engineers and Scientists",
             description: "Advice for new computer science students.",
             keywords: "",
-            hit_id: "pages/misc/advice-to-aspiring-computer-engineers.html",
+            legacy_hit_count_id: "pages/misc/advice-to-aspiring-computer-engineers.html",
             upvote: None,
         },
         page! {
@@ -501,7 +501,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "ASUS G50 G51 Keyboard Problem",
             description: "Solution to the keyboard problem for the ASUS G50, G51, and G51VX series laptops.",
             keywords: "",
-            hit_id: "pages/misc/asuskeyboarddefect.html",
+            legacy_hit_count_id: "pages/misc/asuskeyboarddefect.html",
             upvote: None,
         },
         alias!("keyboarddefect" => "asuskeyboarddefect"),
