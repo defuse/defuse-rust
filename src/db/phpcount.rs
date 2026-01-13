@@ -18,8 +18,10 @@ const BOT_KEYWORDS: &[&str] = &[
     "yahoo", "holmes", "htdig", "archive", "tineye", "yacy", "yeti",
 ];
 
-/// IPs to ignore (localhost)
-const IP_IGNORE_LIST: &[&str] = &["127.0.0.1"];
+/// IPs to ignore
+/// Note: In production, requests come through a reverse proxy that sets X-Forwarded-For,
+/// so we don't need to ignore localhost there. Empty for now.
+const IP_IGNORE_LIST: &[&str] = &[];
 
 #[derive(Clone)]
 pub struct PhpCountService {
@@ -138,7 +140,8 @@ impl PhpCountService {
     async fn is_unique_hit(&self, page_id: &str, client_ip: &str) -> Result<bool, sqlx::Error> {
         let ids_hash = Self::id_hash(page_id, client_ip);
 
-        let result: Option<(i64,)> = sqlx::query_as(
+        // time column is BIGINT UNSIGNED
+        let result: Option<(u64,)> = sqlx::query_as(
             "SELECT time FROM nodupes WHERE ids_hash = ?"
         )
         .bind(&ids_hash)
@@ -148,7 +151,7 @@ impl PhpCountService {
         match result {
             Some((time,)) => {
                 // If the recorded time is older than 30 days, count as unique
-                Ok(time <= Self::now() - HIT_OLD_AFTER_SECONDS)
+                Ok((time as i64) <= Self::now() - HIT_OLD_AFTER_SECONDS)
             }
             None => Ok(true), // Never seen before
         }
@@ -159,8 +162,8 @@ impl PhpCountService {
         let ids_hash = Self::id_hash(page_id, client_ip);
         let now = Self::now();
 
-        // Check if entry exists
-        let exists: Option<(i64,)> = sqlx::query_as(
+        // Check if entry exists (time column is BIGINT UNSIGNED)
+        let exists: Option<(u64,)> = sqlx::query_as(
             "SELECT time FROM nodupes WHERE ids_hash = ?"
         )
         .bind(&ids_hash)
