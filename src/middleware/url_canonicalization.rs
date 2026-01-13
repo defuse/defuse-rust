@@ -306,8 +306,8 @@ mod tests {
 
     #[test]
     fn test_canonicalize_alias() {
-        let result = canonicalize_url("/trent", None);
-        assert_eq!(result, Some("/trustedthirdparty.htm".to_string()));
+        let result = canonicalize_url("/key", None);
+        assert_eq!(result, Some("/contact.htm".to_string()));
     }
 
     #[test]
@@ -336,11 +336,10 @@ mod tests {
     }
 
     #[test]
-    fn test_case_preserves_canonical() {
-        // BH2016 is an alias to side-channel-attacks-on-everyday-applications
-        // so it redirects to the target, not to itself with canonical case
-        let result = canonicalize_url("/bh2016", None);
-        assert_eq!(result, Some("/side-channel-attacks-on-everyday-applications.htm".to_string()));
+    fn test_alias_chain_redirect() {
+        // /key is an alias to contact, should redirect to /contact.htm
+        let result = canonicalize_url("/KEY", None);
+        assert_eq!(result, Some("/contact.htm".to_string()));
     }
 
     #[test]

@@ -1,17 +1,23 @@
-use axum::{middleware as axum_middleware, routing::{get, post}, Router};
+use axum::{middleware as axum_middleware, routing::post, Router};
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod context;
 mod db;
+mod dispatcher;
+mod handler;
 mod middleware;
 mod pages;
 mod registry;
 mod state;
+mod upvote;
 mod vim_highlight;
 
 use db::{PhpCountService, UpvoteService};
-use middleware::{client_ip_middleware, hit_counter_middleware, upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
+use middleware::{
+    client_ip_middleware, hit_counter_middleware, upvote_post_middleware, SecurityHeadersLayer,
+    UrlCanonicalizationLayer,
+};
 use state::AppState;
 
 #[tokio::main]
@@ -28,13 +34,14 @@ async fn main() {
     // Load .env file if present (for local development)
     let _ = dotenvy::dotenv();
 
-    let listen_addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_string());
+    let listen_addr =
+        std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_string());
 
     // Connect to databases (fail fast if unavailable)
-    let phpcount_url = std::env::var("PHPCOUNT_DATABASE_URL")
-        .expect("PHPCOUNT_DATABASE_URL must be set");
-    let upvotes_url = std::env::var("UPVOTES_DATABASE_URL")
-        .expect("UPVOTES_DATABASE_URL must be set");
+    let phpcount_url =
+        std::env::var("PHPCOUNT_DATABASE_URL").expect("PHPCOUNT_DATABASE_URL must be set");
+    let upvotes_url =
+        std::env::var("UPVOTES_DATABASE_URL").expect("UPVOTES_DATABASE_URL must be set");
 
     tracing::info!("Connecting to PHPCount database...");
     let phpcount = PhpCountService::connect(&phpcount_url)
@@ -53,14 +60,8 @@ async fn main() {
 
     // Build router with middleware
     let app = Router::new()
-        // Pages - these are the canonical URLs that get served
-        .route("/", get(pages::home::get))
-        .route("/checksums.htm", get(pages::checksums::get).post(pages::checksums::post))
-        .route("/about.htm", get(pages::about::get))
-        .route("/contact.htm", get(pages::contact::get))
-        .route("/blind-birthday-attack.htm", get(pages::blind_birthday_attack::get))
-        // API endpoints
-        .route("/upvote", post(pages::upvote::post))
+        // API endpoints (not pages - handled explicitly)
+        .route("/upvote", post(upvote::post))
         // Static files at original URLs (matching PHP site structure)
         .nest_service("/images", ServeDir::new("static/images"))
         .nest_service("/js", ServeDir::new("static/js"))
@@ -70,14 +71,20 @@ async fn main() {
         .nest_service("/vimhl.css", ServeDir::new("static/vimhl.css"))
         .nest_service("/print.css", ServeDir::new("static/print.css"))
         // Verification files
-        .nest_service("/googlec56659c80ebb2d30.html", ServeDir::new("static/googlec56659c80ebb2d30.html"))
-        .nest_service("/have-i-been-pwned-verification.txt", ServeDir::new("static/have-i-been-pwned-verification.txt"))
+        .nest_service(
+            "/googlec56659c80ebb2d30.html",
+            ServeDir::new("static/googlec56659c80ebb2d30.html"),
+        )
+        .nest_service(
+            "/have-i-been-pwned-verification.txt",
+            ServeDir::new("static/have-i-been-pwned-verification.txt"),
+        )
         // Favicon
         .nest_service("/favicon.ico", ServeDir::new("static/favicon.ico"))
         // robots.txt
         .nest_service("/robots.txt", ServeDir::new("static/robots.txt"))
-        // 404 fallback for unmatched routes
-        .fallback(pages::not_found::handler)
+        // All pages handled by dispatcher (registry-driven routing)
+        .fallback(dispatcher::handle)
         // Apply middleware layers (outermost first)
         // CatchPanicLayer: ensures a panic in any handler returns 500, not crash
         .layer(CatchPanicLayer::new())
