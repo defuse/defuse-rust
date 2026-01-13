@@ -9,13 +9,12 @@
 use axum::{
     body::Body,
     extract::State,
-    http::{header, Method, Request, StatusCode},
+    http::{header, Method, Request},
     middleware::Next,
     response::{IntoResponse, Redirect, Response},
 };
 use tracing::{debug, warn};
 
-use crate::db::upvotes::VoteAction;
 use crate::state::AppState;
 use super::ClientIp;
 
@@ -83,19 +82,9 @@ pub async fn upvote_post_middleware(
             // This is an upvote POST - process it and redirect
             debug!("Processing upvote fallback: id={}, direction={}", id, direction);
 
-            let vote_action = match direction {
-                "up" => VoteAction::Upvote,
-                "down" => VoteAction::Downvote,
-                _ => {
-                    warn!("Invalid upvote direction: {}", direction);
-                    return (StatusCode::BAD_REQUEST, "Invalid direction").into_response();
-                }
-            };
-
-            // Process the vote
-            if let Err(e) = state.upvotes.process_vote(id, &client_ip, vote_action).await {
+            // Process the vote (errors logged but don't block redirect)
+            if let Err(e) = state.upvotes.process_vote(id, &client_ip, direction).await {
                 warn!("Failed to process upvote: {}", e);
-                // Continue anyway - show the page even if vote failed
             }
 
             // 302 redirect back to the same page to prevent resubmission

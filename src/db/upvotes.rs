@@ -15,6 +15,30 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// Let IP addresses vote again after this many seconds (24 hours)
 const VOTE_OLD_AFTER_SECONDS: i64 = 86400;
 
+/// Errors that can occur during voting
+#[derive(Debug)]
+pub enum VoteError {
+    InvalidDirection,
+    Database(sqlx::Error),
+}
+
+impl From<sqlx::Error> for VoteError {
+    fn from(e: sqlx::Error) -> Self {
+        VoteError::Database(e)
+    }
+}
+
+impl std::fmt::Display for VoteError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VoteError::InvalidDirection => write!(f, "Invalid vote direction"),
+            VoteError::Database(e) => write!(f, "Database error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for VoteError {}
+
 /// User's current vote action
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VoteAction {
@@ -90,6 +114,8 @@ impl UpvoteService {
 
     /// Process a vote (up or down) for a page
     ///
+    /// Accepts direction as "up" or "down" string (matching form values).
+    ///
     /// Logic:
     /// - If user hasn't voted: add vote
     /// - If user voted same direction: undo vote (toggle off)
@@ -98,8 +124,14 @@ impl UpvoteService {
         &self,
         permanent_id: &str,
         client_ip: &str,
-        direction: VoteAction,
-    ) -> Result<VoteResult, sqlx::Error> {
+        direction: &str,
+    ) -> Result<VoteResult, VoteError> {
+        let direction = match direction {
+            "up" => VoteAction::Upvote,
+            "down" => VoteAction::Downvote,
+            _ => return Err(VoteError::InvalidDirection),
+        };
+
         // Clean up old vote history first
         self.remove_old_vote_history().await?;
 
@@ -139,7 +171,7 @@ impl UpvoteService {
         }
 
         // Return updated state
-        self.get_vote_result(permanent_id, client_ip).await
+        Ok(self.get_vote_result(permanent_id, client_ip).await?)
     }
 
     /// Get current vote counts and user's action for a page

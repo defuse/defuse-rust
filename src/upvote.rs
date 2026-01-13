@@ -28,21 +28,10 @@ pub async fn post(
     Extension(client_ip): Extension<ClientIp>,
     Form(form): Form<VoteForm>,
 ) -> Response {
-    let client_ip = client_ip.0;
-
-    // Parse direction
-    let direction = match form.upvotes_direction.as_str() {
-        "up" => VoteAction::Upvote,
-        "down" => VoteAction::Downvote,
-        _ => {
-            return xml_response("fail", "N", "N", 0);
-        }
-    };
-
     // Process the vote
     let result = match state
         .upvotes
-        .process_vote(&form.upvotes_id, &client_ip, direction)
+        .process_vote(&form.upvotes_id, &client_ip.0, &form.upvotes_direction)
         .await
     {
         Ok(r) => r,
