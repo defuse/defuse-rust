@@ -152,6 +152,7 @@ pub const DEFAULT_META_KEYWORDS: &str = "defuse security, encryption, privacy, p
 
 /// Default page info used for unknown/404 pages
 /// Templates can always access page_info without Option handling
+/// TODO: what about the defaults above??
 pub static DEFAULT_PAGE_INFO: PageInfo = PageInfo {
     slug: "",
     title: "",

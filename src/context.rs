@@ -14,7 +14,7 @@ use axum::{
 use crate::vim_highlight;
 
 use crate::middleware::{HitCounts, VoteCounts};
-use crate::pages::registry::{lookup_page_from_path, PageInfo, UpvoteConfig, DEFAULT_PAGE_INFO};
+use crate::pages::registry::{lookup_page_from_path, PageInfo, UpvoteConfig};
 use crate::utils::extract_client_ip;
 
 /// Common context data available to all page templates.
@@ -45,6 +45,18 @@ pub struct PageContext {
 }
 
 impl PageContext {
+    /// Create a PageContext for the 404 page (bypasses registry lookup)
+    pub fn for_not_found(page_info: &'static PageInfo, client_ip: String, dnt_enabled: bool) -> Self {
+        Self {
+            page_info,
+            client_ip,
+            dnt_enabled,
+            page_hits: 0,
+            unique_hits: 0,
+            vote_counts: None,
+        }
+    }
+
     /// Whether this is the home page
     pub fn is_home(&self) -> bool {
         self.page_info.slug.is_empty()
@@ -138,8 +150,10 @@ where
         let headers = &parts.headers;
         let path = parts.uri.path();
 
-        // Look up page info from registry - uses DEFAULT_PAGE_INFO for unknown pages
-        let page_info = lookup_page_from_path(path).unwrap_or(&DEFAULT_PAGE_INFO);
+        // Look up page info from registry - FAILS if page not found
+        // This ensures every page handler has a corresponding registry entry
+        let page_info = lookup_page_from_path(path)
+            .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Page not in registry"))?;
 
         // Get hit counts from middleware (if available)
         let hit_counts = parts

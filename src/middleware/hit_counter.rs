@@ -15,7 +15,7 @@ use axum::{
 };
 use tracing::{debug, warn};
 
-use crate::pages::registry::lookup_page_from_path;
+use crate::pages::registry::{canonical_url, lookup_page_from_path};
 use crate::state::AppState;
 use crate::utils::extract_client_ip;
 
@@ -99,7 +99,24 @@ pub async fn hit_counter_middleware(
     request.extensions_mut().insert(hit_counts);
 
     // Fetch vote counts if page has upvoting enabled
+    // Also ensure the page exists in the database (like PHP's render_arrows -> add_counter)
     if let Some(upvote_config) = &page_info.upvote {
+        // Get title/description from upvote config override or page defaults
+        let title = upvote_config.title.unwrap_or_else(|| page_info.title_or_default());
+        let description = upvote_config.description.unwrap_or_else(|| page_info.description_or_default());
+        let page_url = canonical_url(page_info.slug);
+
+        // Ensure page exists in database (creates or updates metadata)
+        if let Err(e) = state.upvotes.ensure_page(
+            upvote_config.id,
+            upvote_config.category,
+            title,
+            description,
+            &page_url,
+        ).await {
+            warn!("Failed to ensure page {} in upvotes database: {}", upvote_config.id, e);
+        }
+
         let vote_counts = match get_vote_counts(&state, upvote_config.id, &client_ip).await {
             Ok(counts) => counts,
             Err(e) => {
