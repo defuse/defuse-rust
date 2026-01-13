@@ -76,9 +76,6 @@ Complex pages requiring significant logic.
 - [ ] **Quantum Computer Time Capsule**
   - reCAPTCHA integration
 
-- [ ] **Password Policy Hall of Shame**
-  - Database integration
-
 ### Phase 5: Deployment & Testing
 - [ ] Caddy reverse proxy setup (or native TLS)
 - [ ] Full URL routing test suite
@@ -189,8 +186,8 @@ Complex pages requiring significant logic.
 
 ### Other Databases
 - [ ] TRENT (`cracky_trent`) - trusted RNG drawings
-- [ ] Password Policy Hall of Shame (`pphos`)
 - [ ] IP geolocation (`ip2location`) - if needed
+- [x] ~~Password Policy Hall of Shame (`pphos`)~~ - Page deprecated, just static content now
 
 ---
 
