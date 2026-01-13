@@ -34,12 +34,13 @@
 - [x] Page registry as single source of truth for metadata
 
 ### Requires Database
-- [ ] PHPCount hit tracking
-  - [ ] Record page hits on every request
-  - [ ] Unique hit tracking via IP+page hash (privacy-preserving)
-  - [ ] Display hit counts in footer (currently shows 0)
-  - [ ] Ignore search bots
-  - [ ] Tables: `hits`, `nodupes`
+- [x] PHPCount hit tracking
+  - [x] Record page hits on every request
+  - [x] Unique hit tracking via IP+page hash (privacy-preserving)
+  - [x] Display hit counts in footer
+  - [x] Ignore search bots
+  - [x] Tables: `hits`, `nodupes`
+  - [x] Local dev: docker-compose.yml with MariaDB
 - [ ] Upvote system
   - [ ] `/upvote.php` AJAX endpoint (POST, returns XML)
   - [ ] `Upvote::process_post()` on every request for form fallback
@@ -69,12 +70,13 @@
 
 ## Database Integration (sqlx + MySQL)
 
-### PHPCount Database (`phpcount`)
-- [ ] Connect to existing database
-- [ ] Implement `AddHit()` - record hit, check uniqueness
-- [ ] Implement `GetHits()` - return page hit count
-- [ ] Implement `GetTotalHits()` - return site-wide total
-- [ ] Search bot detection (skip counting)
+### PHPCount Database (`phpcount`) - COMPLETE
+- [x] Connect to existing database
+- [x] Implement `AddHit()` - record hit, check uniqueness
+- [x] Implement `GetHits()` - return page hit count
+- [x] Implement `GetTotalHits()` - return site-wide total
+- [x] Search bot detection (skip counting)
+- [x] `php_page_id` field in PageInfo for backward compatibility
 
 ### Upvote Database (`upvotes`)
 - [ ] Connect to existing database
