@@ -3,11 +3,15 @@
 //! This module provides PageContext which is automatically extracted from
 //! each request and made available to all page handlers via Axum's extractor system.
 
+use std::path::Path;
+
 use axum::{
     async_trait,
     extract::FromRequestParts,
     http::{header, request::Parts, StatusCode},
 };
+
+use crate::vim_highlight;
 
 use crate::middleware::{HitCounts, VoteCounts};
 use crate::pages::registry::{lookup_page_from_path, PageInfo, UpvoteConfig, DEFAULT_META_DESCRIPTION, DEFAULT_TITLE};
@@ -131,6 +135,31 @@ impl PageContext {
             .map(|v| v == "downvote")
             .unwrap_or(false)
     }
+
+    // ===== Syntax Highlighting (matches PHP's printHlString/printSourceFile) =====
+
+    /// Syntax highlight a string. Matches PHP's printHlString($text, $ft, $numbers).
+    /// Returns HTML wrapped in <div class="vimhighlight">
+    pub fn hl_string(&self, text: &str, file_type: &str, show_lines: bool) -> String {
+        vim_highlight::highlight_string(text, file_type, show_lines)
+            .unwrap_or_else(|e| format!("<pre>Error highlighting: {}</pre>", html_escape(&e.to_string())))
+    }
+
+    /// Syntax highlight a source file. Matches PHP's printSourceFile($path, $numbers).
+    /// Returns HTML wrapped in <div class="vimhighlight">
+    pub fn hl_file(&self, path: &str, show_lines: bool) -> String {
+        vim_highlight::highlight_file(Path::new(path), show_lines)
+            .unwrap_or_else(|e| format!("<pre>Error highlighting file: {}</pre>", html_escape(&e.to_string())))
+    }
+}
+
+/// Escape HTML special characters to prevent XSS
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
 }
 
 /// Axum extractor - automatically creates PageContext from request
