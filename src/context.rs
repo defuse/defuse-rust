@@ -13,8 +13,8 @@ use axum::{
 
 use crate::vim_highlight;
 
-use crate::middleware::{HitCounts, VoteCounts};
-use crate::pages::registry::{lookup_page_from_path, PageInfo, UpvoteConfig};
+use crate::middleware::{HitCounts, VoteState};
+use crate::registry::{lookup_page_from_path, PageInfo};
 use crate::utils::extract_client_ip;
 
 /// Common context data available to all page templates.
@@ -29,7 +29,7 @@ use crate::utils::extract_client_ip;
 /// ```
 #[derive(Debug, Clone)]
 pub struct PageContext {
-    /// Page info from registry (always present - uses DEFAULT_PAGE_INFO for unknown pages)
+    /// Page info from registry (always present for known pages; 404 handler uses NOT_FOUND_PAGE_INFO)
     /// Templates access this directly: ctx.page_info.title_or_default()
     pub page_info: &'static PageInfo,
     /// Client's IP address (from X-Forwarded-For, X-Real-IP, or connection)
@@ -40,8 +40,8 @@ pub struct PageContext {
     pub page_hits: u32,
     /// Unique visitor count (from PHPCount middleware)
     pub unique_hits: u32,
-    /// Vote counts (from middleware, only if page has upvoting)
-    vote_counts: Option<VoteCounts>,
+    /// Vote state (counts + user's vote). Always present, defaults to zeros.
+    pub vote_state: VoteState,
 }
 
 impl PageContext {
@@ -53,7 +53,7 @@ impl PageContext {
             dnt_enabled,
             page_hits: 0,
             unique_hits: 0,
-            vote_counts: None,
+            vote_state: VoteState::default(),
         }
     }
 
@@ -62,54 +62,16 @@ impl PageContext {
         self.page_info.slug.is_empty()
     }
 
-    /// Get upvote config if this page has voting enabled
-    pub fn upvote(&self) -> Option<&'static UpvoteConfig> {
-        self.page_info.upvote.as_ref()
-    }
-
-    /// Check if this page has voting enabled
-    pub fn has_upvote(&self) -> bool {
-        self.upvote().is_some()
-    }
-
-    /// Get the upvote ID (for templates)
-    pub fn upvote_id(&self) -> &'static str {
-        self.upvote().map(|u| u.id).unwrap_or("")
-    }
-
     /// Get the canonical URL for this page
     pub fn canonical_url(&self) -> String {
         let p = self.page_info;
         if p.slug.is_empty() {
             "https://defuse.ca/".to_string()
-        } else if p.is_directory {
+        } else if p.is_directory() {
             format!("https://defuse.ca/{}/", p.slug.trim_end_matches('/'))
         } else {
             format!("https://defuse.ca/{}.htm", p.slug)
         }
-    }
-
-    /// Get vote total (upvotes - downvotes)
-    pub fn vote_total(&self) -> i32 {
-        self.vote_counts.as_ref().map(|v| v.total()).unwrap_or(0)
-    }
-
-    /// Check if user has upvoted this page
-    pub fn user_upvoted(&self) -> bool {
-        self.vote_counts
-            .as_ref()
-            .and_then(|v| v.user_vote.as_ref())
-            .map(|v| v == "upvote")
-            .unwrap_or(false)
-    }
-
-    /// Check if user has downvoted this page
-    pub fn user_downvoted(&self) -> bool {
-        self.vote_counts
-            .as_ref()
-            .and_then(|v| v.user_vote.as_ref())
-            .map(|v| v == "downvote")
-            .unwrap_or(false)
     }
 
     // ===== Syntax Highlighting (matches PHP's printHlString/printSourceFile) =====
@@ -162,8 +124,12 @@ where
             .cloned()
             .unwrap_or_default();
 
-        // Get vote counts from middleware (if page has upvoting)
-        let vote_counts = parts.extensions.get::<VoteCounts>().cloned();
+        // Get vote state from middleware (defaults to zeros if not set)
+        let vote_state = parts
+            .extensions
+            .get::<VoteState>()
+            .cloned()
+            .unwrap_or_default();
 
         Ok(Self {
             page_info,
@@ -175,7 +141,7 @@ where
                 .unwrap_or(false),
             page_hits: hit_counts.page_hits,
             unique_hits: hit_counts.unique_hits,
-            vote_counts,
+            vote_state,
         })
     }
 }

@@ -5,7 +5,7 @@ use axum::{
 };
 
 use crate::context::PageContext;
-use crate::pages::registry::DEFAULT_PAGE_INFO;
+use crate::registry::NOT_FOUND_PAGE_INFO;
 use crate::utils::extract_client_ip;
 
 #[derive(Template)]
@@ -23,7 +23,7 @@ pub async fn handler(headers: HeaderMap) -> Response {
         .map(|v| v == "1")
         .unwrap_or(false);
 
-    let ctx = PageContext::for_not_found(&DEFAULT_PAGE_INFO, client_ip, dnt_enabled);
+    let ctx = PageContext::for_not_found(&NOT_FOUND_PAGE_INFO, client_ip, dnt_enabled);
     let page = NotFoundPage { ctx };
     (StatusCode::NOT_FOUND, page).into_response()
 }

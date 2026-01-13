@@ -521,8 +521,7 @@ mod tests {
 
     // Integration test - requires vim to be installed
     #[test]
-    #[ignore] // Run with: cargo test -- --ignored
-    fn test_process_text_basic() {
+        fn test_process_text_basic() {
         let hl = VimHighlight::for_print_hl_string("ruby", false);
         let result = hl.process_text("puts 'hello'", true);
         if let Err(ref e) = result {
@@ -538,8 +537,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Run with: cargo test -- --ignored
-    fn test_highlight_string() {
+        fn test_highlight_string() {
         let result = highlight_string("x = 1 + 2", "ruby", false);
         if let Err(ref e) = result {
             eprintln!("Error: {}", e);
@@ -554,7 +552,6 @@ mod tests {
 
     // Tests matching PHP test script exactly
     #[test]
-    #[ignore]
     fn test_php_comparison_simple_ruby() {
         // PHP Test 1: Simple Ruby without line numbers
         let mut hl = VimHighlight::new();
@@ -574,7 +571,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_php_comparison_ruby_with_lines() {
         // PHP Test 2: Ruby with line numbers
         let mut hl = VimHighlight::new();
@@ -594,7 +590,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_php_comparison_multiline_ruby() {
         // PHP Test 3: Multi-line Ruby
         let mut hl = VimHighlight::new();
@@ -614,7 +609,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_php_comparison_plain_text() {
         // PHP Test 4: Plain text (no highlighting)
         let mut hl = VimHighlight::new();
@@ -634,7 +628,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_php_comparison_html_entities() {
         // PHP Test 5: HTML entities in code
         let mut hl = VimHighlight::new();

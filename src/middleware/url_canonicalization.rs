@@ -17,7 +17,7 @@ use axum::{
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
-use crate::pages::registry::{lookup_page, canonical_url};
+use crate::registry::{lookup_page, canonical_url};
 
 // =============================================================================
 // HARDCODED CONFIGURATION - Matching PHP URLParse.php exactly
@@ -219,7 +219,7 @@ fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
         return Some(canonical_with_query);
     }
 
-    if !page_info.is_directory {
+    if !page_info.is_directory() {
         // Non-directory: must have .htm (lowercase)
         // If had .HTM or .Htm etc, redirect to lowercase .htm
         if !had_htm || !path.ends_with(".htm") {

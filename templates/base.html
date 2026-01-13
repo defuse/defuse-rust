@@ -231,38 +231,38 @@
 {% else %}
 <div id="content">
 {% endif %}
-{% if ctx.has_upvote() %}
+{% if let Some(upvote_cfg) = ctx.page_info.upvote %}
 <div class="upvotearrows">
     <div class="upvoteuparrow">
         <form action="{{ ctx.canonical_url() }}" method="post"
-              onsubmit="return upvote.submit('{{ ctx.upvote_id() }}', 'up')"
-              class="upvoteform upvoteUpForm{{ ctx.upvote_id() }}">
+              onsubmit="return upvote.submit('{{ upvote_cfg.id }}', 'up')"
+              class="upvoteform upvoteUpForm{{ upvote_cfg.id }}">
             <input type="hidden" name="upvotes_direction" value="up" />
-            <input type="hidden" name="upvotes_id" value="{{ ctx.upvote_id() }}" />
-            {% if ctx.user_upvoted() %}
+            <input type="hidden" name="upvotes_id" value="{{ upvote_cfg.id }}" />
+            {% if ctx.vote_state.user_upvoted() %}
             <input type="image" src="/images/upvote-selected.gif" alt="Upvote"
-                   name="upvoteUpImage{{ ctx.upvote_id() }}" />
+                   name="upvoteUpImage{{ upvote_cfg.id }}" />
             {% else %}
             <input type="image" src="/images/upvote.gif" alt="Upvote"
-                   name="upvoteUpImage{{ ctx.upvote_id() }}" />
+                   name="upvoteUpImage{{ upvote_cfg.id }}" />
             {% endif %}
         </form>
     </div>
-    <div class="{% if ctx.user_upvoted() %}upvotecount_upvoted{% else %}{% if ctx.user_downvoted() %}upvotecount_downvoted{% else %}upvotecount{% endif %}{% endif %} upvoteCounter{{ ctx.upvote_id() }}">
-        {{ ctx.vote_total() }}
+    <div class="{% if ctx.vote_state.user_upvoted() %}upvotecount_upvoted{% else %}{% if ctx.vote_state.user_downvoted() %}upvotecount_downvoted{% else %}upvotecount{% endif %}{% endif %} upvoteCounter{{ upvote_cfg.id }}">
+        {{ ctx.vote_state.total() }}
     </div>
     <div class="upvotedownarrow">
         <form action="{{ ctx.canonical_url() }}" method="post"
-              onsubmit="return upvote.submit('{{ ctx.upvote_id() }}', 'down')"
-              class="upvoteform upvoteDownForm{{ ctx.upvote_id() }}">
+              onsubmit="return upvote.submit('{{ upvote_cfg.id }}', 'down')"
+              class="upvoteform upvoteDownForm{{ upvote_cfg.id }}">
             <input type="hidden" name="upvotes_direction" value="down" />
-            <input type="hidden" name="upvotes_id" value="{{ ctx.upvote_id() }}" />
-            {% if ctx.user_downvoted() %}
+            <input type="hidden" name="upvotes_id" value="{{ upvote_cfg.id }}" />
+            {% if ctx.vote_state.user_downvoted() %}
             <input type="image" src="/images/downvote-selected.gif" alt="Downvote"
-                   name="upvoteDownImage{{ ctx.upvote_id() }}" />
+                   name="upvoteDownImage{{ upvote_cfg.id }}" />
             {% else %}
             <input type="image" src="/images/downvote.gif" alt="Downvote"
-                   name="upvoteDownImage{{ ctx.upvote_id() }}" />
+                   name="upvoteDownImage{{ upvote_cfg.id }}" />
             {% endif %}
         </form>
     </div>

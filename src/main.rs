@@ -6,6 +6,7 @@ mod context;
 mod db;
 mod middleware;
 mod pages;
+mod registry;
 mod state;
 mod utils;
 mod vim_highlight;

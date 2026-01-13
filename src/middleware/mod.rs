@@ -5,5 +5,5 @@ pub mod upvote_post;
 
 pub use url_canonicalization::UrlCanonicalizationLayer;
 pub use security_headers::SecurityHeadersLayer;
-pub use hit_counter::{hit_counter_middleware, HitCounts, VoteCounts};
+pub use hit_counter::{hit_counter_middleware, HitCounts, VoteState};
 pub use upvote_post::upvote_post_middleware;

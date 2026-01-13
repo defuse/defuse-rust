@@ -15,7 +15,7 @@ use axum::{
 };
 use tracing::{debug, warn};
 
-use crate::pages::registry::{canonical_url, lookup_page_from_path};
+use crate::registry::{canonical_url, lookup_page_from_path};
 use crate::state::AppState;
 use crate::utils::extract_client_ip;
 
@@ -28,17 +28,29 @@ pub struct HitCounts {
     pub total_unique_hits: u32,
 }
 
-/// Vote counts stored in request extensions for templates to read
+/// Vote state stored in request extensions for templates to read.
+/// Contains both aggregate counts and the current user's vote.
 #[derive(Clone, Debug, Default)]
-pub struct VoteCounts {
+pub struct VoteState {
     pub upvotes: i32,
     pub downvotes: i32,
     pub user_vote: Option<String>, // "upvote", "downvote", or None
 }
 
-impl VoteCounts {
+impl VoteState {
+    /// Net vote total (upvotes - downvotes)
     pub fn total(&self) -> i32 {
         self.upvotes - self.downvotes
+    }
+
+    /// Whether the current user has upvoted
+    pub fn user_upvoted(&self) -> bool {
+        self.user_vote.as_deref() == Some("upvote")
+    }
+
+    /// Whether the current user has downvoted
+    pub fn user_downvoted(&self) -> bool {
+        self.user_vote.as_deref() == Some("downvote")
     }
 }
 
@@ -121,7 +133,7 @@ pub async fn hit_counter_middleware(
             Ok(counts) => counts,
             Err(e) => {
                 warn!("Failed to get vote counts for {}: {}", upvote_config.id, e);
-                VoteCounts::default()
+                VoteState::default()
             }
         };
         request.extensions_mut().insert(vote_counts);
@@ -163,10 +175,10 @@ async fn get_hit_counts(state: &AppState, page_id: &str) -> Result<HitCounts, sq
 }
 
 /// Get vote counts from database
-async fn get_vote_counts(state: &AppState, upvote_id: &str, client_ip: &str) -> Result<VoteCounts, sqlx::Error> {
+async fn get_vote_counts(state: &AppState, upvote_id: &str, client_ip: &str) -> Result<VoteState, sqlx::Error> {
     let result = state.upvotes.get_vote_result(upvote_id, client_ip).await?;
 
-    Ok(VoteCounts {
+    Ok(VoteState {
         upvotes: result.upvotes,
         downvotes: result.downvotes,
         user_vote: result.user_action.map(|a| match a {

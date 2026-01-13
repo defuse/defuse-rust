@@ -14,7 +14,7 @@ use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
 use super::url_canonicalization::is_accepted_host;
-use crate::pages::registry::lookup_page_from_path;
+use crate::registry::lookup_page_from_path;
 
 /// Tower layer for security headers
 #[derive(Clone)]
