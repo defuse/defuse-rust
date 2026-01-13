@@ -1,10 +1,10 @@
 //! Security Headers Middleware
 //!
 //! Adds security-related HTTP headers to all responses:
+//! - Content-Type: text/html; charset=utf-8 (explicit, not relying on defaults)
 //! - X-Frame-Options: SAMEORIGIN
 //! - Strict-Transport-Security (HSTS) - only over HTTPS, not for localhost
-//!
-//! Note: Content-Type is set by Askama template responses automatically.
+//! - Cache-Control: no-cache (for pages marked with no_cache in registry)
 
 use axum::{
     body::Body,
@@ -14,6 +14,7 @@ use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
 use super::url_canonicalization::ACCEPTED_HOSTS;
+use crate::pages::registry::lookup_page_from_path;
 
 /// Tower layer for security headers
 #[derive(Clone)]
@@ -36,6 +37,13 @@ pub struct SecurityHeadersMiddleware<S> {
 /// Check if a host is in the accepted hosts list
 fn is_accepted_host(host: &str) -> bool {
     ACCEPTED_HOSTS.iter().any(|h| h.eq_ignore_ascii_case(host))
+}
+
+/// Check if a page should have no-cache headers based on registry metadata
+fn check_no_cache(path: &str) -> bool {
+    lookup_page_from_path(path)
+        .map(|info| info.no_cache)
+        .unwrap_or(false)
 }
 
 impl<S> Service<Request<Body>> for SecurityHeadersMiddleware<S>
@@ -74,9 +82,21 @@ where
 
         let is_accepted = is_accepted_host(&host);
 
+        // Check if this page should not be cached (lookup from registry)
+        // SECURITY: Some pages like passgen must not be cached
+        let path = req.uri().path().to_string();
+        let is_no_cache_page = check_no_cache(&path);
+
         Box::pin(async move {
             let mut response = inner.call(req).await?;
             let headers = response.headers_mut();
+
+            // Content-Type: always set explicitly with charset
+            // Don't rely on framework defaults for security-critical charset
+            headers.insert(
+                header::CONTENT_TYPE,
+                "text/html; charset=utf-8".parse().unwrap(),
+            );
 
             // X-Frame-Options: SAMEORIGIN (always)
             headers.insert(
@@ -91,6 +111,23 @@ where
                     "max-age=31536000; includeSubDomains; preload"
                         .parse()
                         .unwrap(),
+                );
+            }
+
+            // Cache control for sensitive pages (marked with no_cache in registry)
+            // SECURITY: Prevents browsers from caching sensitive content
+            if is_no_cache_page {
+                headers.insert(
+                    header::EXPIRES,
+                    "Mon, 01 Jan 1990 00:00:00 GMT".parse().unwrap(),
+                );
+                headers.insert(
+                    header::CACHE_CONTROL,
+                    "no-cache, no-store, must-revalidate".parse().unwrap(),
+                );
+                headers.insert(
+                    header::PRAGMA,
+                    "no-cache".parse().unwrap(),
                 );
             }
 

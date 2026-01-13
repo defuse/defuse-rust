@@ -9,6 +9,7 @@ use axum::{
     http::{request::Parts, StatusCode, header},
 };
 
+use crate::middleware::HitCounts;
 use crate::pages::registry::{lookup_page, PageInfo, DEFAULT_TITLE, DEFAULT_META_DESCRIPTION};
 
 /// Common context data available to all page templates.
@@ -26,6 +27,7 @@ pub struct PageContext {
     /// Whether this is the home page (path == "/")
     /// Used by base template to hide footer on home page
     pub is_home: bool,
+    // TODO: Why do we have copies of title and description here, shouldn't we just get a copy of the PageInfo to avoid duplication?
     /// Page title from registry (or default)
     pub title: &'static str,
     /// Page meta description from registry (or default)
@@ -34,10 +36,10 @@ pub struct PageContext {
     pub client_ip: String,
     /// Whether Do Not Track header is set
     pub dnt_enabled: bool,
-    /// Page hit count (TODO: implement PHPCount)
-    pub page_hits: u64,
-    /// Unique visitor count (TODO: implement PHPCount)
-    pub unique_hits: u64,
+    /// Page hit count (from PHPCount middleware)
+    pub page_hits: u32,
+    /// Unique visitor count (from PHPCount middleware)
+    pub unique_hits: u32,
 }
 
 /// Axum extractor - automatically creates PageContext from request
@@ -55,6 +57,13 @@ where
         // Look up page info from registry based on path
         let page_info = lookup_page_from_path(path);
 
+        // Get hit counts from middleware (if available)
+        let hit_counts = parts
+            .extensions
+            .get::<HitCounts>()
+            .cloned()
+            .unwrap_or_default();
+
         Ok(Self {
             is_home: path == "/",
             title: page_info.map(|p| p.title_or_default()).unwrap_or(DEFAULT_TITLE),
@@ -65,14 +74,14 @@ where
                 .and_then(|v| v.to_str().ok())
                 .map(|v| v == "1")
                 .unwrap_or(false),
-            // TODO: Implement PHPCount database integration
-            page_hits: 0,
-            unique_hits: 0,
+            page_hits: hit_counts.page_hits,
+            unique_hits: hit_counts.unique_hits,
         })
     }
 }
 
 /// Look up page info from a URL path
+/// TODO: it seems like this is duplicate code with the lookup-from-path in pages/registry.rs? Can we DRY this up?
 fn lookup_page_from_path(path: &str) -> Option<&'static PageInfo> {
     if path == "/" {
         return lookup_page("");
@@ -102,6 +111,8 @@ fn extract_client_ip(headers: &axum::http::HeaderMap) -> String {
             return s.to_string();
         }
     }
+    
+    // TODO: what if there are no IP headers? we need to pull it from the actual TCP connection, no?
 
     // Fallback - in production this would come from the connection info
     "127.0.0.1".to_string()

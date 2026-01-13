@@ -24,6 +24,11 @@ pub struct PageInfo {
     /// Meta keywords (empty = use DEFAULT_META_KEYWORDS)
     pub keywords: &'static str,
 
+    /// PHP-style page ID for backward compatibility with PHPCount database
+    /// e.g., Some("pages/services/checksums.php"), Some("pages/home.html")
+    /// None means use the slug as the page ID (for new pages)
+    pub php_page_id: Option<&'static str>,
+
     /// Redirect target - if Some, this page is an alias
     /// Some("") means redirect to home page
     /// None means this is a real page, not an alias
@@ -34,6 +39,10 @@ pub struct PageInfo {
 
     /// Does this page have dynamic logic? (form handling, database, etc.)
     pub is_dynamic: bool,
+
+    /// Should this page have no-cache headers?
+    /// SECURITY: Used for pages like passgen to prevent password caching
+    pub no_cache: bool,
 }
 
 impl Default for PageInfo {
@@ -43,14 +52,22 @@ impl Default for PageInfo {
             title: "",
             description: "",
             keywords: "",
+            php_page_id: None,
             redirect: None,
             is_directory: false,
             is_dynamic: false,
+            no_cache: false,
         }
     }
 }
 
 impl PageInfo {
+    /// Get the page ID for PHPCount hit tracking
+    /// Uses php_page_id if set, otherwise falls back to slug
+    pub fn hit_counter_id(&self) -> &'static str {
+        self.php_page_id.unwrap_or(self.slug)
+    }
+
     /// Check if this page is an alias (has a redirect target)
     pub fn is_alias(&self) -> bool {
         self.redirect.is_some()
@@ -88,6 +105,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         // ===== Home page =====
         PageInfo {
             slug: "",
+            php_page_id: Some("pages/home.html"),
             is_directory: true,
             is_dynamic: true,
             ..Default::default()
@@ -101,6 +119,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         // ===== Main pages =====
         PageInfo {
             slug: "about",
+            php_page_id: Some("pages/about.html"),
             title: "About - Defuse Security",
             description: "About Defuse Security.",
             ..Default::default()
@@ -116,6 +135,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         // ===== Services =====
         PageInfo {
             slug: "checksums",
+            php_page_id: Some("pages/services/checksums.php"),
             title: "Online Text and File Hash Calculator - MD5, SHA1, SHA256, SHA512, WHIRLPOOL Hash Calculator - Defuse Security",
             description: "Online Hash Tool. Calculate hash of file or text. MD5, SHA1, SHA256, SHA512 and more...",
             is_dynamic: true,
@@ -177,6 +197,8 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Secure Windows & Linux Password Generator - Defuse Security",
             description: "A secure random password generator for Windows, Linux and Macintosh.",
             is_dynamic: true,
+            // SECURITY: Prevent browsers from caching generated passwords
+            no_cache: true,
             ..Default::default()
         },
         PageInfo { slug: "passwords", redirect: Some("passgen"), ..Default::default() },
@@ -331,6 +353,34 @@ pub fn lookup_page(name: &str) -> Option<&'static PageInfo> {
     PAGE_REGISTRY.get(lowercase.as_str()).map(|p| p as &'static PageInfo)
 }
 
+/// Extract page name from a URL path and look it up.
+/// Handles stripping leading slash and .htm/.html extensions.
+/// Returns None for paths that don't map to a known page.
+pub fn lookup_page_from_path(path: &str) -> Option<&'static PageInfo> {
+    // Handle root path
+    if path == "/" {
+        return lookup_page("");
+    }
+
+    let path_without_slash = path.trim_start_matches('/');
+    let path_lower = path_without_slash.to_lowercase();
+
+    // Strip .htm or .html extension (case-insensitive)
+    let name = if path_lower.ends_with(".htm") {
+        &path_without_slash[..path_without_slash.len() - 4]
+    } else if path_lower.ends_with(".html") {
+        &path_without_slash[..path_without_slash.len() - 5]
+    } else {
+        path_without_slash
+    };
+
+    // Try lookup, also try with trailing slash for directories
+    lookup_page(name).or_else(|| {
+        let with_slash = format!("{}/", name.trim_end_matches('/'));
+        lookup_page(&with_slash)
+    })
+}
+
 /// Get the canonical URL for a page slug
 /// Returns the URL path using the canonical case from the registry,
 /// with .htm extension (or trailing / for directories)
@@ -394,5 +444,46 @@ mod tests {
     #[test]
     fn test_directory_url() {
         assert_eq!(canonical_url("audits/"), "/audits/");
+    }
+
+    #[test]
+    fn test_lookup_page_from_path() {
+        use super::lookup_page_from_path;
+
+        // Basic lookup with .htm
+        let info = lookup_page_from_path("/about.htm").unwrap();
+        assert_eq!(info.slug, "about");
+
+        // Lookup without extension
+        let info = lookup_page_from_path("/about").unwrap();
+        assert_eq!(info.slug, "about");
+
+        // Lookup with .html
+        let info = lookup_page_from_path("/about.html").unwrap();
+        assert_eq!(info.slug, "about");
+
+        // Case-insensitive extension
+        let info = lookup_page_from_path("/about.HTM").unwrap();
+        assert_eq!(info.slug, "about");
+
+        // Root path
+        let info = lookup_page_from_path("/").unwrap();
+        assert_eq!(info.slug, "");
+
+        // Unknown page returns None
+        assert!(lookup_page_from_path("/nonexistent.htm").is_none());
+    }
+
+    #[test]
+    fn test_no_cache_flag() {
+        use super::lookup_page_from_path;
+
+        // passgen has no_cache: true
+        let info = lookup_page_from_path("/passgen.htm").unwrap();
+        assert!(info.no_cache);
+
+        // about has no_cache: false (default)
+        let info = lookup_page_from_path("/about.htm").unwrap();
+        assert!(!info.no_cache);
     }
 }

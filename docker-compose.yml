@@ -1,0 +1,20 @@
+services:
+  db:
+    image: mariadb:10.6
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: dev
+      MARIADB_ROOT_HOST: '%'
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Mount dump directory for easy import
+      - ../db-dump:/dump:ro
+    # Increase limits for large import
+    command: >
+      --max_allowed_packet=256M
+      --innodb_buffer_pool_size=1G
+      --innodb_log_file_size=256M
+
+volumes:
+  mysql-data:

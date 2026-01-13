@@ -1,89 +1,132 @@
 # Defuse.ca Rust Rewrite - Project Tracker
 
-## Completed
-- [x] Design decisions documented (see DESIGN_DECISIONS.md)
-- [x] Basic Axum project structure
-- [x] Askama templating setup
-- [x] Base template matching original site layout EXACTLY
-  - Full navigation menu with all dropdowns
-  - Footer with IP/DNT display, hit counts, CC license
-  - Home page uses contenthome div (no footer)
-  - Regular pages use content div (with footer)
-- [x] Copied exact CSS (main.css, mainmenu.css, vimhl.css, print.css)
-- [x] Copied all images and JS at original URLs
-- [x] Checksums page (form handling, multiple hash algorithms)
-- [x] Home page (static, with original content)
-- [x] About page (static, with original content)
-- [x] Context system for passing request info to templates
+## Global Infrastructure (applies to all/most pages)
 
-## In Progress
-- [ ] URL canonicalization middleware
-  - Redirect `/page` → `/page.htm` (canonical form)
-  - Redirect `/page.htm` → `/page.htm` (no change)
-  - Handle directory pages (e.g., `/audits/` stays as-is)
-  - HTTPS enforcement (with localhost bypass via FORCE_HTTPS env var)
-  - Host canonicalization (redirect to defuse.ca)
-  - See `defuse.ca/src/libs/URLParse.php` for full logic
+### Completed
+- [x] URL routing/canonicalization middleware
+  - [x] Redirect `/page` → `/page.htm`
+  - [x] Redirect `.html` → `.htm`
+  - [x] Case normalization (e.g., `/About.htm` → `/about.htm`)
+  - [x] Alias resolution (e.g., `/trent` → `/trustedthirdparty.htm`)
+  - [x] Directory pages with trailing slash
+  - [x] HTTPS enforcement (with localhost bypass)
+  - [x] Host canonicalization (redirect to defuse.ca)
+  - [x] ACCEPTED_HOSTS with port matching (e.g., `defuse:10443`)
+- [x] Security headers middleware
+  - [x] X-Frame-Options: SAMEORIGIN
+  - [x] Strict-Transport-Security (HSTS) - only over HTTPS, not for localhost
+  - [x] Content-Type: text/html; charset=utf-8 (explicit, not relying on defaults)
+  - [x] Cache-Control: no-cache for sensitive pages (via `no_cache` in registry)
+- [x] Panic handling (CatchPanicLayer) - panics return 500, don't crash server
+- [x] 404 page with custom template
+- [x] Base template matching original site layout
+  - [x] Full navigation menu with all dropdowns
+  - [x] Footer with IP/DNT display, hit counts, CC license
+  - [x] Home page uses `contenthome` div (no footer)
+  - [x] Regular pages use `content` div (with footer)
+- [x] Static files
+  - [x] CSS (main.css, mainmenu.css, vimhl.css, print.css)
+  - [x] JS (jquery.js, upvote.js)
+  - [x] Images at original URLs
+- [x] Google site verification meta tag
+- [x] Client IP display in footer (X-Forwarded-For aware)
+- [x] DNT header detection in footer
+- [x] Page registry as single source of truth for metadata
 
-## Next Steps (High Priority)
-
-### TLS/HTTPS Support
-- [ ] Add TLS support for production deployment
-- [ ] Integrate with Let's Encrypt (certbot or acme-client)
-- [ ] HSTS header support (already in original PHP)
-- [ ] Document nginx reverse proxy setup as alternative
-
-### Database Integration (sqlx + MySQL)
+### Requires Database
 - [ ] PHPCount hit tracking
-  - Page hits counter in footer (currently shows 0)
-  - Unique hits counter in footer (currently shows 0)
-  - Anonymous tracking via IP+salt hashing
+  - [ ] Record page hits on every request
+  - [ ] Unique hit tracking via IP+page hash (privacy-preserving)
+  - [ ] Display hit counts in footer (currently shows 0)
+  - [ ] Ignore search bots
+  - [ ] Tables: `hits`, `nodupes`
 - [ ] Upvote system
-  - "Top 8 Pages" list on home page
-  - Vote counters on pages
-- [ ] Pastebin storage
+  - [ ] `/upvote.php` AJAX endpoint (POST, returns XML)
+  - [ ] `Upvote::process_post()` on every request for form fallback
+  - [ ] Vote tracking via IP+page hash
+  - [ ] Tables: `counts`, `history`
+- [x] Upvote images: `upvote.gif`, `upvote-selected.gif`, `downvote.gif`, `downvote-selected.gif`
 
-### Request Context
-- [ ] Extract real client IP from connection (not just headers)
-  - Currently using X-Forwarded-For/X-Real-IP headers
-  - Need to extract from socket addr when not behind proxy
-- [ ] Pass connection info via Axum ConnectInfo extractor
+### Static File Directories (from /storage)
+- [ ] `/extras/files` - downloadable files
+- [ ] `/extras/files2` - more downloadable files
+- [ ] `/extras/mirrors` - mirrored content
+- [ ] `/extras/upload/tmp_w` - upload temp directory
+- [ ] Figure out URL routing for these (check Apache config)
+
+### Decided to Skip
+- [x] ~~Piwik/analytics~~ - Removing entirely
+- [x] ~~Entropy feeding to /dev/urandom~~ - Unnecessary in Rust
+- [x] ~~Last modified date in footer~~ - Dead code in PHP (computed but never displayed)
+
+---
+
+## TLS/Deployment
+- [ ] Document Caddy reverse proxy setup (recommended - auto Let's Encrypt)
+- [ ] Alternative: native Rust TLS with `axum-server` + `rustls`
+
+---
+
+## Database Integration (sqlx + MySQL)
+
+### PHPCount Database (`phpcount`)
+- [ ] Connect to existing database
+- [ ] Implement `AddHit()` - record hit, check uniqueness
+- [ ] Implement `GetHits()` - return page hit count
+- [ ] Implement `GetTotalHits()` - return site-wide total
+- [ ] Search bot detection (skip counting)
+
+### Upvote Database (`upvotes`)
+- [ ] Connect to existing database
+- [ ] Implement vote processing (up/down/undo)
+- [ ] Implement AJAX endpoint returning XML response
+- [ ] Render upvote arrows in templates
+
+### Pastebin Database (`cracky_bin`)
+- [ ] Connect to existing database
+- [ ] Crypto module (CRITICAL - must match PHP exactly)
+  - [ ] AES-256-CBC with null-byte padding (NOT PKCS7)
+  - [ ] HMAC-SHA256 key derivation
+  - [ ] Test vectors from PHP to verify compatibility
+
+### Other Databases
+- [ ] TRENT (`cracky_trent`) - trusted RNG drawings
+- [ ] Password Policy Hall of Shame (`pphos`)
+- [ ] IP geolocation (`ip2location`) - if needed
+
+---
 
 ## Feature Implementation Queue
-- [ ] Crypto module for pastebin (CRITICAL - must match PHP exactly)
-  - AES-256-CBC with null-byte padding
-  - HMAC-SHA256 key derivation
-  - See DESIGN_DECISIONS.md for exact algorithm
-- [ ] Pastebin page
-- [ ] Password generator page
-- [ ] TRENT (trusted RNG) page
-- [ ] Big number calculator (num-bigint + expression parser)
-- [ ] HTML sanitizer page
-- [ ] Online x86 assembler (keep gcc/objdump, fix temp file race)
 
-## Port Remaining Static Pages
-Pages to port from PHP site (see URLParse.php $PAGE_INFO array):
-- [ ] contact.htm
-- [ ] services.htm, projects.htm, research.htm, software.htm
+### Dynamic Pages (require logic)
+- [ ] Pastebin - encrypted paste storage/retrieval
+- [ ] Password generator - secure random generation
+- [ ] TRENT - trusted RNG drawings
+- [ ] Big number calculator - num-bigint + expression parser
+- [ ] HTML sanitizer
+- [ ] Online x86 assembler - keep gcc/objdump, fix temp file race
+- [x] Checksums page (form handling, multiple hash algorithms)
+- [ ] Quantum computer time capsule
+- [ ] Password Policy Hall of Shame
+
+### Static Pages (content only)
+- [x] Home page
+- [x] About page
+- [ ] Contact page
+- [ ] Services, Projects, Research index pages
 - [ ] All audit pages (audits/encfs, audits/ecryptfs, etc.)
-- [ ] All research pages
+- [ ] All research/article pages
 - [ ] All misc pages
-- [ ] 404 page
+- [ ] See URLParse.php $PAGE_INFO for full list (~100+ pages)
 
-## Per-Feature Decisions (decide when implementing)
-- [ ] Assembler - keep gcc/objdump (fix temp file race with `tempfile` crate)
-- [ ] Syntax highlighting - syntect integration
-- [ ] Big number calculator - use num-bigint (replacing Ruby)
+---
 
 ## Testing
 - [ ] Create PHP test vectors for crypto compatibility
-- [ ] URL routing tests (ensure all old URLs work)
-- [ ] Database query verification
+- [ ] URL routing tests - all old URLs must work
+- [ ] Database query verification against production data
 
-## Security Headers (from original PHP)
-- [ ] X-Frame-Options: SAMEORIGIN
-- [ ] Strict-Transport-Security (HSTS)
-- [ ] Content-Type: text/html; charset=utf-8
+---
 
 ## Key Files Reference
 - `defuse.ca/src/index.php` - Master template
