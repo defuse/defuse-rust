@@ -329,6 +329,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "p versus np, hard to prove, hash functions, language collisions",
             ..Default::default()
         },
+        PageInfo {
+            slug: "blind-birthday-attack",
+            php_page_id: Some("pages/research/blind-birthday-attack.php"),
+            title: "Blind Birthday Attack",
+            description: "Birthday attack without seeing the values.",
+            keywords: "birthday attack, blind, double hmac, cryptography",
+            upvote: Some(UpvoteConfig::with_overrides(
+                "blindbirthdayattack",
+                "defuse_pages",
+                Some("Blind Birthday Attack"),
+                Some("A birthday attack without knowing what the collision actually is."),
+            )),
+            ..Default::default()
+        },
 
         // ===== Audits =====
         PageInfo { slug: "audits/", redirect: Some("software-security-auditing"), is_directory: true, ..Default::default() },

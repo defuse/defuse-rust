@@ -64,12 +64,25 @@ defuse-rust/
 └── CLAUDE.md             # This file (stays in root)
 ```
 
+## Development Environment Setup
+
+Before running the project, ensure these directories exist:
+
+```bash
+# VimHighlight cache directory (for syntax highlighting)
+sudo mkdir -p /storage/vimhl
+sudo chown $USER:$USER /storage/vimhl
+```
+
+The cache directory is used by both the PHP original and Rust rewrite for caching vim-generated syntax highlighting output.
+
 ## Key Technical Details
 
 - **Framework**: Axum web framework
 - **Templating**: Askama (Jinja2-style, compile-time checked)
 - **Database**: sqlx with MySQL (not yet integrated)
 - **Original PHP site**: `../defuse.ca/` for reference
+- **Vim**: Required for syntax highlighting (vim or gvim must be installed)
 
 ## Important: Matching Original Site
 

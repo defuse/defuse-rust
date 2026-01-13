@@ -8,6 +8,7 @@ mod middleware;
 mod pages;
 mod state;
 mod utils;
+mod vim_highlight;
 
 use db::{PhpCountService, UpvoteService};
 use middleware::{hit_counter_middleware, upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
@@ -57,6 +58,7 @@ async fn main() {
         .route("/checksums.htm", get(pages::checksums::get).post(pages::checksums::post))
         .route("/about.htm", get(pages::about::get))
         .route("/contact.htm", get(pages::contact::get))
+        .route("/blind-birthday-attack.htm", get(pages::blind_birthday_attack::get))
         // API endpoints
         .route("/upvote", post(pages::upvote::post))
         // Static files at original URLs (matching PHP site structure)
