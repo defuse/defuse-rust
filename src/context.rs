@@ -27,17 +27,6 @@ pub struct PageContext {
 }
 
 impl PageContext {
-    /// Create a PageContext for the 404 page (bypasses registry lookup)
-    pub fn for_not_found(page_info: &'static PageInfo, client_ip: String, dnt_enabled: bool) -> Self {
-        Self {
-            page_info,
-            client_ip,
-            dnt_enabled,
-            hit_counts: HitCounts::default(),
-            vote_state: VoteState::default(),
-        }
-    }
-
     /// Whether this is the home page
     pub fn is_home(&self) -> bool {
         self.page_info.slug.is_empty()

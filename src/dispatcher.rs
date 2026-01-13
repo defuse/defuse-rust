@@ -123,19 +123,6 @@ fn extract_page_context(request: &Request<Body>, page_info: &'static PageInfo) -
 
 /// Render the 404 not found page.
 fn render_not_found(request: &Request<Body>) -> Response {
-    let client_ip = request
-        .extensions()
-        .get::<ClientIp>()
-        .map(|ip| ip.0.clone())
-        .unwrap_or_else(|| "unknown".to_string());
-
-    let dnt_enabled = request
-        .headers()
-        .get(header::DNT)
-        .and_then(|v| v.to_str().ok())
-        .map(|v| v == "1")
-        .unwrap_or(false);
-
-    let ctx = PageContext::for_not_found(&NOT_FOUND_PAGE_INFO, client_ip, dnt_enabled);
+    let ctx = extract_page_context(request, &NOT_FOUND_PAGE_INFO);
     (StatusCode::NOT_FOUND, NotFoundPage { ctx }).into_response()
 }
