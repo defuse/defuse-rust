@@ -1,12 +1,13 @@
 use askama::Template;
 use axum::{
-    http::{header, HeaderMap, StatusCode},
+    body::Body,
+    http::{header, Request, StatusCode},
     response::{IntoResponse, Response},
 };
 
 use crate::context::PageContext;
+use crate::middleware::ClientIp;
 use crate::registry::NOT_FOUND_PAGE_INFO;
-use crate::utils::extract_client_ip;
 
 #[derive(Template)]
 #[template(path = "pages/404.html")]
@@ -15,9 +16,17 @@ pub struct NotFoundPage {
 }
 
 /// 404 handler - does NOT use PageContext extractor (which would fail for unknown pages)
-pub async fn handler(headers: HeaderMap) -> Response {
-    let client_ip = extract_client_ip(&headers);
-    let dnt_enabled = headers
+pub async fn handler(request: Request<Body>) -> Response {
+    // Get client IP from extensions (always present - set by client_ip_middleware)
+    let client_ip = request
+        .extensions()
+        .get::<ClientIp>()
+        .expect("BUG: ClientIp not in extensions - client_ip_middleware not running?")
+        .0
+        .clone();
+
+    let dnt_enabled = request
+        .headers()
         .get(header::DNT)
         .and_then(|v| v.to_str().ok())
         .map(|v| v == "1")

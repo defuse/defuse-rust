@@ -17,7 +17,7 @@ use tracing::{debug, warn};
 
 use crate::db::upvotes::VoteAction;
 use crate::state::AppState;
-use crate::utils::extract_client_ip;
+use super::ClientIp;
 
 /// Middleware function that handles upvote POST fallback for non-JS users
 pub async fn upvote_post_middleware(
@@ -41,8 +41,13 @@ pub async fn upvote_post_middleware(
         return next.run(request).await;
     }
 
-    // Extract client IP before consuming the request
-    let client_ip = extract_client_ip(request.headers());
+    // Get client IP from extensions (always present - set by client_ip_middleware)
+    let client_ip = request
+        .extensions()
+        .get::<ClientIp>()
+        .expect("BUG: ClientIp not in extensions - client_ip_middleware not running?")
+        .0
+        .clone();
 
     // Get the redirect URL (current page)
     let redirect_url = request.uri().to_string();

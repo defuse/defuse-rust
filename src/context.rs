@@ -13,9 +13,8 @@ use axum::{
 
 use crate::vim_highlight;
 
-use crate::middleware::{HitCounts, VoteState};
+use crate::middleware::{ClientIp, HitCounts, VoteState};
 use crate::registry::{lookup_page_from_path, PageInfo};
-use crate::utils::extract_client_ip;
 
 /// Common context data available to all page templates.
 ///
@@ -131,9 +130,17 @@ where
             .cloned()
             .unwrap_or_default();
 
+        // Get client IP from middleware (always present - set by client_ip_middleware)
+        let client_ip = parts
+            .extensions
+            .get::<ClientIp>()
+            .expect("BUG: ClientIp not in extensions - client_ip_middleware not running?")
+            .0
+            .clone();
+
         Ok(Self {
             page_info,
-            client_ip: extract_client_ip(headers),
+            client_ip,
             dnt_enabled: headers
                 .get(header::DNT)
                 .and_then(|v| v.to_str().ok())

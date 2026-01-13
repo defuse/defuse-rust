@@ -8,11 +8,10 @@ mod middleware;
 mod pages;
 mod registry;
 mod state;
-mod utils;
 mod vim_highlight;
 
 use db::{PhpCountService, UpvoteService};
-use middleware::{hit_counter_middleware, upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
+use middleware::{client_ip_middleware, hit_counter_middleware, upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
 use state::AppState;
 
 #[tokio::main]
@@ -94,10 +93,17 @@ async fn main() {
             hit_counter_middleware,
         ))
         .layer(UrlCanonicalizationLayer)
+        // Client IP extraction - must be outermost to run first
+        .layer(axum_middleware::from_fn(client_ip_middleware))
         .with_state(state);
 
     tracing::info!("Listening on http://{}", listen_addr);
 
     let listener = tokio::net::TcpListener::bind(&listen_addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }

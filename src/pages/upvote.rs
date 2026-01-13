@@ -5,15 +5,15 @@
 
 use axum::{
     extract::State,
-    http::{header, HeaderMap, StatusCode},
+    http::{header, StatusCode},
     response::{IntoResponse, Response},
-    Form,
+    Extension, Form,
 };
 use serde::Deserialize;
 
 use crate::db::upvotes::VoteAction;
+use crate::middleware::ClientIp;
 use crate::state::AppState;
-use crate::utils::extract_client_ip;
 
 #[derive(Deserialize)]
 pub struct VoteForm {
@@ -24,10 +24,10 @@ pub struct VoteForm {
 /// POST /upvote - Process a vote and return XML response
 pub async fn post(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(client_ip): Extension<ClientIp>,
     Form(form): Form<VoteForm>,
 ) -> Response {
-    let client_ip = extract_client_ip(&headers);
+    let client_ip = client_ip.0;
 
     // Parse direction
     let direction = match form.upvotes_direction.as_str() {

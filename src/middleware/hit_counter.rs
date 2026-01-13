@@ -17,7 +17,7 @@ use tracing::{debug, warn};
 
 use crate::registry::{canonical_url, lookup_page_from_path};
 use crate::state::AppState;
-use crate::utils::extract_client_ip;
+use super::ClientIp;
 
 /// Hit counts stored in request extensions for templates to read
 #[derive(Clone, Debug, Default)]
@@ -76,8 +76,14 @@ pub async fn hit_counter_middleware(
 
     let page_id = page_info.hit_counter_id().to_string();
 
-    // Extract info needed for hit counting
-    let client_ip = extract_client_ip(request.headers());
+    // Get client IP from extensions (always present - set by client_ip_middleware)
+    let client_ip = request
+        .extensions()
+        .get::<ClientIp>()
+        .expect("BUG: ClientIp not in extensions - client_ip_middleware not running?")
+        .0
+        .clone();
+
     let user_agent = request
         .headers()
         .get(header::USER_AGENT)
