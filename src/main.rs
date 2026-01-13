@@ -7,6 +7,7 @@ mod db;
 mod middleware;
 mod pages;
 mod state;
+mod utils;
 
 use db::PhpCountService;
 use middleware::{hit_counter_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};

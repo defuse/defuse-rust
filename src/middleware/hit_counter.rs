@@ -16,6 +16,7 @@ use tracing::{debug, warn};
 
 use crate::pages::registry::lookup_page_from_path;
 use crate::state::AppState;
+use crate::utils::extract_client_ip;
 
 /// Hit counts stored in request extensions for templates to read
 #[derive(Clone, Debug, Default)]
@@ -40,16 +41,13 @@ pub async fn hit_counter_middleware(
     }
 
     // Look up the page in the registry to get the correct page ID
-    let page_info = lookup_page_from_path(&path);
-
-    // Skip if page not found in registry (404s, unknown paths)
-    let page_id = match page_info {
-        Some(info) => info.hit_counter_id().to_string(),
-        None => {
-            // For unknown pages, use a fallback ID
-            path_to_page_id(&path)
-        }
+    // Skip if page not found (404s shouldn't be counted)
+    let page_info = match lookup_page_from_path(&path) {
+        Some(info) => info,
+        None => return next.run(request).await,
     };
+
+    let page_id = page_info.hit_counter_id().to_string();
 
     // Extract info needed for hit counting
     let client_ip = extract_client_ip(request.headers());
@@ -103,42 +101,6 @@ fn should_skip_path(path: &str) -> bool {
     }
 
     false
-}
-
-/// Convert URL path to page ID (matching PHP behavior)
-fn path_to_page_id(path: &str) -> String {
-    // PHP uses the page name without extension
-    // e.g., "/checksums.htm" -> "checksums"
-    //       "/" -> "home"
-    if path == "/" {
-        return "home".to_string();
-    }
-
-    path.trim_start_matches('/')
-        .trim_end_matches(".htm")
-        .trim_end_matches(".html")
-        .to_string()
-}
-
-/// Extract client IP from headers (X-Forwarded-For, X-Real-IP, or fallback)
-fn extract_client_ip(headers: &axum::http::HeaderMap) -> String {
-    // Check X-Forwarded-For first (for reverse proxy setups)
-    if let Some(forwarded) = headers.get("x-forwarded-for") {
-        if let Ok(s) = forwarded.to_str() {
-            // Take the first IP if there are multiple
-            return s.split(',').next().unwrap_or(s).trim().to_string();
-        }
-    }
-
-    // Check X-Real-IP
-    if let Some(real_ip) = headers.get("x-real-ip") {
-        if let Ok(s) = real_ip.to_str() {
-            return s.to_string();
-        }
-    }
-
-    // Fallback - in production the reverse proxy should always set headers
-    "127.0.0.1".to_string()
 }
 
 /// Get hit counts from database

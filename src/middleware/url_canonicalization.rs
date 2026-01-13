@@ -139,8 +139,8 @@ where
     }
 }
 
-/// Check if a host is in the accepted hosts list
-fn is_accepted_host(host: &str) -> bool {
+/// Check if a host is in the accepted hosts list (localhost, dev hosts, etc.)
+pub fn is_accepted_host(host: &str) -> bool {
     ACCEPTED_HOSTS.iter().any(|h| h.eq_ignore_ascii_case(host))
 }
 

@@ -6,11 +6,12 @@
 use axum::{
     async_trait,
     extract::FromRequestParts,
-    http::{request::Parts, StatusCode, header},
+    http::{header, request::Parts, StatusCode},
 };
 
 use crate::middleware::HitCounts;
-use crate::pages::registry::{lookup_page, PageInfo, DEFAULT_TITLE, DEFAULT_META_DESCRIPTION};
+use crate::pages::registry::{lookup_page_from_path, PageInfo, DEFAULT_META_DESCRIPTION, DEFAULT_TITLE};
+use crate::utils::extract_client_ip;
 
 /// Common context data available to all page templates.
 ///
@@ -24,14 +25,9 @@ use crate::pages::registry::{lookup_page, PageInfo, DEFAULT_TITLE, DEFAULT_META_
 /// ```
 #[derive(Debug, Clone)]
 pub struct PageContext {
-    /// Whether this is the home page (path == "/")
-    /// Used by base template to hide footer on home page
-    pub is_home: bool,
-    // TODO: Why do we have copies of title and description here, shouldn't we just get a copy of the PageInfo to avoid duplication?
-    /// Page title from registry (or default)
-    pub title: &'static str,
-    /// Page meta description from registry (or default)
-    pub description: &'static str,
+    /// Page info from registry (None if page not found)
+    /// This is the single source of truth for title, description, etc.
+    page_info: Option<&'static PageInfo>,
     /// Client's IP address (from X-Forwarded-For, X-Real-IP, or connection)
     pub client_ip: String,
     /// Whether Do Not Track header is set
@@ -40,6 +36,27 @@ pub struct PageContext {
     pub page_hits: u32,
     /// Unique visitor count (from PHPCount middleware)
     pub unique_hits: u32,
+}
+
+impl PageContext {
+    /// Whether this is the home page
+    pub fn is_home(&self) -> bool {
+        self.page_info.map(|p| p.slug.is_empty()).unwrap_or(false)
+    }
+
+    /// Page title (from registry or default)
+    pub fn title(&self) -> &'static str {
+        self.page_info
+            .map(|p| p.title_or_default())
+            .unwrap_or(DEFAULT_TITLE)
+    }
+
+    /// Page meta description (from registry or default)
+    pub fn description(&self) -> &'static str {
+        self.page_info
+            .map(|p| p.description_or_default())
+            .unwrap_or(DEFAULT_META_DESCRIPTION)
+    }
 }
 
 /// Axum extractor - automatically creates PageContext from request
@@ -54,7 +71,7 @@ where
         let headers = &parts.headers;
         let path = parts.uri.path();
 
-        // Look up page info from registry based on path
+        // Look up page info from registry (single source of truth)
         let page_info = lookup_page_from_path(path);
 
         // Get hit counts from middleware (if available)
@@ -65,9 +82,7 @@ where
             .unwrap_or_default();
 
         Ok(Self {
-            is_home: path == "/",
-            title: page_info.map(|p| p.title_or_default()).unwrap_or(DEFAULT_TITLE),
-            description: page_info.map(|p| p.description_or_default()).unwrap_or(DEFAULT_META_DESCRIPTION),
+            page_info,
             client_ip: extract_client_ip(headers),
             dnt_enabled: headers
                 .get(header::DNT)
@@ -78,42 +93,4 @@ where
             unique_hits: hit_counts.unique_hits,
         })
     }
-}
-
-/// Look up page info from a URL path
-/// TODO: it seems like this is duplicate code with the lookup-from-path in pages/registry.rs? Can we DRY this up?
-fn lookup_page_from_path(path: &str) -> Option<&'static PageInfo> {
-    if path == "/" {
-        return lookup_page("");
-    }
-
-    // Strip leading slash and .htm extension
-    let name = path
-        .trim_start_matches('/')
-        .trim_end_matches(".htm")
-        .trim_end_matches(".html");
-
-    lookup_page(name)
-}
-
-fn extract_client_ip(headers: &axum::http::HeaderMap) -> String {
-    // Check X-Forwarded-For first (for reverse proxy setups)
-    if let Some(forwarded) = headers.get("x-forwarded-for") {
-        if let Ok(s) = forwarded.to_str() {
-            // Take the first IP if there are multiple
-            return s.split(',').next().unwrap_or(s).trim().to_string();
-        }
-    }
-
-    // Check X-Real-IP
-    if let Some(real_ip) = headers.get("x-real-ip") {
-        if let Ok(s) = real_ip.to_str() {
-            return s.to_string();
-        }
-    }
-    
-    // TODO: what if there are no IP headers? we need to pull it from the actual TCP connection, no?
-
-    // Fallback - in production this would come from the connection info
-    "127.0.0.1".to_string()
 }

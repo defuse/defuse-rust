@@ -13,7 +13,7 @@ use axum::{
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
-use super::url_canonicalization::ACCEPTED_HOSTS;
+use super::url_canonicalization::is_accepted_host;
 use crate::pages::registry::lookup_page_from_path;
 
 /// Tower layer for security headers
@@ -32,11 +32,6 @@ impl<S> Layer<S> for SecurityHeadersLayer {
 #[derive(Clone)]
 pub struct SecurityHeadersMiddleware<S> {
     inner: S,
-}
-
-/// Check if a host is in the accepted hosts list
-fn is_accepted_host(host: &str) -> bool {
-    ACCEPTED_HOSTS.iter().any(|h| h.eq_ignore_ascii_case(host))
 }
 
 /// Check if a page should have no-cache headers based on registry metadata
