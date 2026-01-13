@@ -1,44 +1,27 @@
 //! Request context - extracted once per request, shared with all templates.
 //!
-//! This module provides PageContext which is automatically extracted from
-//! each request and made available to all page handlers via Axum's extractor system.
+//! PageContext contains all per-request data needed by templates: page metadata,
+//! client info, hit counts, and vote state. It is constructed by the dispatcher.
 
 use std::path::Path;
 
-use axum::{
-    async_trait,
-    extract::FromRequestParts,
-    http::{header, request::Parts, StatusCode},
-};
-
+use crate::middleware::{HitCounts, VoteState};
+use crate::registry::PageInfo;
 use crate::vim_highlight;
-
-use crate::middleware::{ClientIp, HitCounts, VoteState};
-use crate::registry::{lookup_page_from_path, PageInfo};
 
 /// Common context data available to all page templates.
 ///
-/// This is automatically extracted from each request - handlers just declare
-/// it as a parameter and Axum provides it automatically:
-///
-/// ```rust
-/// pub async fn get(ctx: PageContext) -> impl IntoResponse {
-///     // ctx is automatically populated from the request
-/// }
-/// ```
+/// Constructed by the dispatcher for each request.
 #[derive(Debug, Clone)]
 pub struct PageContext {
     /// Page info from registry (always present for known pages; 404 handler uses NOT_FOUND_PAGE_INFO)
-    /// Templates access this directly: ctx.page_info.title_or_default()
     pub page_info: &'static PageInfo,
     /// Client's IP address (from X-Forwarded-For, X-Real-IP, or connection)
     pub client_ip: String,
     /// Whether Do Not Track header is set
     pub dnt_enabled: bool,
-    /// Page hit count (from PHPCount middleware)
-    pub page_hits: u32,
-    /// Unique visitor count (from PHPCount middleware)
-    pub unique_hits: u32,
+    /// Hit counts for this page and site totals
+    pub hit_counts: HitCounts,
     /// Vote state (counts + user's vote). Always present, defaults to zeros.
     pub vote_state: VoteState,
 }
@@ -50,8 +33,7 @@ impl PageContext {
             page_info,
             client_ip,
             dnt_enabled,
-            page_hits: 0,
-            unique_hits: 0,
+            hit_counts: HitCounts::default(),
             vote_state: VoteState::default(),
         }
     }
@@ -97,58 +79,4 @@ fn html_escape(s: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&#x27;")
-}
-
-/// Axum extractor - automatically creates PageContext from request
-#[async_trait]
-impl<S> FromRequestParts<S> for PageContext
-where
-    S: Send + Sync,
-{
-    type Rejection = (StatusCode, &'static str);
-
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let headers = &parts.headers;
-        let path = parts.uri.path();
-
-        // Look up page info from registry - FAILS if page not found
-        // This ensures every page handler has a corresponding registry entry
-        let page_info = lookup_page_from_path(path)
-            .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "Page not in registry"))?;
-
-        // Get hit counts from middleware (if available)
-        let hit_counts = parts
-            .extensions
-            .get::<HitCounts>()
-            .cloned()
-            .unwrap_or_default();
-
-        // Get vote state from middleware (defaults to zeros if not set)
-        let vote_state = parts
-            .extensions
-            .get::<VoteState>()
-            .cloned()
-            .unwrap_or_default();
-
-        // Get client IP from middleware (always present - set by client_ip_middleware)
-        let client_ip = parts
-            .extensions
-            .get::<ClientIp>()
-            .expect("BUG: ClientIp not in extensions - client_ip_middleware not running?")
-            .0
-            .clone();
-
-        Ok(Self {
-            page_info,
-            client_ip,
-            dnt_enabled: headers
-                .get(header::DNT)
-                .and_then(|v| v.to_str().ok())
-                .map(|v| v == "1")
-                .unwrap_or(false),
-            page_hits: hit_counts.page_hits,
-            unique_hits: hit_counts.unique_hits,
-            vote_state,
-        })
-    }
 }

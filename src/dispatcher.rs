@@ -116,8 +116,7 @@ fn extract_page_context(request: &Request<Body>, page_info: &'static PageInfo) -
         page_info,
         client_ip,
         dnt_enabled,
-        page_hits: hit_counts.page_hits,
-        unique_hits: hit_counts.unique_hits,
+        hit_counts,
         vote_state,
     }
 }
