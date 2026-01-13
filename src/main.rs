@@ -11,6 +11,7 @@ mod pages;
 mod registry;
 mod state;
 mod upvote;
+mod util;
 mod vim_highlight;
 
 use db::{PhpCountService, UpvoteService};

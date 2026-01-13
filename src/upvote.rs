@@ -14,6 +14,7 @@ use serde::Deserialize;
 use crate::db::upvotes::VoteAction;
 use crate::middleware::ClientIp;
 use crate::state::AppState;
+use crate::util::html_escape;
 
 #[derive(Deserialize)]
 pub struct VoteForm {
@@ -84,13 +85,4 @@ fn xml_response(status: &str, uparrow: &str, downarrow: &str, total: i32) -> Res
         xml,
     )
         .into_response()
-}
-
-/// Simple HTML entity escaping for XML
-fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#39;")
 }

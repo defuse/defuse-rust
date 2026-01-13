@@ -7,6 +7,7 @@ use std::path::Path;
 
 use crate::middleware::{HitCounts, VoteState};
 use crate::registry::PageInfo;
+use crate::util::html_escape;
 use crate::vim_highlight;
 
 /// Common context data available to all page templates.
@@ -59,13 +60,4 @@ impl PageContext {
         vim_highlight::highlight_file(Path::new(path), show_lines)
             .unwrap_or_else(|e| format!("<pre>Error highlighting file: {}</pre>", html_escape(&e.to_string())))
     }
-}
-
-/// Escape HTML special characters to prevent XSS
-fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#x27;")
 }
