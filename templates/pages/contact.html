@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Contact Information</h1>
+
+<table cellspacing="10" >
+    <tr>
+        <td>
+            <strong>Name:&nbsp;</strong>
+        </td>
+        <td>
+            Taylor Hornby
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <strong>Email:&nbsp;</strong>
+        </td>
+        <td>
+            <a href="mailto:taylor@defuse.ca">taylor@defuse.ca</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <strong>Twitter:&nbsp;</strong>
+        </td>
+        <td>
+            <a href="https://twitter.com/defusesec">@DefuseSec</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <strong>IM:&nbsp;</strong>
+        </td>
+        <td>
+            I'm not on any public IM services, so Twitter DMing is probably your
+            best option (ask me to follow you).
+        </td>
+    </tr>
+</table>
+
+<h2>PGP Keys</h2>
+
+<table cellspacing="10">
+    <tr>
+        <td>
+            <a href="/downloads/taylor.asc">taylor@defuse.ca</a></td>
+        <td><code>7482 4F1A 188E 3EAA 0F6A  FC7D B2DE 7461 D3EC B97C</code></td>
+    </tr>
+    <tr>
+        <td><a href="/downloads/taylor-zcash.asc">taylor@z.cash</a></td>
+        <td><code>1CCE 08D8 9EFC 7374 1D05  7130 AB01 5732 390F 4D0F</code></td>
+    </tr>
+    <tr>
+        <td>
+            <a href="https://github.com/defuse/php-encryption/raw/master/dist/signingkey-new.asc">php-encryption release signing key</a></td>
+        <td><code>6DD6 E677 0281 5846 FC85  25A3 DD2E 507F 7BDB 1669</code></td>
+    </tr>
+    <tr>
+        <td>
+            <a href="/downloads/taylor-old.asc">taylor@defuse.ca (old, expired)</a></td>
+        <td><code>2FA6 1D8D 99B9 2658 6BAC  3D53 385E E055 A129 1538</code></td>
+    </tr>
+</table>
+{% endblock %}

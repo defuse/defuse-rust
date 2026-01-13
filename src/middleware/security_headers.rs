@@ -91,12 +91,23 @@ where
             let mut response = inner.call(req).await?;
             let headers = response.headers_mut();
 
-            // Content-Type: always set explicitly with charset
-            // Don't rely on framework defaults for security-critical charset
-            headers.insert(
-                header::CONTENT_TYPE,
-                "text/html; charset=utf-8".parse().unwrap(),
-            );
+            // Content-Type: only set for HTML pages, not static assets
+            // Static file handlers set their own content types (CSS, JS, images)
+            // Only override if not already set, or if it's a page (not static file)
+            let existing_content_type = headers.get(header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+
+            // If no content-type set, or it's text/html without charset, set explicitly
+            if existing_content_type.is_empty()
+                || existing_content_type == "text/html"
+                || existing_content_type.starts_with("text/html;")
+            {
+                headers.insert(
+                    header::CONTENT_TYPE,
+                    "text/html; charset=utf-8".parse().unwrap(),
+                );
+            }
 
             // X-Frame-Options: SAMEORIGIN (always)
             headers.insert(

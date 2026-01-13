@@ -47,6 +47,7 @@ async fn main() {
         .route("/", get(pages::home::get))
         .route("/checksums.htm", get(pages::checksums::get).post(pages::checksums::post))
         .route("/about.htm", get(pages::about::get))
+        .route("/contact.htm", get(pages::contact::get))
         // Static files at original URLs (matching PHP site structure)
         .nest_service("/images", ServeDir::new("static/images"))
         .nest_service("/js", ServeDir::new("static/js"))
@@ -55,6 +56,11 @@ async fn main() {
         .nest_service("/mainmenu.css", ServeDir::new("static/mainmenu.css"))
         .nest_service("/vimhl.css", ServeDir::new("static/vimhl.css"))
         .nest_service("/print.css", ServeDir::new("static/print.css"))
+        // Verification files
+        .nest_service("/googlec56659c80ebb2d30.html", ServeDir::new("static/googlec56659c80ebb2d30.html"))
+        .nest_service("/have-i-been-pwned-verification.txt", ServeDir::new("static/have-i-been-pwned-verification.txt"))
+        // Favicon
+        .nest_service("/favicon.ico", ServeDir::new("static/favicon.ico"))
         // 404 fallback for unmatched routes
         .fallback(pages::not_found::handler)
         // Apply middleware layers (outermost first)

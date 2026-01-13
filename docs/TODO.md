@@ -114,7 +114,7 @@
 ### Static Pages (content only)
 - [x] Home page
 - [x] About page
-- [ ] Contact page
+- [x] Contact page
 - [ ] Services, Projects, Research index pages
 - [ ] All audit pages (audits/encfs, audits/ecryptfs, etc.)
 - [ ] All research/article pages

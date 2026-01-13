@@ -126,6 +126,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         },
         PageInfo {
             slug: "contact",
+            php_page_id: Some("pages/contact.html"),
             title: "Defuse Security's Contact Information",
             description: "Defuse Security's contact information.",
             ..Default::default()
@@ -252,6 +253,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             description: "My master's thesis.",
             ..Default::default()
         },
+        PageInfo {
+            slug: "godel-second-incompleteness-theorem-by-turing-machines",
+            title: "A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines",
+            description: "Proving Gödel's second incompleteness theorem in a simpler way using Turing machines.",
+            keywords: "godel, second incompleteness theorem, simple proof, turing machines, computability",
+            ..Default::default()
+        },
+        PageInfo {
+            slug: "plausible-reason-p-noteq-np-is-hard-to-prove",
+            title: "A Plausible Reason It's So Hard To Prove P!=NP",
+            description: "Attempting to show why P!=NP is hard to prove using hash functions.",
+            keywords: "p versus np, hard to prove, hash functions, language collisions",
+            ..Default::default()
+        },
 
         // ===== Audits =====
         PageInfo { slug: "audits/", redirect: Some("software-security-auditing"), is_directory: true, ..Default::default() },
@@ -320,6 +335,13 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             slug: "the-universe-is-made-of-cheese",
             title: "The Universe is Made of Cheese - A Formal Proof",
             description: "A logical proof that the universe consists entirely of cheese.",
+            ..Default::default()
+        },
+        PageInfo {
+            slug: "fractal-zoom",
+            title: "Fractal Zoom",
+            description: "A psychedelic short story.",
+            keywords: "fractal zoom, short story, sci-fi, psychedelic",
             ..Default::default()
         },
         PageInfo {
