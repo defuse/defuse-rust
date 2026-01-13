@@ -64,6 +64,67 @@ pub struct PageInfo {
 // NOTE: No Default impl - every page must explicitly specify all fields including `upvote`.
 // This prevents accidentally omitting upvote config for pages that should have it.
 
+/// Helper macro for defining alias pages (redirects)
+macro_rules! alias {
+    ($slug:expr => $target:expr) => {
+        PageInfo {
+            slug: $slug,
+            title: "",
+            description: "",
+            keywords: "",
+            legacy_hit_count_id: "",
+            redirect: Some($target),
+            no_cache: false,
+            upvote: None,
+        }
+    };
+}
+
+/// Helper macro for defining regular pages
+/// Required: slug, title, description, keywords, hit_id, upvote
+/// Optional: no_cache (defaults to false)
+macro_rules! page {
+    (
+        slug: $slug:expr,
+        title: $title:expr,
+        description: $description:expr,
+        keywords: $keywords:expr,
+        hit_id: $hit_id:expr,
+        upvote: $upvote:expr $(,)?
+    ) => {
+        PageInfo {
+            slug: $slug,
+            title: $title,
+            description: $description,
+            keywords: $keywords,
+            legacy_hit_count_id: $hit_id,
+            redirect: None,
+            no_cache: false,
+            upvote: $upvote,
+        }
+    };
+    (
+        slug: $slug:expr,
+        title: $title:expr,
+        description: $description:expr,
+        keywords: $keywords:expr,
+        hit_id: $hit_id:expr,
+        upvote: $upvote:expr,
+        no_cache: $no_cache:expr $(,)?
+    ) => {
+        PageInfo {
+            slug: $slug,
+            title: $title,
+            description: $description,
+            keywords: $keywords,
+            legacy_hit_count_id: $hit_id,
+            redirect: None,
+            no_cache: $no_cache,
+            upvote: $upvote,
+        }
+    };
+}
+
 impl PageInfo {
     /// Is this a directory-style URL? (no .htm extension)
     /// Derived from slug: empty string or ends with "/"
@@ -116,94 +177,48 @@ pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
 /// The `slug` field in PageInfo stores the canonical case for URLs.
 /// Empty string "" is the home page.
 pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::new(|| {
-    // All pages defined with explicit field names for clarity
-    // NOTE: Every field must be specified - no Default impl
     let pages: &[PageInfo] = &[
         // ===== Home page =====
-        PageInfo {
+        page! {
             slug: "",
             title: "",
             description: "",
             keywords: "",
-            legacy_hit_count_id: "pages/home.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/home.html",
             upvote: None,
         },
 
-        // ===== Home page aliases (redirects don't need hit counter IDs) =====
-        PageInfo {
-            slug: "index",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some(""),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
-            slug: "index.html",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some(""),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
-            slug: "index.php",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some(""),
-            no_cache: false,
-            upvote: None,
-        },
+        // ===== Home page aliases =====
+        alias!("index" => ""),
+        alias!("index.html" => ""),
+        alias!("index.php" => ""),
 
         // ===== Main pages =====
-        PageInfo {
+        page! {
             slug: "about",
             title: "About - Defuse Security",
             description: "About Defuse Security.",
             keywords: "",
-            legacy_hit_count_id: "pages/about.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/about.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "contact",
             title: "Defuse Security's Contact Information",
             description: "Defuse Security's contact information.",
             keywords: "",
-            legacy_hit_count_id: "pages/contact.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/contact.html",
             upvote: None,
         },
-        PageInfo {
-            slug: "key",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("contact"),
-            no_cache: false,
-            upvote: None,
-        },
+        alias!("key" => "contact"),
 
         // ===== Services =====
-        PageInfo {
+        page! {
             slug: "checksums",
             title: "Online Text and File Hash Calculator - MD5, SHA1, SHA256, SHA512, WHIRLPOOL Hash Calculator - Defuse Security",
             description: "Online Hash Tool. Calculate hash of file or text. MD5, SHA1, SHA256, SHA512 and more...",
             keywords: "",
-            legacy_hit_count_id: "pages/services/checksums.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/checksums.php",
             upvote: Some(UpvoteConfig {
                 id: "onlinechecksums",
                 category: "defuse_pages",
@@ -211,249 +226,160 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A tool for computing hashes (MD5, SHA1, SHA2, etc.) of text and files."),
             }),
         },
-        PageInfo {
+        page! {
             slug: "pastebin",
             title: "Encrypted Pastebin - Keep your data private and secure! - Defuse Security",
             description: "An Encrypted, Anonymous, Secure, and PRIVATE Pastebin.",
             keywords: "",
-            legacy_hit_count_id: "pages/services/pastebin.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/pastebin.php",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "trustedthirdparty",
             title: "TRENT - FREE Third party Drawing Service - Defuse Security",
             description: "TRENT, the trusted random number generator for contests and drawings.",
             keywords: "",
-            legacy_hit_count_id: "pages/services/trustedthirdparty.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/trustedthirdparty.php",
             upvote: None,
         },
-        PageInfo {
-            slug: "trent",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("trustedthirdparty"),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
+        alias!("trent" => "trustedthirdparty"),
+        page! {
             slug: "big-number-calculator",
             title: "Online Big Number Calculator",
             description: "Calculate enormous mathematical equations from within your browser.",
             keywords: "",
-            legacy_hit_count_id: "pages/services/big-number-calculator.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/big-number-calculator.php",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "online-x86-assembler",
             title: "Online x86 and x64 Intel Instruction Assembler",
             description: "Easily find out which bytes your x86 ASM instructions assemble to.",
             keywords: "",
-            legacy_hit_count_id: "pages/services/online-x86-assembler.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/online-x86-assembler.php",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "html-sanitize",
             title: "Online HTML Sanitizer Tool - htmlspecialchars - Defuse Security",
             description: "Convert text containing special characters into proper HTML.",
             keywords: "",
-            legacy_hit_count_id: "pages/services/html-sanitize.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/html-sanitize.php",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "software-security-auditing",
             title: "Software Security Auditing",
             description: "Get your software audited for security bugs.",
             keywords: "",
-            legacy_hit_count_id: "pages/services/software-security-auditing.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/software-security-auditing.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "quantum-computer-time-capsule",
             title: "Send a Message to the Future (Digital Time Capsule)",
             description: "Save a message that will become readable after quantum computers are built.",
             keywords: "",
-            legacy_hit_count_id: "pages/services/quantum-computer-time-capsule.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/services/quantum-computer-time-capsule.php",
             upvote: None,
         },
 
         // ===== Software =====
-        PageInfo {
+        page! {
             slug: "passgen",
             title: "Secure Windows & Linux Password Generator - Defuse Security",
             description: "A secure random password generator for Windows, Linux and Macintosh.",
             keywords: "",
-            legacy_hit_count_id: "pages/software/passgen.php",
-            redirect: None,
+            hit_id: "pages/software/passgen.php",
+            upvote: None,
             no_cache: true, // SECURITY: Prevent browsers from caching generated passwords
-            upvote: None,
         },
-        PageInfo {
-            slug: "passwords",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("passgen"),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
-            slug: "password",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("passgen"),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
-            slug: "pass",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("passgen"),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
+        alias!("passwords" => "passgen"),
+        alias!("password" => "passgen"),
+        alias!("pass" => "passgen"),
+        page! {
             slug: "helloworld-cms",
             title: "Secure and Light CMS for PHP - Defuse Security",
             description: "A lightweight, ultra-secure CMS for PHP",
             keywords: "",
-            legacy_hit_count_id: "pages/software/helloworld-cms.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/software/helloworld-cms.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "php-hash-cracker",
             title: "Salted Hash Cracking PHP Script - Defuse Security",
             description: "Dictionary hash cracking PHP scripts (supports LOTS of hash types!!)",
             keywords: "",
-            legacy_hit_count_id: "pages/software/php-hash-cracker.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/software/php-hash-cracker.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "backup-verify-script",
             title: "Script for Comparing Folders and Validating Backups",
             description: "A command-line script for verifying backups by comparing two folders in Linux",
             keywords: "",
-            legacy_hit_count_id: "pages/software/backup-verify-script.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/software/backup-verify-script.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "sockstress",
             title: "Sockstress Denial of Service Tool & Source Code - Defuse Security",
             description: "A C implementation of the sockstress attack from 2008.",
             keywords: "",
-            legacy_hit_count_id: "pages/software/sockstress.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/software/sockstress.html",
             upvote: None,
         },
 
         // ===== Research =====
-        PageInfo {
+        page! {
             slug: "password-policy-hall-of-shame",
             title: "Password Policy Hall of SHAME - Defuse Security",
             description: "List of websites and services that impose password restrictions.",
             keywords: "",
-            legacy_hit_count_id: "pages/research/password-policy-hall-of-shame.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/research/password-policy-hall-of-shame.php",
             upvote: None,
         },
-        PageInfo {
-            slug: "pphos",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("password-policy-hall-of-shame"),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
+        alias!("pphos" => "password-policy-hall-of-shame"),
+        page! {
             slug: "side-channel-attacks-on-everyday-applications",
             title: "Side-Channel Attacks on Everyday Applications (Black Hat 2016)",
             description: "Data and code for my paper applying FLUSH+RELOAD to break privacy.",
             keywords: "",
-            legacy_hit_count_id: "pages/research/side-channel-attacks-on-everyday-applications.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/research/side-channel-attacks-on-everyday-applications.html",
             upvote: None,
         },
         // BH2016 is the canonical case - case-insensitive lookup handles "bh2016" automatically
-        PageInfo {
-            slug: "BH2016",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("side-channel-attacks-on-everyday-applications"),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
+        alias!("BH2016" => "side-channel-attacks-on-everyday-applications"),
+        page! {
             slug: "concentration-bounds-from-parallel-repetition-theorems",
             title: "Concentration Bounds from Parallel Repetition Theorems",
             description: "My master's thesis.",
             keywords: "",
-            legacy_hit_count_id: "pages/research/concentration-bounds-from-parallel-repetition-theorems.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/research/concentration-bounds-from-parallel-repetition-theorems.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "godel-second-incompleteness-theorem-by-turing-machines",
             title: "A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines",
             description: "Proving Gödel's second incompleteness theorem in a simpler way using Turing machines.",
             keywords: "godel, second incompleteness theorem, simple proof, turing machines, computability",
-            legacy_hit_count_id: "pages/research/godel-second-incompleteness-theorem-by-turing-machines.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/research/godel-second-incompleteness-theorem-by-turing-machines.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "plausible-reason-p-noteq-np-is-hard-to-prove",
             title: "A Plausible Reason It's So Hard To Prove P!=NP",
             description: "Attempting to show why P!=NP is hard to prove using hash functions.",
             keywords: "p versus np, hard to prove, hash functions, language collisions",
-            legacy_hit_count_id: "pages/research/plausible-reason-p-noteq-np-is-hard-to-prove.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/research/plausible-reason-p-noteq-np-is-hard-to-prove.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "blind-birthday-attack",
             title: "Blind Birthday Attack",
             description: "Birthday attack without seeing the values.",
             keywords: "birthday attack, blind, double hmac, cryptography",
-            legacy_hit_count_id: "pages/research/blind-birthday-attack.php",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/research/blind-birthday-attack.php",
             upvote: Some(UpvoteConfig {
                 id: "blindbirthdayattack",
                 category: "defuse_pages",
@@ -463,168 +389,122 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         },
 
         // ===== Audits =====
-        PageInfo {
-            slug: "audits/",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("software-security-auditing"),
-            no_cache: false,
-            upvote: None,
-        },
-        PageInfo {
+        alias!("audits/" => "software-security-auditing"),
+        page! {
             slug: "audits/encfs",
             title: "EncFS Security Audit",
             description: "Security audit of the EncFS encrypted filesystem.",
             keywords: "",
-            legacy_hit_count_id: "pages/audits/encfs.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/audits/encfs.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "audits/ecryptfs",
             title: "eCryptfs Security Audit",
             description: "Security audit of the eCryptfs encrypted filesystem.",
             keywords: "",
-            legacy_hit_count_id: "pages/audits/ecryptfs.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/audits/ecryptfs.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "audits/zerobin",
             title: "ZeroBin Security Audit",
             description: "Security audit of the ZeroBin Zero-Knowledge Pastebin",
             keywords: "",
-            legacy_hit_count_id: "pages/audits/zerobin.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/audits/zerobin.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "audits/pefs",
             title: "PEFS Security Audit",
             description: "Security audit of the PEFS encrypted filesystem.",
             keywords: "",
-            legacy_hit_count_id: "pages/audits/pefs.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/audits/pefs.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "audits/hash0",
             title: "Hash0 Security Audit",
             description: "Security audit of the Hash0 password system",
             keywords: "",
-            legacy_hit_count_id: "pages/audits/hash0.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/audits/hash0.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "audits/gocryptfs",
             title: "Gocryptfs Security Audit",
             description: "Security audit of the gocryptfs encrypted filesystem",
             keywords: "",
-            legacy_hit_count_id: "pages/audits/gocryptfs.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/audits/gocryptfs.html",
             upvote: None,
         },
 
         // ===== Misc pages =====
-        PageInfo {
+        page! {
             slug: "honestyware",
             title: "Honestyware - The right way to sell software.",
             description: "Honestyware is a revolutionary way to sell software that embraces piracy.",
             keywords: "",
-            legacy_hit_count_id: "pages/misc/honestyware.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/honestyware.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "reading-list",
             title: "Reading List - Defuse Security",
             description: "Everything I have read so far.",
             keywords: "",
-            legacy_hit_count_id: "pages/misc/reading-list.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/reading-list.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "vimrc",
             title: "My .vimrc - Defuse Security",
             description: "My Vim configuration file",
             keywords: "",
-            legacy_hit_count_id: "pages/misc/vimrc.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/vimrc.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "transparency",
             title: "Transparency Report",
             description: "",
             keywords: "",
-            legacy_hit_count_id: "pages/misc/transparency.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/transparency.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "the-universe-is-made-of-cheese",
             title: "The Universe is Made of Cheese - A Formal Proof",
             description: "A logical proof that the universe consists entirely of cheese.",
             keywords: "",
-            legacy_hit_count_id: "pages/misc/the-universe-is-made-of-cheese.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/the-universe-is-made-of-cheese.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "fractal-zoom",
             title: "Fractal Zoom",
             description: "A psychedelic short story.",
             keywords: "fractal zoom, short story, sci-fi, psychedelic",
-            legacy_hit_count_id: "pages/misc/fractal-zoom.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/fractal-zoom.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "advice-to-aspiring-computer-engineers",
             title: "Advice to Aspiring Computer Engineers and Scientists",
             description: "Advice for new computer science students.",
             keywords: "",
-            legacy_hit_count_id: "pages/misc/advice-to-aspiring-computer-engineers.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/advice-to-aspiring-computer-engineers.html",
             upvote: None,
         },
-        PageInfo {
+        page! {
             slug: "asuskeyboarddefect",
             title: "ASUS G50 G51 Keyboard Problem",
             description: "Solution to the keyboard problem for the ASUS G50, G51, and G51VX series laptops.",
             keywords: "",
-            legacy_hit_count_id: "pages/misc/asuskeyboarddefect.html",
-            redirect: None,
-            no_cache: false,
+            hit_id: "pages/misc/asuskeyboarddefect.html",
             upvote: None,
         },
-        PageInfo {
-            slug: "keyboarddefect",
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
-            redirect: Some("asuskeyboarddefect"),
-            no_cache: false,
-            upvote: None,
-        },
+        alias!("keyboarddefect" => "asuskeyboarddefect"),
 
         // TODO: Add remaining pages from PHP $PAGE_INFO
         // See defuse.ca/src/libs/URLParse.php for the full list
