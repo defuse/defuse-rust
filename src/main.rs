@@ -10,7 +10,7 @@ mod state;
 mod utils;
 
 use db::{PhpCountService, UpvoteService};
-use middleware::{hit_counter_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
+use middleware::{hit_counter_middleware, upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
 use state::AppState;
 
 #[tokio::main]
@@ -72,12 +72,19 @@ async fn main() {
         .nest_service("/have-i-been-pwned-verification.txt", ServeDir::new("static/have-i-been-pwned-verification.txt"))
         // Favicon
         .nest_service("/favicon.ico", ServeDir::new("static/favicon.ico"))
+        // robots.txt
+        .nest_service("/robots.txt", ServeDir::new("static/robots.txt"))
         // 404 fallback for unmatched routes
         .fallback(pages::not_found::handler)
         // Apply middleware layers (outermost first)
         // CatchPanicLayer: ensures a panic in any handler returns 500, not crash
         .layer(CatchPanicLayer::new())
         .layer(SecurityHeadersLayer)
+        // Upvote POST fallback - handles votes when JS is disabled, redirects after
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            upvote_post_middleware,
+        ))
         // Hit counter middleware - records page hits, stores counts in extensions
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),

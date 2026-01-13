@@ -25,6 +25,7 @@ hex = "0.4"
 
 # Form parsing
 serde = { version = "1", features = ["derive"] }
+form_urlencoded = "1"
 
 # Config
 dotenvy = "0.15"

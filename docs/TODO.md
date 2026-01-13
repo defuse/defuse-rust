@@ -41,12 +41,17 @@
   - [x] Ignore search bots
   - [x] Tables: `hits`, `nodupes`
   - [x] Local dev: docker-compose.yml with MariaDB
-- [ ] Upvote system
-  - [ ] `/upvote.php` AJAX endpoint (POST, returns XML)
-  - [ ] `Upvote::process_post()` on every request for form fallback
-  - [ ] Vote tracking via IP+page hash
-  - [ ] Tables: `counts`, `history`
+- [x] Upvote system
+  - [x] `/upvote` AJAX endpoint (POST, returns XML)
+  - [x] Upvote POST fallback middleware (for non-JS users)
+  - [x] Vote tracking via IP+page hash (privacy-preserving)
+  - [x] 24-hour rate limiting (allows re-vote after cooldown)
+  - [x] Tables: `counts`, `history`
+  - [x] Per-page upvote config via registry (UpvoteConfig)
+  - [x] Vote counts fetched in middleware, available in templates
+  - [x] Home page top 8 pages list
 - [x] Upvote images: `upvote.gif`, `upvote-selected.gif`, `downvote.gif`, `downvote-selected.gif`
+- [x] robots.txt
 
 ### Static File Directories (from /storage)
 - [ ] `/extras/files` - downloadable files
@@ -78,11 +83,12 @@
 - [x] Search bot detection (skip counting)
 - [x] `php_page_id` field in PageInfo for backward compatibility
 
-### Upvote Database (`upvotes`)
-- [ ] Connect to existing database
-- [ ] Implement vote processing (up/down/undo)
-- [ ] Implement AJAX endpoint returning XML response
-- [ ] Render upvote arrows in templates
+### Upvote Database (`upvotes`) - COMPLETE
+- [x] Connect to existing database
+- [x] Implement vote processing (up/down/undo)
+- [x] Implement AJAX endpoint returning XML response
+- [x] Render upvote arrows in templates
+- [x] Non-JS fallback via POST middleware
 
 ### Pastebin Database (`cracky_bin`)
 - [ ] Connect to existing database
@@ -95,6 +101,31 @@
 - [ ] TRENT (`cracky_trent`) - trusted RNG drawings
 - [ ] Password Policy Hall of Shame (`pphos`)
 - [ ] IP geolocation (`ip2location`) - if needed
+
+---
+
+## Per-Page Features (used on multiple pages)
+
+### Syntax Highlighting (VimHighlight.php)
+- [ ] PHP: Uses Vim shell-out to syntax-highlight code
+- [ ] Rust: Use `syntect` crate instead (per plan, no shell-out)
+- [ ] Functions to implement:
+  - `printHlString($text, $ft, $numbers)` - highlight text inline
+  - `printSourceFile($path, $numbers)` - highlight a file
+- [ ] Used on many code/research pages (e.g., FLUSH+RELOAD, crypto pages)
+- [ ] Color scheme: `dw_cyan` (may need custom theme)
+
+### Bibliography System (Bibliography.php)
+- [ ] For research articles with academic citations
+- [ ] Functions to implement:
+  - `addReference($key, $title, $authors, $date, $url)` - add citation
+  - `cite($key)` - inline citation link [1]
+  - `printBibliography()` - render references section
+- [ ] Used on research pages (FLUSH+RELOAD, side channels, etc.)
+
+### Page-Specific Script Includes
+- [ ] reCAPTCHA for quantum-computer-time-capsule page
+- [ ] Other page-specific JS/CSS if needed
 
 ---
 
