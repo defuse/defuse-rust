@@ -30,6 +30,11 @@ pub async fn upvote_post_middleware(
         return next.run(request).await;
     }
 
+    // Skip /upvote endpoint - it has its own handler that returns XML for JS
+    if request.uri().path() == "/upvote" {
+        return next.run(request).await;
+    }
+
     // Check Content-Type - we only handle form submissions
     let content_type = request
         .headers()

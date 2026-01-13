@@ -245,6 +245,7 @@ Complex pages requiring significant logic.
 - [ ] Create PHP test vectors for crypto compatibility
 - [ ] URL routing tests - all old URLs must work
 - [ ] Database query verification against production data
+- [ ] Integration tests for upvote system (AJAX endpoint + fallback middleware)
 
 ---
 
