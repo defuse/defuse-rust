@@ -1,5 +1,95 @@
 # Defuse.ca Rust Rewrite - Project Tracker
 
+## Implementation Roadmap
+
+### Phase 1: Global Infrastructure - COMPLETE
+- [x] URL routing/canonicalization
+- [x] Security headers
+- [x] Hit counting (PHPCount)
+- [x] Upvote system
+- [x] Base template with navigation
+- [x] Static files (CSS, JS, images)
+- [x] robots.txt
+
+### Phase 2: Per-Page Features (NEXT UP)
+Enable features needed by many static pages before bulk migration.
+
+- [ ] **Syntax Highlighting** (`syntect` crate)
+  - Askama filter or helper function for inline code blocks
+  - Support common languages (C, Python, PHP, Rust, x86 asm, etc.)
+  - Match existing vimhl.css styling or adapt
+  - Test with a few pages that use highlighting
+
+- [ ] **Bibliography System**
+  - Rust struct to hold references
+  - Askama macros/filters for `cite()` and bibliography rendering
+  - Test with a research page (e.g., FLUSH+RELOAD)
+
+### Phase 3: Static Content Migration
+Bulk migration of ~100 static pages. Build tooling to ensure accuracy.
+
+- [ ] **Verification tooling**
+  - Script to compare Rust output vs live site HTML
+  - Diff tool to catch transcription errors
+  - Automated check for broken links, missing images
+
+- [ ] **Migration strategy**
+  - Extract page list from URLParse.php $PAGE_INFO
+  - For each page: add to registry, create template, verify output
+  - Group by section (audits/, research/, misc/)
+
+- [ ] **Static page groups**
+  - [ ] Index pages (services, projects, research)
+  - [ ] Audit reports (6 pages)
+  - [ ] Research articles (~30 pages)
+  - [ ] Misc pages (~40 pages)
+  - [ ] Mirrors (pocorgtfo, truecrypt hashes)
+
+### Phase 4: Dynamic Features
+Complex pages requiring significant logic.
+
+- [ ] **Pastebin** (CRITICAL - crypto compatibility)
+  - AES-256-CBC with null-byte padding
+  - HMAC-SHA256 key derivation matching PHP exactly
+  - Test vectors from production data
+
+- [ ] **Password Generator**
+  - Constant-time secure random generation
+  - Multiple output formats
+  - No-cache headers (already in registry)
+
+- [ ] **TRENT** - Trusted random number drawings
+  - Database integration
+  - Drawing verification
+
+- [ ] **Big Number Calculator**
+  - `num-bigint` + expression parser
+  - Replace Ruby shell-out
+
+- [ ] **Online x86 Assembler**
+  - Keep gcc/objdump but fix temp file race
+  - Use `tempfile` crate
+
+- [ ] **HTML Sanitizer**
+  - Pure Rust implementation
+
+- [ ] **Quantum Computer Time Capsule**
+  - reCAPTCHA integration
+
+- [ ] **Password Policy Hall of Shame**
+  - Database integration
+
+### Phase 5: Deployment & Testing
+- [ ] Caddy reverse proxy setup (or native TLS)
+- [ ] Full URL routing test suite
+- [ ] Crypto compatibility verification
+- [ ] Load testing
+- [ ] Production deployment
+
+---
+
+## Detailed Status
+
 ## Global Infrastructure (applies to all/most pages)
 
 ### Completed
