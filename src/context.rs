@@ -9,8 +9,8 @@ use axum::{
     http::{header, request::Parts, StatusCode},
 };
 
-use crate::middleware::HitCounts;
-use crate::pages::registry::{lookup_page_from_path, PageInfo, DEFAULT_META_DESCRIPTION, DEFAULT_TITLE};
+use crate::middleware::{HitCounts, VoteCounts};
+use crate::pages::registry::{lookup_page_from_path, PageInfo, UpvoteConfig, DEFAULT_META_DESCRIPTION, DEFAULT_TITLE};
 use crate::utils::extract_client_ip;
 
 /// Common context data available to all page templates.
@@ -36,6 +36,8 @@ pub struct PageContext {
     pub page_hits: u32,
     /// Unique visitor count (from PHPCount middleware)
     pub unique_hits: u32,
+    /// Vote counts (from middleware, only if page has upvoting)
+    vote_counts: Option<VoteCounts>,
 }
 
 impl PageContext {
@@ -56,6 +58,78 @@ impl PageContext {
         self.page_info
             .map(|p| p.description_or_default())
             .unwrap_or(DEFAULT_META_DESCRIPTION)
+    }
+
+    /// Get upvote config if this page has voting enabled
+    pub fn upvote(&self) -> Option<&'static UpvoteConfig> {
+        self.page_info.and_then(|p| p.upvote.as_ref())
+    }
+
+    /// Check if this page has voting enabled
+    pub fn has_upvote(&self) -> bool {
+        self.upvote().is_some()
+    }
+
+    /// Get the upvote ID (for templates)
+    pub fn upvote_id(&self) -> &'static str {
+        self.upvote().map(|u| u.id).unwrap_or("")
+    }
+
+    /// Get the upvote category
+    pub fn upvote_category(&self) -> &'static str {
+        self.upvote().map(|u| u.category).unwrap_or("")
+    }
+
+    /// Get the upvote title (override or page title)
+    pub fn upvote_title(&self) -> &'static str {
+        self.page_info
+            .map(|p| p.upvote_title())
+            .unwrap_or(DEFAULT_TITLE)
+    }
+
+    /// Get the upvote description (override or page description)
+    pub fn upvote_description(&self) -> &'static str {
+        self.page_info
+            .map(|p| p.upvote_description())
+            .unwrap_or(DEFAULT_META_DESCRIPTION)
+    }
+
+    /// Get the canonical URL for this page
+    pub fn canonical_url(&self) -> String {
+        self.page_info
+            .map(|p| {
+                if p.slug.is_empty() {
+                    "https://defuse.ca/".to_string()
+                } else if p.is_directory {
+                    format!("https://defuse.ca/{}/", p.slug.trim_end_matches('/'))
+                } else {
+                    format!("https://defuse.ca/{}.htm", p.slug)
+                }
+            })
+            .unwrap_or_else(|| "https://defuse.ca/".to_string())
+    }
+
+    /// Get vote total (upvotes - downvotes)
+    pub fn vote_total(&self) -> i32 {
+        self.vote_counts.as_ref().map(|v| v.total()).unwrap_or(0)
+    }
+
+    /// Check if user has upvoted this page
+    pub fn user_upvoted(&self) -> bool {
+        self.vote_counts
+            .as_ref()
+            .and_then(|v| v.user_vote.as_ref())
+            .map(|v| v == "upvote")
+            .unwrap_or(false)
+    }
+
+    /// Check if user has downvoted this page
+    pub fn user_downvoted(&self) -> bool {
+        self.vote_counts
+            .as_ref()
+            .and_then(|v| v.user_vote.as_ref())
+            .map(|v| v == "downvote")
+            .unwrap_or(false)
     }
 }
 
@@ -81,6 +155,9 @@ where
             .cloned()
             .unwrap_or_default();
 
+        // Get vote counts from middleware (if page has upvoting)
+        let vote_counts = parts.extensions.get::<VoteCounts>().cloned();
+
         Ok(Self {
             page_info,
             client_ip: extract_client_ip(headers),
@@ -91,6 +168,7 @@ where
                 .unwrap_or(false),
             page_hits: hit_counts.page_hits,
             unique_hits: hit_counts.unique_hits,
+            vote_counts,
         })
     }
 }

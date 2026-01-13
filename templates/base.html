@@ -231,6 +231,43 @@
 {% else %}
 <div id="content">
 {% endif %}
+{% if ctx.has_upvote() %}
+<div class="upvotearrows">
+    <div class="upvoteuparrow">
+        <form action="{{ ctx.canonical_url() }}" method="post"
+              onsubmit="return upvote.submit('{{ ctx.upvote_id() }}', 'up')"
+              class="upvoteform upvoteUpForm{{ ctx.upvote_id() }}">
+            <input type="hidden" name="upvotes_direction" value="up" />
+            <input type="hidden" name="upvotes_id" value="{{ ctx.upvote_id() }}" />
+            {% if ctx.user_upvoted() %}
+            <input type="image" src="/images/upvote-selected.gif" alt="Upvote"
+                   name="upvoteUpImage{{ ctx.upvote_id() }}" />
+            {% else %}
+            <input type="image" src="/images/upvote.gif" alt="Upvote"
+                   name="upvoteUpImage{{ ctx.upvote_id() }}" />
+            {% endif %}
+        </form>
+    </div>
+    <div class="{% if ctx.user_upvoted() %}upvotecount_upvoted{% else %}{% if ctx.user_downvoted() %}upvotecount_downvoted{% else %}upvotecount{% endif %}{% endif %} upvoteCounter{{ ctx.upvote_id() }}">
+        {{ ctx.vote_total() }}
+    </div>
+    <div class="upvotedownarrow">
+        <form action="{{ ctx.canonical_url() }}" method="post"
+              onsubmit="return upvote.submit('{{ ctx.upvote_id() }}', 'down')"
+              class="upvoteform upvoteDownForm{{ ctx.upvote_id() }}">
+            <input type="hidden" name="upvotes_direction" value="down" />
+            <input type="hidden" name="upvotes_id" value="{{ ctx.upvote_id() }}" />
+            {% if ctx.user_downvoted() %}
+            <input type="image" src="/images/downvote-selected.gif" alt="Downvote"
+                   name="upvoteDownImage{{ ctx.upvote_id() }}" />
+            {% else %}
+            <input type="image" src="/images/downvote.gif" alt="Downvote"
+                   name="upvoteDownImage{{ ctx.upvote_id() }}" />
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endif %}
 {% block content %}{% endblock %}
 </div>
 </div> <!-- Wrap -->

@@ -9,6 +9,42 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
+/// Configuration for page upvoting
+/// If a page has this, it will show vote arrows
+#[derive(Debug, Clone)]
+pub struct UpvoteConfig {
+    /// Unique page ID for the upvote system (must be valid CSS class name)
+    pub id: &'static str,
+    /// Category for grouping pages (e.g., "defuse_pages", "audits")
+    pub category: &'static str,
+    /// Optional title override (if None, uses page title)
+    pub title: Option<&'static str>,
+    /// Optional description override (if None, uses page description)
+    pub description: Option<&'static str>,
+}
+
+impl UpvoteConfig {
+    /// Create config with just id and category, using page defaults for title/description
+    pub const fn new(id: &'static str, category: &'static str) -> Self {
+        Self {
+            id,
+            category,
+            title: None,
+            description: None,
+        }
+    }
+
+    /// Create config with custom title and description
+    pub const fn with_overrides(
+        id: &'static str,
+        category: &'static str,
+        title: Option<&'static str>,
+        description: Option<&'static str>,
+    ) -> Self {
+        Self { id, category, title, description }
+    }
+}
+
 /// Information about a single page
 #[derive(Debug, Clone)]
 pub struct PageInfo {
@@ -43,6 +79,9 @@ pub struct PageInfo {
     /// Should this page have no-cache headers?
     /// SECURITY: Used for pages like passgen to prevent password caching
     pub no_cache: bool,
+
+    /// Upvote configuration - if Some, page shows vote arrows
+    pub upvote: Option<UpvoteConfig>,
 }
 
 impl Default for PageInfo {
@@ -57,6 +96,7 @@ impl Default for PageInfo {
             is_directory: false,
             is_dynamic: false,
             no_cache: false,
+            upvote: None,
         }
     }
 }
@@ -86,6 +126,22 @@ impl PageInfo {
     /// Get keywords, falling back to default if empty
     pub fn keywords_or_default(&self) -> &'static str {
         if self.keywords.is_empty() { DEFAULT_META_KEYWORDS } else { self.keywords }
+    }
+
+    /// Get upvote title (uses override if set, else page title)
+    pub fn upvote_title(&self) -> &'static str {
+        self.upvote
+            .as_ref()
+            .and_then(|u| u.title)
+            .unwrap_or_else(|| self.title_or_default())
+    }
+
+    /// Get upvote description (uses override if set, else page description)
+    pub fn upvote_description(&self) -> &'static str {
+        self.upvote
+            .as_ref()
+            .and_then(|u| u.description)
+            .unwrap_or_else(|| self.description_or_default())
     }
 }
 
@@ -140,6 +196,12 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Online Text and File Hash Calculator - MD5, SHA1, SHA256, SHA512, WHIRLPOOL Hash Calculator - Defuse Security",
             description: "Online Hash Tool. Calculate hash of file or text. MD5, SHA1, SHA256, SHA512 and more...",
             is_dynamic: true,
+            upvote: Some(UpvoteConfig::with_overrides(
+                "onlinechecksums",
+                "defuse_pages",
+                Some("Online Hash Calculator"),
+                Some("A tool for computing hashes (MD5, SHA1, SHA2, etc.) of text and files."),
+            )),
             ..Default::default()
         },
         PageInfo {

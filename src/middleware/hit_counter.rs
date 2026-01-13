@@ -1,9 +1,10 @@
-//! Hit counter middleware - records page hits using PHPCount
+//! Hit counter middleware - records page hits and fetches vote counts
 //!
 //! This middleware:
 //! 1. Records a hit for each HTML page request
 //! 2. Stores hit counts in request extensions for templates to display
-//! 3. Skips static files (CSS, JS, images)
+//! 3. Fetches vote counts for pages with upvoting enabled
+//! 4. Skips static files (CSS, JS, images)
 
 use axum::{
     body::Body,
@@ -25,6 +26,20 @@ pub struct HitCounts {
     pub unique_hits: u32,
     pub total_hits: u32,
     pub total_unique_hits: u32,
+}
+
+/// Vote counts stored in request extensions for templates to read
+#[derive(Clone, Debug, Default)]
+pub struct VoteCounts {
+    pub upvotes: i32,
+    pub downvotes: i32,
+    pub user_vote: Option<String>, // "upvote", "downvote", or None
+}
+
+impl VoteCounts {
+    pub fn total(&self) -> i32 {
+        self.upvotes - self.downvotes
+    }
 }
 
 /// Middleware function that records hits and stores counts
@@ -83,6 +98,18 @@ pub async fn hit_counter_middleware(
     // Store in request extensions for PageContext to read
     request.extensions_mut().insert(hit_counts);
 
+    // Fetch vote counts if page has upvoting enabled
+    if let Some(upvote_config) = &page_info.upvote {
+        let vote_counts = match get_vote_counts(&state, upvote_config.id, &client_ip).await {
+            Ok(counts) => counts,
+            Err(e) => {
+                warn!("Failed to get vote counts for {}: {}", upvote_config.id, e);
+                VoteCounts::default()
+            }
+        };
+        request.extensions_mut().insert(vote_counts);
+    }
+
     next.run(request).await
 }
 
@@ -115,5 +142,19 @@ async fn get_hit_counts(state: &AppState, page_id: &str) -> Result<HitCounts, sq
         unique_hits,
         total_hits,
         total_unique_hits,
+    })
+}
+
+/// Get vote counts from database
+async fn get_vote_counts(state: &AppState, upvote_id: &str, client_ip: &str) -> Result<VoteCounts, sqlx::Error> {
+    let result = state.upvotes.get_vote_result(upvote_id, client_ip).await?;
+
+    Ok(VoteCounts {
+        upvotes: result.upvotes,
+        downvotes: result.downvotes,
+        user_vote: result.user_action.map(|a| match a {
+            crate::db::upvotes::VoteAction::Upvote => "upvote".to_string(),
+            crate::db::upvotes::VoteAction::Downvote => "downvote".to_string(),
+        }),
     })
 }

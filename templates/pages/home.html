@@ -16,8 +16,44 @@
 
 <h2>Top 8 Pages</h2>
 
-<!-- TODO: Implement Upvote::render_list(8, null) -->
-<p><em>Page rankings coming soon...</em></p>
+<script type="text/javascript" src="/js/upvote.js"></script>
+<table class="upvote_pagelist">
+{% for page in top_pages %}
+<tr>
+    <td class="upvote_list_arrowcell">
+        <div class="upvotearrowsinlist">
+            <div class="upvoteuparrow">
+                <form action="{{ page.canonical_url }}" method="post"
+                      onsubmit="return upvote.submit('{{ page.permanent_id }}', 'up')"
+                      class="upvoteform upvoteUpForm{{ page.permanent_id }}">
+                    <input type="hidden" name="upvotes_direction" value="up" />
+                    <input type="hidden" name="upvotes_id" value="{{ page.permanent_id }}" />
+                    <input type="image" src="/images/upvote.gif" alt="Upvote"
+                           name="upvoteUpImage{{ page.permanent_id }}" />
+                </form>
+            </div>
+            <div class="upvotecount upvoteCounter{{ page.permanent_id }}">
+                {{ page.total() }}
+            </div>
+            <div class="upvotedownarrow">
+                <form action="{{ page.canonical_url }}" method="post"
+                      onsubmit="return upvote.submit('{{ page.permanent_id }}', 'down')"
+                      class="upvoteform upvoteDownForm{{ page.permanent_id }}">
+                    <input type="hidden" name="upvotes_direction" value="down" />
+                    <input type="hidden" name="upvotes_id" value="{{ page.permanent_id }}" />
+                    <input type="image" src="/images/downvote.gif" alt="Downvote"
+                           name="upvoteDownImage{{ page.permanent_id }}" />
+                </form>
+            </div>
+        </div>
+    </td>
+    <td class="upvote_list_titlecell">
+        <a class="upvote_list_title" href="{{ page.canonical_url }}">{{ page.title }}</a>
+        <div class="upvote_list_desc">{{ page.description }}</div>
+    </td>
+</tr>
+{% endfor %}
+</table>
 <a href="/all-pages.htm" style="padding-left: 70px; text-decoration: none;"><b>more pages...</b></a>
 
 <h2>Services</h2>

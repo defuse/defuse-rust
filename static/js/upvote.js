@@ -42,7 +42,7 @@ upvote.submit = function (id, direction) {
         return true;
     }
 
-    xmlhttp.open("POST", "/upvote.php", true);
+    xmlhttp.open("POST", "/upvote", true);
     xmlhttp.onreadystatechange=function() {
         if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
             // The following code runs when we get a reply from an AJAX request.

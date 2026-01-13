@@ -4,4 +4,4 @@ pub mod hit_counter;
 
 pub use url_canonicalization::UrlCanonicalizationLayer;
 pub use security_headers::SecurityHeadersLayer;
-pub use hit_counter::{hit_counter_middleware, HitCounts};
+pub use hit_counter::{hit_counter_middleware, HitCounts, VoteCounts};

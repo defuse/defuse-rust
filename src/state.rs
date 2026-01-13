@@ -1,21 +1,22 @@
 //! Application state shared across all requests
 
-use crate::db::PhpCountService;
+use crate::db::{PhpCountService, UpvoteService};
 
 /// Application state containing database services and shared resources
 #[derive(Clone)]
 pub struct AppState {
     /// Hit counter service
     pub phpcount: PhpCountService,
+    /// Upvote/downvote service
+    pub upvotes: UpvoteService,
     // Future services will be added here:
-    // pub upvotes: UpvoteService,
     // pub pastebin: PastebinService,
     // pub trent: TrentService,
     // etc.
 }
 
 impl AppState {
-    pub fn new(phpcount: PhpCountService) -> Self {
-        Self { phpcount }
+    pub fn new(phpcount: PhpCountService, upvotes: UpvoteService) -> Self {
+        Self { phpcount, upvotes }
     }
 }

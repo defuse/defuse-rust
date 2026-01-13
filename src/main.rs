@@ -1,4 +1,4 @@
-use axum::{middleware as axum_middleware, routing::get, Router};
+use axum::{middleware as axum_middleware, routing::{get, post}, Router};
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -9,7 +9,7 @@ mod pages;
 mod state;
 mod utils;
 
-use db::PhpCountService;
+use db::{PhpCountService, UpvoteService};
 use middleware::{hit_counter_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
 use state::AppState;
 
@@ -32,6 +32,8 @@ async fn main() {
     // Connect to databases (fail fast if unavailable)
     let phpcount_url = std::env::var("PHPCOUNT_DATABASE_URL")
         .expect("PHPCOUNT_DATABASE_URL must be set");
+    let upvotes_url = std::env::var("UPVOTES_DATABASE_URL")
+        .expect("UPVOTES_DATABASE_URL must be set");
 
     tracing::info!("Connecting to PHPCount database...");
     let phpcount = PhpCountService::connect(&phpcount_url)
@@ -39,8 +41,14 @@ async fn main() {
         .expect("Failed to connect to PHPCount database");
     tracing::info!("PHPCount database connected");
 
+    tracing::info!("Connecting to Upvotes database...");
+    let upvotes = UpvoteService::connect(&upvotes_url)
+        .await
+        .expect("Failed to connect to Upvotes database");
+    tracing::info!("Upvotes database connected");
+
     // Create application state
-    let state = AppState::new(phpcount);
+    let state = AppState::new(phpcount, upvotes);
 
     // Build router with middleware
     let app = Router::new()
@@ -49,6 +57,8 @@ async fn main() {
         .route("/checksums.htm", get(pages::checksums::get).post(pages::checksums::post))
         .route("/about.htm", get(pages::about::get))
         .route("/contact.htm", get(pages::contact::get))
+        // API endpoints
+        .route("/upvote", post(pages::upvote::post))
         // Static files at original URLs (matching PHP site structure)
         .nest_service("/images", ServeDir::new("static/images"))
         .nest_service("/js", ServeDir::new("static/js"))
