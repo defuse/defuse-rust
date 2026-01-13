@@ -11,6 +11,9 @@
 - [x] Static files (CSS, JS, images)
 - [x] robots.txt
 
+### Phase 1.5: Codebase Audit Follow-up (NEXT)
+- [ ] Review `docs/CODEBASE_AUDIT.md` and decide what to address
+
 ### Phase 2: Per-Page Features (IN PROGRESS)
 Enable features needed by many static pages before bulk migration.
 
