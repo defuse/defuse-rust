@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>{{ ctx.title() }}</title>
-<meta name="description" content="{% block meta_description %}{{ ctx.description() }}{% endblock %}" />
-<meta name="keywords" content="{% block meta_keywords %}defuse security, encryption, privacy, programming, code, research{% endblock %}" />
+<title>{{ ctx.page_info.title_or_default() }}</title>
+<meta name="description" content="{{ ctx.page_info.description_or_default() }}" />
+<meta name="keywords" content="{{ ctx.page_info.keywords_or_default() }}" />
 <meta name="google-site-verification" content="LjgndE9fyTkxbPz8aMFyJQFSS3cQiXIrYchE_b2VXlg" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <script type="text/javascript" src="/js/upvote.js"></script>

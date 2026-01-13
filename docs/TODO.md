@@ -11,14 +11,14 @@
 - [x] Static files (CSS, JS, images)
 - [x] robots.txt
 
-### Phase 2: Per-Page Features (NEXT UP)
+### Phase 2: Per-Page Features (IN PROGRESS)
 Enable features needed by many static pages before bulk migration.
 
-- [ ] **Syntax Highlighting** (`syntect` crate)
-  - Askama filter or helper function for inline code blocks
-  - Support common languages (C, Python, PHP, Rust, x86 asm, etc.)
-  - Match existing vimhl.css styling or adapt
-  - Test with a few pages that use highlighting
+- [x] **Syntax Highlighting** (vim-based, matching PHP exactly)
+  - `ctx.hl_string(text, filetype, show_lines)` in templates
+  - `ctx.hl_file(path, show_lines)` for source files
+  - Caching support via /storage/vimhl
+  - Tested with blind-birthday-attack page
 
 - [ ] **Bibliography System**
   - Rust struct to hold references

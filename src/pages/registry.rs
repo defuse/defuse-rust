@@ -150,6 +150,21 @@ pub const DEFAULT_TITLE: &str = "Defuse Security Research and Development";
 pub const DEFAULT_META_DESCRIPTION: &str = "Defuse Security. Home of PIE Bin, TRENT, and more...";
 pub const DEFAULT_META_KEYWORDS: &str = "defuse security, encryption, privacy, programming, code, research";
 
+/// Default page info used for unknown/404 pages
+/// Templates can always access page_info without Option handling
+pub static DEFAULT_PAGE_INFO: PageInfo = PageInfo {
+    slug: "",
+    title: "",
+    description: "",
+    keywords: "",
+    php_page_id: None,
+    redirect: None,
+    is_directory: false,
+    is_dynamic: false,
+    no_cache: false,
+    upvote: None,
+};
+
 /// The page registry - all pages on the site
 ///
 /// Keys are LOWERCASE for case-insensitive lookup.

@@ -14,7 +14,7 @@ use axum::{
 use crate::vim_highlight;
 
 use crate::middleware::{HitCounts, VoteCounts};
-use crate::pages::registry::{lookup_page_from_path, PageInfo, UpvoteConfig, DEFAULT_META_DESCRIPTION, DEFAULT_TITLE};
+use crate::pages::registry::{lookup_page_from_path, PageInfo, UpvoteConfig, DEFAULT_PAGE_INFO};
 use crate::utils::extract_client_ip;
 
 /// Common context data available to all page templates.
@@ -29,9 +29,9 @@ use crate::utils::extract_client_ip;
 /// ```
 #[derive(Debug, Clone)]
 pub struct PageContext {
-    /// Page info from registry (None if page not found)
-    /// This is the single source of truth for title, description, etc.
-    page_info: Option<&'static PageInfo>,
+    /// Page info from registry (always present - uses DEFAULT_PAGE_INFO for unknown pages)
+    /// Templates access this directly: ctx.page_info.title_or_default()
+    pub page_info: &'static PageInfo,
     /// Client's IP address (from X-Forwarded-For, X-Real-IP, or connection)
     pub client_ip: String,
     /// Whether Do Not Track header is set
@@ -47,26 +47,12 @@ pub struct PageContext {
 impl PageContext {
     /// Whether this is the home page
     pub fn is_home(&self) -> bool {
-        self.page_info.map(|p| p.slug.is_empty()).unwrap_or(false)
-    }
-
-    /// Page title (from registry or default)
-    pub fn title(&self) -> &'static str {
-        self.page_info
-            .map(|p| p.title_or_default())
-            .unwrap_or(DEFAULT_TITLE)
-    }
-
-    /// Page meta description (from registry or default)
-    pub fn description(&self) -> &'static str {
-        self.page_info
-            .map(|p| p.description_or_default())
-            .unwrap_or(DEFAULT_META_DESCRIPTION)
+        self.page_info.slug.is_empty()
     }
 
     /// Get upvote config if this page has voting enabled
     pub fn upvote(&self) -> Option<&'static UpvoteConfig> {
-        self.page_info.and_then(|p| p.upvote.as_ref())
+        self.page_info.upvote.as_ref()
     }
 
     /// Check if this page has voting enabled
@@ -79,38 +65,16 @@ impl PageContext {
         self.upvote().map(|u| u.id).unwrap_or("")
     }
 
-    /// Get the upvote category
-    pub fn upvote_category(&self) -> &'static str {
-        self.upvote().map(|u| u.category).unwrap_or("")
-    }
-
-    /// Get the upvote title (override or page title)
-    pub fn upvote_title(&self) -> &'static str {
-        self.page_info
-            .map(|p| p.upvote_title())
-            .unwrap_or(DEFAULT_TITLE)
-    }
-
-    /// Get the upvote description (override or page description)
-    pub fn upvote_description(&self) -> &'static str {
-        self.page_info
-            .map(|p| p.upvote_description())
-            .unwrap_or(DEFAULT_META_DESCRIPTION)
-    }
-
     /// Get the canonical URL for this page
     pub fn canonical_url(&self) -> String {
-        self.page_info
-            .map(|p| {
-                if p.slug.is_empty() {
-                    "https://defuse.ca/".to_string()
-                } else if p.is_directory {
-                    format!("https://defuse.ca/{}/", p.slug.trim_end_matches('/'))
-                } else {
-                    format!("https://defuse.ca/{}.htm", p.slug)
-                }
-            })
-            .unwrap_or_else(|| "https://defuse.ca/".to_string())
+        let p = self.page_info;
+        if p.slug.is_empty() {
+            "https://defuse.ca/".to_string()
+        } else if p.is_directory {
+            format!("https://defuse.ca/{}/", p.slug.trim_end_matches('/'))
+        } else {
+            format!("https://defuse.ca/{}.htm", p.slug)
+        }
     }
 
     /// Get vote total (upvotes - downvotes)
@@ -174,8 +138,8 @@ where
         let headers = &parts.headers;
         let path = parts.uri.path();
 
-        // Look up page info from registry (single source of truth)
-        let page_info = lookup_page_from_path(path);
+        // Look up page info from registry - uses DEFAULT_PAGE_INFO for unknown pages
+        let page_info = lookup_page_from_path(path).unwrap_or(&DEFAULT_PAGE_INFO);
 
         // Get hit counts from middleware (if available)
         let hit_counts = parts
