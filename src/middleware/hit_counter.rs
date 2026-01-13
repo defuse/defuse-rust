@@ -1,10 +1,9 @@
 //! Hit counter middleware - records page hits and fetches vote counts
 //!
 //! This middleware:
-//! 1. Records a hit for each HTML page request
+//! 1. Records a hit for each page in the registry
 //! 2. Stores hit counts in request extensions for templates to display
 //! 3. Fetches vote counts for pages with upvoting enabled
-//! 4. Skips static files (CSS, JS, images)
 
 use axum::{
     body::Body,
@@ -62,13 +61,7 @@ pub async fn hit_counter_middleware(
 ) -> Response {
     let path = request.uri().path().to_string();
 
-    // Skip static files - only count HTML pages
-    if should_skip_path(&path) {
-        return next.run(request).await;
-    }
-
-    // Look up the page in the registry to get the correct page ID
-    // Skip if page not found (404s shouldn't be counted)
+    // Look up the page in the registry - only registered pages get hit counting
     let page_info = match lookup_page_from_path(&path) {
         Some(info) => info,
         None => return next.run(request).await,
@@ -146,23 +139,6 @@ pub async fn hit_counter_middleware(
     }
 
     next.run(request).await
-}
-
-/// Check if path should skip hit counting (static files, etc.)
-fn should_skip_path(path: &str) -> bool {
-    // Skip static file extensions
-    let static_extensions = [".css", ".js", ".png", ".gif", ".jpg", ".jpeg", ".ico", ".svg", ".woff", ".woff2", ".ttf"];
-    if static_extensions.iter().any(|ext| path.ends_with(ext)) {
-        return true;
-    }
-
-    // Skip known static directories
-    let static_dirs = ["/images/", "/js/", "/css/", "/fonts/"];
-    if static_dirs.iter().any(|dir| path.starts_with(dir)) {
-        return true;
-    }
-
-    false
 }
 
 /// Get hit counts from database

@@ -31,6 +31,7 @@ pub async fn upvote_post_middleware(
     }
 
     // Skip /upvote endpoint - it has its own handler that returns XML for JS
+    // TODO: or should we check that we're on a valid page defined in the registry?
     if request.uri().path() == "/upvote" {
         return next.run(request).await;
     }
