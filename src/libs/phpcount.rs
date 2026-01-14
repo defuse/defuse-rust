@@ -94,12 +94,13 @@ impl PhpCountService {
         self.create_counts_if_not_present(page_id).await?;
 
         // Single query to get all counts
-        let result: (u32, u32, u64, u64) = sqlx::query_as(
+        // Note: SUM() returns DECIMAL in MySQL, so we cast to UNSIGNED
+        let result: (u64, u64, u64, u64) = sqlx::query_as(
             "SELECT
-                COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 0 THEN hitcount END), 0),
-                COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 1 THEN hitcount END), 0),
-                COALESCE(SUM(CASE WHEN isunique = 0 THEN hitcount END), 0),
-                COALESCE(SUM(CASE WHEN isunique = 1 THEN hitcount END), 0)
+                CAST(COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 0 THEN hitcount END), 0) AS UNSIGNED),
+                CAST(COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 1 THEN hitcount END), 0) AS UNSIGNED),
+                CAST(COALESCE(SUM(CASE WHEN isunique = 0 THEN hitcount END), 0) AS UNSIGNED),
+                CAST(COALESCE(SUM(CASE WHEN isunique = 1 THEN hitcount END), 0) AS UNSIGNED)
             FROM hits"
         )
         .bind(page_id)
@@ -108,8 +109,8 @@ impl PhpCountService {
         .await?;
 
         Ok(HitCounts {
-            page_hits: result.0,
-            unique_hits: result.1,
+            page_hits: result.0 as u32,
+            unique_hits: result.1 as u32,
             total_hits: result.2 as u32,
             total_unique_hits: result.3 as u32,
         })
