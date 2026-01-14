@@ -30,12 +30,8 @@ pub async fn upvote_post_middleware(
         return next.run(request).await;
     }
 
-    // Skip /upvote endpoint - it has its own handler that returns XML for JS
-    if request.uri().path() == "/upvote" {
-        return next.run(request).await;
-    }
-
     // Only process upvotes for formally-registered pages with upvoting enabled
+    // (This naturally skips /upvote endpoint since it's not in the registry)
     let path = request.uri().path();
     let has_upvoting = lookup_page_from_path(path)
         .map(|page| page.upvote.is_some())

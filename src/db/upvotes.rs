@@ -58,7 +58,8 @@ impl VoteAction {
         match s {
             "upvote" => Some(VoteAction::Upvote),
             "downvote" => Some(VoteAction::Downvote),
-            _ => None,
+            "" => None,
+            other => panic!("BUG: Invalid vote action in database: {:?}", other),
         }
     }
 }
