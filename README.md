@@ -38,3 +38,19 @@ cargo run
 ```bash
 cargo test
 ```
+
+## Production Deployment
+
+This application does not handle TLS directly. It must run behind a TLS-terminating reverse proxy (e.g., Caddy, nginx) in production.
+
+The app expects the proxy to set `X-Forwarded-Proto: https` on HTTPS requests. Without this header, the app assumes HTTP and will redirect to HTTPS, which fails if there's no proxy handling TLS.
+
+**Recommended: Caddy**
+
+```
+defuse.ca {
+    reverse_proxy localhost:3000
+}
+```
+
+Caddy automatically provisions Let's Encrypt certificates and sets the correct headers.
