@@ -48,11 +48,13 @@ this is fine
    - Location: `hit_counter.rs:36`
    - There's already a `VoteAction` enum in `upvotes.rs:42-47`, use it instead of magic strings
    - **Action:** Change type and update conversion at line 166-169
+   should be fixed
 
 2. **`VoteState` vs `VoteResult` duplication** - two nearly identical structs:
    - `hit_counter.rs:33-38` - `VoteState { upvotes, downvotes, user_vote: Option<String> }`
    - `upvotes.rs:66-72` - `VoteResult { upvotes, downvotes, user_action: Option<VoteAction> }`
    - **Action:** Unify into single type, re-export from middleware
+   should be fixed
 
 3. **Missing newtype wrappers** - page IDs and upvote IDs passed as raw `&str`
    - Easy to accidentally pass URL slug when page ID expected
