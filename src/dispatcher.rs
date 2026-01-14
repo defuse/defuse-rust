@@ -55,8 +55,9 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
     let client_ip = request
         .extensions()
         .get::<ClientIp>()
-        .map(|ip| ip.0.clone())
-        .unwrap_or_else(|| "unknown".to_string());
+        .expect("BUG: ClientIp not in extensions - client_ip_middleware must run first")
+        .0
+        .clone();
 
     let dnt_enabled = request
         .headers()
@@ -215,8 +216,9 @@ fn render_not_found(request: &Request<Body>) -> Response {
     let client_ip = request
         .extensions()
         .get::<ClientIp>()
-        .map(|ip| ip.0.clone())
-        .unwrap_or_else(|| "unknown".to_string());
+        .expect("BUG: ClientIp not in extensions - client_ip_middleware must run first")
+        .0
+        .clone();
 
     let dnt_enabled = request
         .headers()
