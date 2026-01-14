@@ -11,7 +11,6 @@ mod middleware;
 mod pages;
 mod registry;
 mod upvote;
-mod util;
 
 use app_state::AppState;
 use libs::{PhpCountService, UpvoteService};

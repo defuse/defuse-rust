@@ -7,9 +7,8 @@ use std::path::Path;
 
 use crate::libs::phpcount::HitCounts;
 use crate::libs::upvotes::VoteState;
+use crate::libs::{util::html_escape, vim_highlight};
 use crate::registry::PageInfo;
-use crate::util::html_escape;
-use crate::libs::vim_highlight;
 
 /// Common context data available to all page templates.
 ///

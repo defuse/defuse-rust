@@ -12,9 +12,8 @@ use axum::{
 use serde::Deserialize;
 
 use crate::app_state::AppState;
-use crate::libs::upvotes::VoteAction;
+use crate::libs::{upvotes::VoteAction, util::html_escape};
 use crate::middleware::ClientIp;
-use crate::util::html_escape;
 
 #[derive(Deserialize)]
 pub struct VoteForm {
