@@ -16,7 +16,7 @@ mod vim_highlight;
 
 use db::{PhpCountService, UpvoteService};
 use middleware::{
-    client_ip_middleware, hit_counter_middleware, upvote_post_middleware, SecurityHeadersLayer,
+    client_ip_middleware, upvote_post_middleware, SecurityHeadersLayer,
     UrlCanonicalizationLayer,
 };
 use state::AppState;
@@ -94,11 +94,6 @@ async fn main() {
         .layer(axum_middleware::from_fn_with_state(
             state.clone(),
             upvote_post_middleware,
-        ))
-        // Hit counter middleware - records page hits, stores counts in extensions
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            hit_counter_middleware,
         ))
         .layer(UrlCanonicalizationLayer)
         // Client IP extraction - must be outermost to run first

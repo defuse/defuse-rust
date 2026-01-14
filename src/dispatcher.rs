@@ -2,6 +2,10 @@
 //!
 //! This module handles routing by looking up pages in the registry and
 //! calling the appropriate handler method based on the HTTP method.
+//!
+//! Hit counting and vote state are fetched here (not in middleware) because
+//! they only apply to formally-defined pages. This matches PHP's approach
+//! and keeps all page-handling logic in one place.
 
 use axum::{
     body::Body,
@@ -10,10 +14,11 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
 };
 use bytes::Bytes;
+use tracing::{debug, warn};
 
 use crate::context::PageContext;
 use crate::middleware::client_ip::ClientIp;
-use crate::middleware::hit_counter::{HitCounts, VoteState};
+use crate::middleware::{HitCounts, VoteState};
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{canonical_url, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
 use crate::state::AppState;
@@ -45,12 +50,30 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         return render_not_found(&request);
     };
 
-    // Extract PageContext from request (before consuming body)
-    let ctx = extract_page_context(&request, page_info);
+    // Extract all data from request BEFORE any async operations
+    // (Request<Body> is not Sync, so can't hold reference across await)
+    let client_ip = request
+        .extensions()
+        .get::<ClientIp>()
+        .map(|ip| ip.0.clone())
+        .unwrap_or_else(|| "unknown".to_string());
 
-    // Extract body for POST requests
+    let dnt_enabled = request
+        .headers()
+        .get(header::DNT)
+        .and_then(|v| v.to_str().ok())
+        .map(|v| v == "1")
+        .unwrap_or(false);
+
+    let user_agent = request
+        .headers()
+        .get(header::USER_AGENT)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+
+    // Extract body for POST requests (consumes request)
     let body = if method == Method::POST {
-        // Consume request body
         let (_parts, body) = request.into_parts();
         match axum::body::to_bytes(body, 100 * 1024 * 1024).await {
             // 100MB limit (matches PHP's post_max_size)
@@ -60,8 +83,32 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
             }
         }
     } else {
-        // For non-POST, we don't need the body
         Bytes::new()
+    };
+
+    // Now do async operations (hit counting, vote fetching)
+    let page_id = page_info.hit_counter_id();
+    let hit_counts = record_and_get_hits(&state, page_id, &client_ip, &user_agent).await;
+
+    let vote_state = if let Some(upvote_config) = &page_info.upvote {
+        fetch_vote_state(&state, page_info, upvote_config, &client_ip).await
+    } else {
+        VoteState::default()
+    };
+
+    debug!(
+        "Page {} - hits: {}, votes: {}",
+        page_id,
+        hit_counts.page_hits,
+        vote_state.total()
+    );
+
+    let ctx = PageContext {
+        page_info,
+        client_ip,
+        dnt_enabled,
+        hit_counts,
+        vote_state,
     };
 
     // Dispatch based on HTTP method
@@ -81,16 +128,96 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
     }
 }
 
-/// Extract PageContext from the request.
-fn extract_page_context(request: &Request<Body>, page_info: &'static PageInfo) -> PageContext {
-    // Get client IP from extensions (set by client_ip_middleware)
+/// Record a hit and get hit counts from the database.
+async fn record_and_get_hits(
+    state: &AppState,
+    page_id: &str,
+    client_ip: &str,
+    user_agent: &str,
+) -> HitCounts {
+    // Record the hit (errors logged but don't block page render)
+    if let Err(e) = state.phpcount.add_hit(page_id, client_ip, user_agent).await {
+        warn!("Failed to record hit for {}: {}", page_id, e);
+    }
+
+    // Fetch counts
+    let page_hits = state.phpcount.get_hits(page_id, false).await.unwrap_or(0);
+    let unique_hits = state.phpcount.get_hits(page_id, true).await.unwrap_or(0);
+    let total_hits = state.phpcount.get_total_hits(false).await.unwrap_or(0);
+    let total_unique_hits = state.phpcount.get_total_hits(true).await.unwrap_or(0);
+
+    HitCounts {
+        page_hits,
+        unique_hits,
+        total_hits,
+        total_unique_hits,
+    }
+}
+
+/// Fetch vote state for a page with upvoting enabled.
+async fn fetch_vote_state(
+    state: &AppState,
+    page_info: &'static PageInfo,
+    upvote_config: &crate::registry::UpvoteConfig,
+    client_ip: &str,
+) -> VoteState {
+    // Get title/description from upvote config override or page defaults
+    let title = upvote_config
+        .title
+        .unwrap_or_else(|| page_info.title_or_default());
+    let description = upvote_config
+        .description
+        .unwrap_or_else(|| page_info.description_or_default());
+    let page_url = canonical_url(page_info.slug);
+
+    // Ensure page exists in database (creates or updates metadata)
+    if let Err(e) = state
+        .upvotes
+        .ensure_page(
+            upvote_config.id,
+            upvote_config.category,
+            title,
+            description,
+            &page_url,
+        )
+        .await
+    {
+        warn!(
+            "Failed to ensure page {} in upvotes database: {}",
+            upvote_config.id, e
+        );
+    }
+
+    // Fetch vote counts and user's vote
+    match state
+        .upvotes
+        .get_vote_result(upvote_config.id, client_ip)
+        .await
+    {
+        Ok(result) => VoteState {
+            upvotes: result.upvotes,
+            downvotes: result.downvotes,
+            user_vote: result.user_action,
+        },
+        Err(e) => {
+            warn!(
+                "Failed to get vote counts for {}: {}",
+                upvote_config.id, e
+            );
+            VoteState::default()
+        }
+    }
+}
+
+/// Render the 404 not found page.
+fn render_not_found(request: &Request<Body>) -> Response {
+    // For 404 pages, we don't record hits or fetch votes
     let client_ip = request
         .extensions()
         .get::<ClientIp>()
         .map(|ip| ip.0.clone())
         .unwrap_or_else(|| "unknown".to_string());
 
-    // Get DNT header
     let dnt_enabled = request
         .headers()
         .get(header::DNT)
@@ -98,31 +225,13 @@ fn extract_page_context(request: &Request<Body>, page_info: &'static PageInfo) -
         .map(|v| v == "1")
         .unwrap_or(false);
 
-    // Get hit counts from extensions (set by hit_counter_middleware)
-    let hit_counts = request
-        .extensions()
-        .get::<HitCounts>()
-        .cloned()
-        .unwrap_or_default();
-
-    // Get vote state from extensions (set by hit_counter_middleware)
-    let vote_state = request
-        .extensions()
-        .get::<VoteState>()
-        .cloned()
-        .unwrap_or_default();
-
-    PageContext {
-        page_info,
+    let ctx = PageContext {
+        page_info: &NOT_FOUND_PAGE_INFO,
         client_ip,
         dnt_enabled,
-        hit_counts,
-        vote_state,
-    }
-}
+        hit_counts: HitCounts::default(),
+        vote_state: VoteState::default(),
+    };
 
-/// Render the 404 not found page.
-fn render_not_found(request: &Request<Body>) -> Response {
-    let ctx = extract_page_context(request, &NOT_FOUND_PAGE_INFO);
     (StatusCode::NOT_FOUND, NotFoundPage { ctx }).into_response()
 }
