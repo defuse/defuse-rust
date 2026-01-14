@@ -88,52 +88,30 @@ impl PhpCountService {
         Ok(true)
     }
 
-    /// Get hit count for a specific page (internal helper)
-    async fn get_hits(&self, page_id: &str, unique: bool) -> Result<u32, sqlx::Error> {
+    /// Get all hit counts for a page (page hits, unique hits, and site totals).
+    pub async fn get_hit_counts(&self, page_id: &str) -> Result<HitCounts, sqlx::Error> {
         // Ensure page exists first
         self.create_counts_if_not_present(page_id).await?;
 
-        let is_unique: i8 = if unique { 1 } else { 0 };
-        let result: Option<(u32,)> = sqlx::query_as(
-            "SELECT hitcount FROM hits WHERE pageid = ? AND isunique = ?"
+        // Single query to get all counts
+        let result: (u32, u32, u64, u64) = sqlx::query_as(
+            "SELECT
+                COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 0 THEN hitcount END), 0),
+                COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 1 THEN hitcount END), 0),
+                COALESCE(SUM(CASE WHEN isunique = 0 THEN hitcount END), 0),
+                COALESCE(SUM(CASE WHEN isunique = 1 THEN hitcount END), 0)
+            FROM hits"
         )
         .bind(page_id)
-        .bind(is_unique)
-        .fetch_optional(&self.pool)
+        .bind(page_id)
+        .fetch_one(&self.pool)
         .await?;
-
-        Ok(result.map(|(count,)| count).unwrap_or(0))
-    }
-
-    /// Get total hits across all pages (internal helper)
-    ///
-    /// Note: When unique=true, this returns the SUM of each page's unique hits,
-    /// NOT site-wide unique visitors.
-    async fn get_total_hits(&self, unique: bool) -> Result<u32, sqlx::Error> {
-        let is_unique: i8 = if unique { 1 } else { 0 };
-        // Cast to UNSIGNED to avoid DECIMAL type from SUM
-        let result: Option<(u64,)> = sqlx::query_as(
-            "SELECT CAST(COALESCE(SUM(hitcount), 0) AS UNSIGNED) FROM hits WHERE isunique = ?"
-        )
-        .bind(is_unique)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(result.map(|(count,)| count as u32).unwrap_or(0))
-    }
-
-    /// Get all hit counts for a page (page hits, unique hits, and site totals).
-    pub async fn get_hit_counts(&self, page_id: &str) -> Result<HitCounts, sqlx::Error> {
-        let page_hits = self.get_hits(page_id, false).await?;
-        let unique_hits = self.get_hits(page_id, true).await?;
-        let total_hits = self.get_total_hits(false).await?;
-        let total_unique_hits = self.get_total_hits(true).await?;
 
         Ok(HitCounts {
-            page_hits,
-            unique_hits,
-            total_hits,
-            total_unique_hits,
+            page_hits: result.0,
+            unique_hits: result.1,
+            total_hits: result.2 as u32,
+            total_unique_hits: result.3 as u32,
         })
     }
 
