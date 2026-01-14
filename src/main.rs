@@ -19,10 +19,11 @@ use middleware::{upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizati
 #[tokio::main]
 async fn main() {
     // Initialize logging
+    // Default to info level; set RUST_LOG=defuse=debug for verbose output
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "defuse=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "defuse=info,tower_http=info".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();

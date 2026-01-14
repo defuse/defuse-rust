@@ -98,12 +98,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         VoteState::default()
     };
 
-    debug!(
-        "Page {} - hits: {}, votes: {}",
-        page_id,
-        hit_counts.page_hits,
-        vote_state.total()
-    );
+    debug!("{} {} (ip: {})", method, path, client_ip);
 
     let ctx = PageContext {
         page_info,

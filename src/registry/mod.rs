@@ -233,7 +233,7 @@ pub fn lookup_page_from_path(path: &str) -> Option<&'static PageInfo> {
         return lookup_page("");
     }
 
-    let path_without_slash = path.trim_start_matches('/');
+    let path_without_slash = path.strip_prefix('/').unwrap_or(path);
     let path_lower = path_without_slash.to_lowercase();
 
     // Strip .htm or .html extension (case-insensitive)

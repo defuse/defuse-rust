@@ -159,7 +159,7 @@ fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
     }
 
     // Parse the path to extract the page name
-    let path_without_leading_slash = path.trim_start_matches('/');
+    let path_without_leading_slash = path.strip_prefix('/').unwrap_or(path);
     let path_lower = path_without_leading_slash.to_lowercase();
 
     // Check for invalid patterns: /.htm or /foo/.htm (case-insensitive)
@@ -372,5 +372,19 @@ mod tests {
         assert!(is_accepted_host("localhost"));
         // But "defuse" without port should also match "defuse" entry
         assert!(is_accepted_host("defuse"));
+    }
+
+    #[test]
+    fn test_double_slash_no_redirect() {
+        // Double slash should not redirect (will 404 naturally)
+        let result = canonicalize_url("//about.htm", None);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_triple_slash_no_redirect() {
+        // Triple slash should not redirect (will 404 naturally)
+        let result = canonicalize_url("///about.htm", None);
+        assert_eq!(result, None);
     }
 }
