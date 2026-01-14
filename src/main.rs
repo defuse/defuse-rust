@@ -14,10 +14,7 @@ mod upvote;
 
 use app_state::AppState;
 use libs::{PhpCountService, UpvoteService};
-use middleware::{
-    client_ip_middleware, upvote_post_middleware, SecurityHeadersLayer,
-    UrlCanonicalizationLayer,
-};
+use middleware::{upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
 
 #[tokio::main]
 async fn main() {
@@ -94,8 +91,6 @@ async fn main() {
             upvote_post_middleware,
         ))
         .layer(UrlCanonicalizationLayer)
-        // Client IP extraction - must be outermost to run first
-        .layer(axum_middleware::from_fn(client_ip_middleware))
         .with_state(state);
 
     tracing::info!("Listening on http://{}", listen_addr);

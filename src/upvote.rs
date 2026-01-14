@@ -4,16 +4,16 @@
 //! Port of defuse.ca/src/libs/Upvote.php::process_ajax()
 
 use axum::{
-    extract::State,
-    http::{header, StatusCode},
+    extract::{ConnectInfo, State},
+    http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Response},
-    Extension, Form,
+    Form,
 };
 use serde::Deserialize;
+use std::net::SocketAddr;
 
 use crate::app_state::AppState;
-use crate::libs::{upvotes::VoteAction, util::html_escape};
-use crate::middleware::ClientIp;
+use crate::libs::{upvotes::VoteAction, util::{client_ip, html_escape}};
 
 #[derive(Deserialize)]
 pub struct VoteForm {
@@ -24,13 +24,16 @@ pub struct VoteForm {
 /// POST /upvote - Process a vote and return XML response
 pub async fn post(
     State(state): State<AppState>,
-    Extension(client_ip): Extension<ClientIp>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Form(form): Form<VoteForm>,
 ) -> Response {
+    let client_ip = client_ip(addr.ip(), &headers);
+
     // Process the vote
     let result = match state
         .upvotes
-        .process_vote(&form.upvotes_id, &client_ip.0, &form.upvotes_direction)
+        .process_vote(&form.upvotes_id, &client_ip, &form.upvotes_direction)
         .await
     {
         Ok(r) => r,

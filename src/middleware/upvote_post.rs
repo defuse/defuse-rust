@@ -8,16 +8,17 @@
 
 use axum::{
     body::Body,
-    extract::State,
+    extract::{ConnectInfo, State},
     http::{header, Method, Request},
     middleware::Next,
     response::{IntoResponse, Redirect, Response},
 };
+use std::net::SocketAddr;
 use tracing::debug;
 
 use crate::app_state::AppState;
+use crate::libs::util::client_ip;
 use crate::registry::lookup_page_from_path;
-use super::ClientIp;
 
 /// Middleware function that handles upvote POST fallback for non-JS users
 pub async fn upvote_post_middleware(
@@ -52,13 +53,14 @@ pub async fn upvote_post_middleware(
         return next.run(request).await;
     }
 
-    // Get client IP from extensions (always present - set by client_ip_middleware)
-    let client_ip = request
+    // Get client IP from connection info + headers
+    let connection_ip = request
         .extensions()
-        .get::<ClientIp>()
-        .expect("BUG: ClientIp not in extensions - client_ip_middleware not running?")
+        .get::<ConnectInfo<SocketAddr>>()
+        .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
         .0
-        .clone();
+        .ip();
+    let client_ip = client_ip(connection_ip, request.headers());
 
     // Get the redirect URL (current page)
     let redirect_url = request.uri().to_string();

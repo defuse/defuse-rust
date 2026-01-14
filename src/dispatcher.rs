@@ -9,20 +9,19 @@
 
 use axum::{
     body::Body,
-    extract::State,
+    extract::{ConnectInfo, State},
     http::{header, Method, Request, StatusCode},
     response::{IntoResponse, Redirect, Response},
 };
 use bytes::Bytes;
+use std::net::SocketAddr;
 use tracing::{debug, warn};
 
+use crate::app_state::AppState;
 use crate::context::PageContext;
-use crate::libs::phpcount::HitCounts;
-use crate::libs::upvotes::VoteState;
-use crate::middleware::client_ip::ClientIp;
+use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{canonical_url, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
-use crate::app_state::AppState;
 
 /// Main dispatcher - handles all page requests via the registry.
 ///
@@ -53,12 +52,13 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
 
     // Extract all data from request BEFORE any async operations
     // (Request<Body> is not Sync, so can't hold reference across await)
-    let client_ip = request
+    let connection_ip = request
         .extensions()
-        .get::<ClientIp>()
-        .expect("BUG: ClientIp not in extensions - client_ip_middleware must run first")
+        .get::<ConnectInfo<SocketAddr>>()
+        .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
         .0
-        .clone();
+        .ip();
+    let client_ip = client_ip(connection_ip, request.headers());
 
     let dnt_enabled = request
         .headers()
@@ -198,12 +198,13 @@ async fn fetch_vote_state(
 /// Render the 404 not found page.
 fn render_not_found(request: &Request<Body>) -> Response {
     // For 404 pages, we don't record hits or fetch votes
-    let client_ip = request
+    let connection_ip = request
         .extensions()
-        .get::<ClientIp>()
-        .expect("BUG: ClientIp not in extensions - client_ip_middleware must run first")
+        .get::<ConnectInfo<SocketAddr>>()
+        .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
         .0
-        .clone();
+        .ip();
+    let client_ip = client_ip(connection_ip, request.headers());
 
     let dnt_enabled = request
         .headers()
