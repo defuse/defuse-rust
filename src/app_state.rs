@@ -1,6 +1,6 @@
 //! Application state shared across all requests
 
-use crate::db::{PhpCountService, UpvoteService};
+use crate::libs::{PhpCountService, UpvoteService};
 
 /// Application state containing database services and shared resources
 #[derive(Clone)]

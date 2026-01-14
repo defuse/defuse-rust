@@ -15,8 +15,8 @@ use axum::{
 };
 use tracing::debug;
 
+use crate::app_state::AppState;
 use crate::registry::lookup_page_from_path;
-use crate::state::AppState;
 use super::ClientIp;
 
 /// Middleware function that handles upvote POST fallback for non-JS users

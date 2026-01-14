@@ -2,9 +2,9 @@ use askama::Template;
 use axum::response::IntoResponse;
 
 use crate::context::PageContext;
-use crate::db::upvotes::PageVoteInfo;
+use crate::app_state::AppState;
 use crate::handler::{BoxFuture, PageHandler};
-use crate::state::AppState;
+use crate::libs::upvotes::PageVoteInfo;
 
 pub struct Handler;
 

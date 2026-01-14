@@ -10,7 +10,7 @@ use axum::response::Response;
 use bytes::Bytes;
 
 use crate::context::PageContext;
-use crate::state::AppState;
+use crate::app_state::AppState;
 
 /// A boxed future that returns a Response. Used for trait object compatibility.
 pub type BoxFuture = Pin<Box<dyn Future<Output = Response> + Send>>;
@@ -44,7 +44,7 @@ macro_rules! simple_page {
 
         use $crate::context::PageContext;
         use $crate::handler::{BoxFuture, PageHandler};
-        use $crate::state::AppState;
+        use $crate::app_state::AppState;
 
         pub struct Handler;
 

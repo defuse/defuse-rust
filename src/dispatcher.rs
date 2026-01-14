@@ -17,12 +17,12 @@ use bytes::Bytes;
 use tracing::{debug, warn};
 
 use crate::context::PageContext;
-use crate::db::phpcount::HitCounts;
-use crate::db::upvotes::VoteState;
+use crate::libs::phpcount::HitCounts;
+use crate::libs::upvotes::VoteState;
 use crate::middleware::client_ip::ClientIp;
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{canonical_url, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
-use crate::state::AppState;
+use crate::app_state::AppState;
 
 /// Main dispatcher - handles all page requests via the registry.
 ///

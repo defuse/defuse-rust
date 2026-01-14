@@ -11,9 +11,9 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::db::upvotes::VoteAction;
+use crate::app_state::AppState;
+use crate::libs::upvotes::VoteAction;
 use crate::middleware::ClientIp;
-use crate::state::AppState;
 use crate::util::html_escape;
 
 #[derive(Deserialize)]

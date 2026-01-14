@@ -5,11 +5,11 @@
 
 use std::path::Path;
 
-use crate::db::phpcount::HitCounts;
-use crate::db::upvotes::VoteState;
+use crate::libs::phpcount::HitCounts;
+use crate::libs::upvotes::VoteState;
 use crate::registry::PageInfo;
 use crate::util::html_escape;
-use crate::vim_highlight;
+use crate::libs::vim_highlight;
 
 /// Common context data available to all page templates.
 ///

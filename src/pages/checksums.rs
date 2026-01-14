@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256, Sha384, Sha512};
 
 use crate::context::PageContext;
 use crate::handler::{BoxFuture, PageHandler};
-use crate::state::AppState;
+use crate::app_state::AppState;
 
 const SUPPORTED_ALGORITHMS: &[&str] = &["md5", "sha1", "sha256", "sha384", "sha512", "md5(md5())"];
 

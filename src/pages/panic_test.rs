@@ -7,7 +7,7 @@ use axum::response::IntoResponse;
 
 use crate::context::PageContext;
 use crate::handler::{BoxFuture, PageHandler};
-use crate::state::AppState;
+use crate::app_state::AppState;
 
 pub struct Handler;
 

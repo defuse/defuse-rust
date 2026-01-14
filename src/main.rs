@@ -2,24 +2,23 @@ use axum::{middleware as axum_middleware, routing::post, Router};
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod app_state;
 mod context;
-mod db;
 mod dispatcher;
 mod handler;
+mod libs;
 mod middleware;
 mod pages;
 mod registry;
-mod state;
 mod upvote;
 mod util;
-mod vim_highlight;
 
-use db::{PhpCountService, UpvoteService};
+use app_state::AppState;
+use libs::{PhpCountService, UpvoteService};
 use middleware::{
     client_ip_middleware, upvote_post_middleware, SecurityHeadersLayer,
     UrlCanonicalizationLayer,
 };
-use state::AppState;
 
 #[tokio::main]
 async fn main() {
