@@ -17,9 +17,9 @@ use bytes::Bytes;
 use tracing::{debug, warn};
 
 use crate::context::PageContext;
+use crate::db::phpcount::HitCounts;
 use crate::db::upvotes::VoteState;
 use crate::middleware::client_ip::ClientIp;
-use crate::middleware::HitCounts;
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{canonical_url, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
 use crate::state::AppState;
@@ -143,21 +143,8 @@ async fn record_and_get_hits(
     }
 
     // Fetch counts
-    let page_hits = state.phpcount.get_hits(page_id, false).await
-        .expect("Failed to get page hits");
-    let unique_hits = state.phpcount.get_hits(page_id, true).await
-        .expect("Failed to get unique hits");
-    let total_hits = state.phpcount.get_total_hits(false).await
-        .expect("Failed to get total hits");
-    let total_unique_hits = state.phpcount.get_total_hits(true).await
-        .expect("Failed to get total unique hits");
-
-    HitCounts {
-        page_hits,
-        unique_hits,
-        total_hits,
-        total_unique_hits,
-    }
+    state.phpcount.get_hit_counts(page_id).await
+        .expect("Failed to get hit counts")
 }
 
 /// Fetch vote state for a page with upvoting enabled.

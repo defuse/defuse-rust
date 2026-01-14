@@ -23,6 +23,15 @@ const BOT_KEYWORDS: &[&str] = &[
 /// so we don't need to ignore localhost there. Empty for now.
 const IP_IGNORE_LIST: &[&str] = &[];
 
+/// Hit counts for a page and site totals.
+#[derive(Clone, Debug, Default)]
+pub struct HitCounts {
+    pub page_hits: u32,
+    pub unique_hits: u32,
+    pub total_hits: u32,
+    pub total_unique_hits: u32,
+}
+
 #[derive(Clone)]
 pub struct PhpCountService {
     pool: MySqlPool,
@@ -79,8 +88,8 @@ impl PhpCountService {
         Ok(true)
     }
 
-    /// Get hit count for a specific page
-    pub async fn get_hits(&self, page_id: &str, unique: bool) -> Result<u32, sqlx::Error> {
+    /// Get hit count for a specific page (internal helper)
+    async fn get_hits(&self, page_id: &str, unique: bool) -> Result<u32, sqlx::Error> {
         // Ensure page exists first
         self.create_counts_if_not_present(page_id).await?;
 
@@ -96,11 +105,11 @@ impl PhpCountService {
         Ok(result.map(|(count,)| count).unwrap_or(0))
     }
 
-    /// Get total hits across all pages
+    /// Get total hits across all pages (internal helper)
     ///
     /// Note: When unique=true, this returns the SUM of each page's unique hits,
     /// NOT site-wide unique visitors.
-    pub async fn get_total_hits(&self, unique: bool) -> Result<u32, sqlx::Error> {
+    async fn get_total_hits(&self, unique: bool) -> Result<u32, sqlx::Error> {
         let is_unique: i8 = if unique { 1 } else { 0 };
         // Cast to UNSIGNED to avoid DECIMAL type from SUM
         let result: Option<(u64,)> = sqlx::query_as(
@@ -111,6 +120,21 @@ impl PhpCountService {
         .await?;
 
         Ok(result.map(|(count,)| count as u32).unwrap_or(0))
+    }
+
+    /// Get all hit counts for a page (page hits, unique hits, and site totals).
+    pub async fn get_hit_counts(&self, page_id: &str) -> Result<HitCounts, sqlx::Error> {
+        let page_hits = self.get_hits(page_id, false).await?;
+        let unique_hits = self.get_hits(page_id, true).await?;
+        let total_hits = self.get_total_hits(false).await?;
+        let total_unique_hits = self.get_total_hits(true).await?;
+
+        Ok(HitCounts {
+            page_hits,
+            unique_hits,
+            total_hits,
+            total_unique_hits,
+        })
     }
 
     /// Check if user agent belongs to a search bot

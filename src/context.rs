@@ -5,8 +5,8 @@
 
 use std::path::Path;
 
+use crate::db::phpcount::HitCounts;
 use crate::db::upvotes::VoteState;
-use crate::middleware::HitCounts;
 use crate::registry::PageInfo;
 use crate::util::html_escape;
 use crate::vim_highlight;
