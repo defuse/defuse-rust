@@ -76,6 +76,10 @@ async fn main() {
             "/have-i-been-pwned-verification.txt",
             ServeDir::new("static/have-i-been-pwned-verification.txt"),
         )
+        .nest_service(
+            "/b06c1611fa2dac4cc177a7a63c70902c453cdb92.html",
+            ServeDir::new("static/b06c1611fa2dac4cc177a7a63c70902c453cdb92.html"),
+        )
         // Favicon
         .nest_service("/favicon.ico", ServeDir::new("static/favicon.ico"))
         // robots.txt
