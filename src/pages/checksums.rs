@@ -31,7 +31,8 @@ impl PageHandler for Handler {
 
     fn post(&self, ctx: PageContext, _state: &AppState, body: Bytes) -> Option<BoxFuture> {
         Some(Box::pin(async move {
-            let form: ChecksumsForm = serde_urlencoded::from_bytes(&body).unwrap_or_default();
+            let form: ChecksumsForm = serde_urlencoded::from_bytes(&body)
+                .expect("Failed to parse checksums form");
 
             let normalize = form.normalize.as_deref() == Some("yes");
 

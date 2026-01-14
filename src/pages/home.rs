@@ -12,7 +12,10 @@ impl PageHandler for Handler {
     fn get(&self, ctx: PageContext, state: &AppState) -> BoxFuture {
         let upvotes = state.upvotes.clone();
         Box::pin(async move {
-            let top_pages = upvotes.get_top_pages(8, None).await.unwrap_or_default();
+            let top_pages = upvotes
+                .get_top_pages(8, None)
+                .await
+                .expect("BUG: Failed to get top pages from database");
             HomePage { ctx, top_pages }.into_response()
         })
     }

@@ -142,10 +142,14 @@ async fn record_and_get_hits(
     }
 
     // Fetch counts
-    let page_hits = state.phpcount.get_hits(page_id, false).await.unwrap_or(0);
-    let unique_hits = state.phpcount.get_hits(page_id, true).await.unwrap_or(0);
-    let total_hits = state.phpcount.get_total_hits(false).await.unwrap_or(0);
-    let total_unique_hits = state.phpcount.get_total_hits(true).await.unwrap_or(0);
+    let page_hits = state.phpcount.get_hits(page_id, false).await
+        .expect("Failed to get page hits");
+    let unique_hits = state.phpcount.get_hits(page_id, true).await
+        .expect("Failed to get unique hits");
+    let total_hits = state.phpcount.get_total_hits(false).await
+        .expect("Failed to get total hits");
+    let total_unique_hits = state.phpcount.get_total_hits(true).await
+        .expect("Failed to get total unique hits");
 
     HitCounts {
         page_hits,

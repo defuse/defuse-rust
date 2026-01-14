@@ -13,7 +13,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Redirect, Response},
 };
-use tracing::{debug, warn};
+use tracing::debug;
 
 use crate::state::AppState;
 use super::ClientIp;
@@ -82,10 +82,9 @@ pub async fn upvote_post_middleware(
             // This is an upvote POST - process it and redirect
             debug!("Processing upvote fallback: id={}, direction={}", id, direction);
 
-            // Process the vote (errors logged but don't block redirect)
-            if let Err(e) = state.upvotes.process_vote(id, &client_ip, direction).await {
-                warn!("Failed to process upvote: {}", e);
-            }
+            // Process the vote - panic on failure so user doesn't think vote succeeded
+            state.upvotes.process_vote(id, &client_ip, direction).await
+                .expect("Failed to process upvote");
 
             // 302 redirect back to the same page to prevent resubmission
             Redirect::to(&redirect_url).into_response()
