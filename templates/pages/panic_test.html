@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Panic Test{% endblock %}
+
+{% block content %}
+<h1>Panic Test Page</h1>
+
+<p>This page is designed to test panic handling. The line below calls a method that panics:</p>
+
+<p>Some content before the panic...</p>
+
+{# This will panic when the template is rendered #}
+<p>Panic result: {{ self.trigger_panic() }}</p>
+
+<p>You should never see this line because the panic happens above.</p>
+{% endblock %}

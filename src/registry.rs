@@ -291,6 +291,17 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A birthday attack without knowing what the collision actually is."),
             }),
         },
+
+        // ===== Test pages =====
+        page! {
+            handler: panic_test,
+            slug: "panic-test",
+            title: "Panic Test",
+            description: "Test page that panics during rendering.",
+            keywords: "",
+            legacy_hit_count_id: "",
+            upvote: None,
+        },
     ];
 
     // Build HashMap with lowercase keys for case-insensitive lookup

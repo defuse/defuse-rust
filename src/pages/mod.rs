@@ -4,3 +4,4 @@ pub mod checksums;
 pub mod contact;
 pub mod home;
 pub mod not_found;
+pub mod panic_test;
