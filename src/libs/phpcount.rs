@@ -26,10 +26,10 @@ const IP_IGNORE_LIST: &[&str] = &[];
 /// Hit counts for a page and site totals.
 #[derive(Clone, Debug, Default)]
 pub struct HitCounts {
-    pub page_hits: u32,
-    pub unique_hits: u32,
-    pub total_hits: u32,
-    pub total_unique_hits: u32,
+    pub page_hits: u64,
+    pub unique_hits: u64,
+    pub total_hits: u64,
+    pub total_unique_hits: u64,
 }
 
 #[derive(Clone)]
@@ -109,10 +109,10 @@ impl PhpCountService {
         .await?;
 
         Ok(HitCounts {
-            page_hits: result.0 as u32,
-            unique_hits: result.1 as u32,
-            total_hits: result.2 as u32,
-            total_unique_hits: result.3 as u32,
+            page_hits: result.0,
+            unique_hits: result.1,
+            total_hits: result.2,
+            total_unique_hits: result.3,
         })
     }
 
