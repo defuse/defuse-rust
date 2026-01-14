@@ -196,14 +196,25 @@ impl UpvoteService {
         // Clean up old history so user sees correct state
         self.remove_old_vote_history().await?;
 
-        let upvotes = self.get_upvotes(permanent_id).await?;
-        let downvotes = self.get_downvotes(permanent_id).await?;
-        let user_vote = self.get_user_action(permanent_id, client_ip).await?;
+        let hash = Self::vote_hash(permanent_id, client_ip);
+
+        // Single query to get counts and user's action
+        let result: (Option<i32>, Option<i32>, Option<String>) = sqlx::query_as(
+            "SELECT
+                (SELECT upvotes FROM counts WHERE permanent_id = ?),
+                (SELECT downvotes FROM counts WHERE permanent_id = ?),
+                (SELECT action FROM history WHERE hash = ?)"
+        )
+        .bind(permanent_id)
+        .bind(permanent_id)
+        .bind(&hash)
+        .fetch_one(&self.pool)
+        .await?;
 
         Ok(VoteState {
-            upvotes,
-            downvotes,
-            user_vote,
+            upvotes: result.0.unwrap_or(0),
+            downvotes: result.1.unwrap_or(0),
+            user_vote: result.2.and_then(|s| VoteAction::from_str(&s)),
         })
     }
 
@@ -324,30 +335,6 @@ impl UpvoteService {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs() as i64
-    }
-
-    /// Get upvote count for a page
-    async fn get_upvotes(&self, permanent_id: &str) -> Result<i32, sqlx::Error> {
-        let result: Option<(i32,)> = sqlx::query_as(
-            "SELECT upvotes FROM counts WHERE permanent_id = ?"
-        )
-        .bind(permanent_id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(result.map(|(v,)| v).unwrap_or(0))
-    }
-
-    /// Get downvote count for a page
-    async fn get_downvotes(&self, permanent_id: &str) -> Result<i32, sqlx::Error> {
-        let result: Option<(i32,)> = sqlx::query_as(
-            "SELECT downvotes FROM counts WHERE permanent_id = ?"
-        )
-        .bind(permanent_id)
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(result.map(|(v,)| v).unwrap_or(0))
     }
 
     /// Add an upvote, optionally undoing a downvote
