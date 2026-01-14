@@ -14,6 +14,7 @@ use axum::{
 };
 use tracing::{debug, warn};
 
+use crate::db::upvotes::VoteAction;
 use crate::registry::{canonical_url, lookup_page_from_path};
 use crate::state::AppState;
 use super::ClientIp;
@@ -33,7 +34,7 @@ pub struct HitCounts {
 pub struct VoteState {
     pub upvotes: i32,
     pub downvotes: i32,
-    pub user_vote: Option<String>, // "upvote", "downvote", or None
+    pub user_vote: Option<VoteAction>,
 }
 
 impl VoteState {
@@ -44,12 +45,12 @@ impl VoteState {
 
     /// Whether the current user has upvoted
     pub fn user_upvoted(&self) -> bool {
-        self.user_vote.as_deref() == Some("upvote")
+        self.user_vote == Some(VoteAction::Upvote)
     }
 
     /// Whether the current user has downvoted
     pub fn user_downvoted(&self) -> bool {
-        self.user_vote.as_deref() == Some("downvote")
+        self.user_vote == Some(VoteAction::Downvote)
     }
 }
 
@@ -163,9 +164,6 @@ async fn get_vote_counts(state: &AppState, upvote_id: &str, client_ip: &str) -> 
     Ok(VoteState {
         upvotes: result.upvotes,
         downvotes: result.downvotes,
-        user_vote: result.user_action.map(|a| match a {
-            crate::db::upvotes::VoteAction::Upvote => "upvote".to_string(),
-            crate::db::upvotes::VoteAction::Downvote => "downvote".to_string(),
-        }),
+        user_vote: result.user_action,
     })
 }
