@@ -15,6 +15,7 @@ use axum::{
 };
 use tracing::debug;
 
+use crate::registry::lookup_page_from_path;
 use crate::state::AppState;
 use super::ClientIp;
 
@@ -30,8 +31,17 @@ pub async fn upvote_post_middleware(
     }
 
     // Skip /upvote endpoint - it has its own handler that returns XML for JS
-    // TODO: or should we check that we're on a valid page defined in the registry?
     if request.uri().path() == "/upvote" {
+        return next.run(request).await;
+    }
+
+    // Only process upvotes for formally-registered pages with upvoting enabled
+    let path = request.uri().path();
+    let has_upvoting = lookup_page_from_path(path)
+        .map(|page| page.upvote.is_some())
+        .unwrap_or(false);
+
+    if !has_upvoting {
         return next.run(request).await;
     }
 

@@ -152,6 +152,7 @@ this is fine
 
 - `upvote_post.rs:33` - `// TODO: or should we check that we're on a valid page defined in the registry?`
 - Currently accepts upvote form submissions on ANY URL
+fixing
 
 ### Other Divergences
 
