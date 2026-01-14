@@ -41,8 +41,8 @@ pub async fn post(
         }
     };
 
-    // Determine arrow states based on user's current action
-    let (uparrow, downarrow) = match result.user_action {
+    // Determine arrow states based on user's current vote
+    let (uparrow, downarrow) = match result.user_vote {
         Some(VoteAction::Upvote) => ("Y", "N"),
         Some(VoteAction::Downvote) => ("N", "Y"),
         None => ("N", "N"),

@@ -63,17 +63,29 @@ impl VoteAction {
     }
 }
 
-/// Result of a vote operation
-#[derive(Debug, Clone)]
-pub struct VoteResult {
+/// Vote state: aggregate counts and current user's vote.
+/// Used by templates to display vote UI.
+#[derive(Debug, Clone, Default)]
+pub struct VoteState {
     pub upvotes: i32,
     pub downvotes: i32,
-    pub user_action: Option<VoteAction>,
+    pub user_vote: Option<VoteAction>,
 }
 
-impl VoteResult {
+impl VoteState {
+    /// Net vote total (upvotes - downvotes)
     pub fn total(&self) -> i32 {
         self.upvotes - self.downvotes
+    }
+
+    /// Whether the current user has upvoted
+    pub fn user_upvoted(&self) -> bool {
+        self.user_vote == Some(VoteAction::Upvote)
+    }
+
+    /// Whether the current user has downvoted
+    pub fn user_downvoted(&self) -> bool {
+        self.user_vote == Some(VoteAction::Downvote)
     }
 }
 
@@ -125,7 +137,7 @@ impl UpvoteService {
         permanent_id: &str,
         client_ip: &str,
         direction: &str,
-    ) -> Result<VoteResult, VoteError> {
+    ) -> Result<VoteState, VoteError> {
         let direction = match direction {
             "up" => VoteAction::Upvote,
             "down" => VoteAction::Downvote,
@@ -171,26 +183,26 @@ impl UpvoteService {
         }
 
         // Return updated state
-        Ok(self.get_vote_result(permanent_id, client_ip).await?)
+        Ok(self.get_vote_state(permanent_id, client_ip).await?)
     }
 
-    /// Get current vote counts and user's action for a page
-    pub async fn get_vote_result(
+    /// Get current vote counts and user's vote for a page
+    pub async fn get_vote_state(
         &self,
         permanent_id: &str,
         client_ip: &str,
-    ) -> Result<VoteResult, sqlx::Error> {
+    ) -> Result<VoteState, sqlx::Error> {
         // Clean up old history so user sees correct state
         self.remove_old_vote_history().await?;
 
         let upvotes = self.get_upvotes(permanent_id).await?;
         let downvotes = self.get_downvotes(permanent_id).await?;
-        let user_action = self.get_user_action(permanent_id, client_ip).await?;
+        let user_vote = self.get_user_action(permanent_id, client_ip).await?;
 
-        Ok(VoteResult {
+        Ok(VoteState {
             upvotes,
             downvotes,
-            user_action,
+            user_vote,
         })
     }
 

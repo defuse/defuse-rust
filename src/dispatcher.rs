@@ -17,8 +17,9 @@ use bytes::Bytes;
 use tracing::{debug, warn};
 
 use crate::context::PageContext;
+use crate::db::upvotes::VoteState;
 use crate::middleware::client_ip::ClientIp;
-use crate::middleware::{HitCounts, VoteState};
+use crate::middleware::HitCounts;
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{canonical_url, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
 use crate::state::AppState;
@@ -194,24 +195,17 @@ async fn fetch_vote_state(
     }
 
     // Fetch vote counts and user's vote
-    match state
+    state
         .upvotes
-        .get_vote_result(upvote_config.id, client_ip)
+        .get_vote_state(upvote_config.id, client_ip)
         .await
-    {
-        Ok(result) => VoteState {
-            upvotes: result.upvotes,
-            downvotes: result.downvotes,
-            user_vote: result.user_action,
-        },
-        Err(e) => {
+        .unwrap_or_else(|e| {
             warn!(
                 "Failed to get vote counts for {}: {}",
                 upvote_config.id, e
             );
             VoteState::default()
-        }
-    }
+        })
 }
 
 /// Render the 404 not found page.
