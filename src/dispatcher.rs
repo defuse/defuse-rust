@@ -156,7 +156,14 @@ async fn fetch_vote_state(
     let description = upvote_config
         .description
         .unwrap_or_else(|| page_info.description_or_default());
-    let page_url = canonical_url(page_info.slug);
+    // Use full URL for database storage (matching PHP behavior)
+    let page_url = if page_info.slug.is_empty() {
+        "https://defuse.ca/".to_string()
+    } else if page_info.is_directory() {
+        format!("https://defuse.ca/{}/", page_info.slug.trim_end_matches('/'))
+    } else {
+        format!("https://defuse.ca/{}.htm", page_info.slug)
+    };
 
     // Ensure page exists in database (creates or updates metadata)
     if let Err(e) = state
