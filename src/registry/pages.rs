@@ -35,7 +35,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         page! {
             handler: about,
             slug: "about",
-            title: "About - Defuse Security",
+            title: "",
             description: "About Defuse Security.",
             keywords: "",
             legacy_hit_count_id: "pages/about.html",

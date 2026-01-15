@@ -37,11 +37,11 @@ impl PageContext {
     pub fn canonical_url(&self) -> String {
         let p = self.page_info;
         if p.slug.is_empty() {
-            "https://defuse.ca/".to_string()
+            "https://defuse.ca:443/".to_string()
         } else if p.is_directory() {
-            format!("https://defuse.ca/{}/", p.slug.trim_end_matches('/'))
+            format!("https://defuse.ca:443/{}/", p.slug.trim_end_matches('/'))
         } else {
-            format!("https://defuse.ca/{}.htm", p.slug)
+            format!("https://defuse.ca:443/{}.htm", p.slug)
         }
     }
 
