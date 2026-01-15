@@ -20,10 +20,6 @@
 {% endfor %}
 </table>
 {% else %}
-<h2>Supported Hash Algorithms</h2>
-<p>
-{% for algo in supported_algorithms %}
-{{ algo }} {% endfor %}
-</p>
+<h2>Supported Hash Algorithms</h2><p>{% for algo in supported_algorithms %}{{ algo }} {% endfor %}</p>
 {% endif %}
 {% endblock %}

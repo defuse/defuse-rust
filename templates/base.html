@@ -325,7 +325,7 @@
         </div> <!-- end footer -->
         </div> <!-- footerwrapper -->
 {%- endif %}
-        <!-- Piwik -->
+{% if !ctx.is_home() %}        {% endif %}<!-- Piwik -->
 <!-- disabled piwik/matomo temporarily cuz it's broken
 <script type="text/javascript">
   var _paq = _paq || [];

@@ -24,17 +24,19 @@ use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::handler::{BoxFuture, PageHandler};
 
+// Order matches PHP's hash_algos() output
 const SUPPORTED_ALGORITHMS: &[&str] = &[
+    "md5", "LM", "NTLM", "sha1", "sha256", "sha384", "sha512",
+    "md5(md5())", "MySQL4.1+", "ripemd160", "whirlpool",
     "adler32", "crc32", "crc32b", "crc32c",
-    "fnv132", "fnv164", "fnv1a32", "fnv1a64",
+    "fnv1a32", "fnv1a64", "fnv132", "fnv164",
     "gost", "gost-crypto",
-    "joaat",
-    "LM", "md2", "md4", "md5", "md5(md5())", "MySQL4.1+", "NTLM",
-    "ripemd128", "ripemd160", "ripemd256", "ripemd320",
-    "sha1", "sha224", "sha256",
+    // haval hashes not implemented
+    "joaat", "md2", "md4",
+    "ripemd128", "ripemd256", "ripemd320",
     "sha3-224", "sha3-256", "sha3-384", "sha3-512",
-    "sha384", "sha512", "sha512/224", "sha512/256",
-    "whirlpool",
+    "sha224", "sha512/224", "sha512/256",
+    // snefru, tiger hashes not implemented
 ];
 
 pub struct Handler;
