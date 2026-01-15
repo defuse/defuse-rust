@@ -1,3 +1,16 @@
 pub mod blind_birthday_attack;
 pub mod cbcmodeiv;
 pub mod concentration_bounds_from_parallel_repetition_theorems;
+pub mod cracking_synergy_bad_cryptography;
+pub mod eotp;
+pub mod filesystem_events_ntfs_permissions;
+pub mod in_browser_port_scanning;
+pub mod instruction_filters;
+pub mod manual_random_number_generator;
+pub mod onedetection;
+pub mod race_conditions_in_web_applications;
+pub mod research;
+pub mod side_channel_attacks_on_everyday_applications;
+pub mod side_channels_in_encoding_functions;
+pub mod truecrypt_plausible_deniability_useless_by_game_theory;
+pub mod web_browser_javascript_cryptography;
