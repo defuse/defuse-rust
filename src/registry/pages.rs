@@ -1060,7 +1060,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "encfs, security audit, cryptography",
             legacy_hit_count_id: "pages/audits/encfs-old.php",
             upvote: Some(UpvoteConfig {
-                id: "auditencfs",
+                id: "auditencfsOLD",
                 category: "defuse_pages",
                 title: Some("EncFS Security Audit"),
                 description: Some("The results of an EncFS security audit."),

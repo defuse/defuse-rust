@@ -180,7 +180,7 @@ audit.
 &nbsp;&nbsp; between encrypted files. This value is actually re-used for three
 &nbsp;&nbsp; things. It&#039;s used as part of the XTS mode tweak, to &quot;randomize&quot; the
 &nbsp;&nbsp; filename encryption, and as the VMAC IV (after being encrypted).
-&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp; For the filename encryption, the tweak value is used as a substitute
 &nbsp;&nbsp; for an IV. Filenames are encrypted by first prefixing the tweak, then
 &nbsp;&nbsp; encrypting them in CBC mode with a zero IV.
