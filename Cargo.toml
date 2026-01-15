@@ -17,11 +17,24 @@ askama_axum = "0.4"
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "mysql"] }
 
-# Hashing (for checksums page example, and phpcount ID hashing)
+# Hashing (for checksums page)
 sha1 = "0.10"
 sha2 = "0.10"
+sha3 = "0.10"
 md-5 = "0.10"
+md2 = "0.10"
+md4 = "0.10"
+ripemd = "0.1"
+whirlpool = "0.10"
+gost94 = "0.10"
 hex = "0.4"
+
+# Checksums
+adler = "1.0"
+crc = "3.2"
+
+# For LM hash (DES-based)
+des = "0.8"
 
 # Form parsing
 serde = { version = "1", features = ["derive"] }
