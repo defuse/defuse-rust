@@ -1,9 +1,13 @@
 pub mod about;
-pub mod blind_birthday_attack;
-pub mod cbcmodeiv;
-pub mod checksums;
 pub mod contact;
+pub mod donated;
 pub mod home;
+pub mod misc;
 pub mod not_found;
 pub mod panic_test;
-pub mod software_security_auditing;
+pub mod privacy_policy;
+pub mod research;
+pub mod security_contact_vulnerability_disclosure;
+pub mod services;
+pub mod software;
+pub mod transparency;

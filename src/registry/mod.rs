@@ -123,10 +123,10 @@ pub(crate) use alias;
 /// Required: handler (first!), slug, title, description, keywords, legacy_hit_count_id, upvote
 /// Optional: no_cache (defaults to false)
 ///
-/// The handler field takes a module name (e.g., `about`) which expands to `&pages::about::Handler`.
+/// The handler field takes a module path (e.g., `about` or `research::my_page`) which expands to `&pages::about::Handler`.
 macro_rules! page {
     (
-        handler: $handler:ident,
+        handler: $($handler:ident)::+,
         slug: $slug:expr,
         title: $title:expr,
         description: $description:expr,
@@ -135,7 +135,7 @@ macro_rules! page {
         upvote: $upvote:expr $(,)?
     ) => {
         PageInfo {
-            handler: Some(&crate::pages::$handler::Handler),
+            handler: Some(&crate::pages::$($handler)::+::Handler),
             slug: $slug,
             title: $title,
             description: $description,
@@ -147,7 +147,7 @@ macro_rules! page {
         }
     };
     (
-        handler: $handler:ident,
+        handler: $($handler:ident)::+,
         slug: $slug:expr,
         title: $title:expr,
         description: $description:expr,
@@ -157,7 +157,7 @@ macro_rules! page {
         no_cache: $no_cache:expr $(,)?
     ) => {
         PageInfo {
-            handler: Some(&crate::pages::$handler::Handler),
+            handler: Some(&crate::pages::$($handler)::+::Handler),
             slug: $slug,
             title: $title,
             description: $description,

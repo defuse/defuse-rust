@@ -1,0 +1,1 @@
+crate::simple_page!(ConcentrationBoundsFromParallelRepetitionTheoremsPage, "pages/research/concentration_bounds_from_parallel_repetition_theorems.html");

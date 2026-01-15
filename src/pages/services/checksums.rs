@@ -83,7 +83,7 @@ impl PageHandler for Handler {
 }
 
 #[derive(Template)]
-#[template(path = "pages/checksums.html")]
+#[template(path = "pages/services/checksums.html")]
 struct ChecksumsPage {
     ctx: PageContext,
     input: String,
