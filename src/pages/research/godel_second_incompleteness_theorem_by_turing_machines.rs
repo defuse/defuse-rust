@@ -1,0 +1,1 @@
+crate::simple_page!(GodelSecondIncompletenessTheoremByTuringMachinesPage, "pages/research/godel_second_incompleteness_theorem_by_turing_machines.html");

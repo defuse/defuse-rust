@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}<div class="pagedate">
+June 22, 2011
+</div>
+<h1>Centralization is Killing BitCoin</h1>
+<p>
+BitCoin is a well-designed decentralized crypto-currency. As far as cryptographers know, BitCoin is absolutely secure and very robust as long as a single party cannot gain control of the majority of the network. However, an undesirable trend towards the centralization of BitCoin is beginning to form. Monopoly BitCoin services are beginning to emerge, and as BitCoin becomes more popular and more valuable, they are starting to be attacked. These attacks are now becoming a major concern for the health of the BitCoin currency and the security of BitCoin users.
+</p>
+<center>
+<img src="/images/bitcoin-monopoly.gif" alt="BitCoin Centralization" title="BitCoin Monopoly" />
+</center>
+<h2>DeepBit Attacks</h2>
+<p>
+I first noticed the centralization trend when I saw that almost 50% of the entire network's computing power was concentrated in one mining pool - DeepBit. This kind of centralization directly contradicts one of BitCoin's core goals - to be decentralized. It's no surprise though, since implementing a centralized service is much easier than designing an entire peer to peer network just to provide the same functionality. Peer to peer is still relatively new technology. We haven't yet established a rock solid framework that makes P2P applications easy to develop. We opt to quickly develop a centralized service rather than spend months planning and implementing the P2P equivalent.
+</p>
+
+<center>
+<img src="/images/bitcoin-chart.png" alt="BitCoin Computing Power Distribution" title="BitCoin Computing Power Distribution" /><br />
+BitCoin computing power distribution before the DeepBit attacks.<br />
+source: <a href="http://bitcoinwatch.com/">http://bitcoinwatch.com/</a>
+</center>
+
+
+<p>
+The simplicity of building centralized services comes at a cost. I pointed out to the BitCoin community that if DeepBit was ever shut down, either by malicious attack or accidentally, all of it's users would be effectively disconnected from the BitCoin network. Their machines would remain idle, trying to reconnect to DeepBit until it came back online. During that time, DeepBit's 50% share of the network's computing power would be gone. The network's strength, as a whole, would be reduced by half.
+</p>
+
+<center>
+<img src="/images/bitcoin-ddos.png" alt="BitCoin DeepBit DDoS" title="BitCoin Deepbit DDos Attack" /><br />
+BitCoin computing power distribution during the DeepBit attacks.
+</center>
+
+
+<p>
+Sure enough, DeepBit was hit with a Distributed Denial of Service (DDoS) attack. The service went offline for a few days, and during that time, as expected, much of the BitCoin network's computing power went missing. This should have been a wake up call to the BitCoin community that the ease of centralization is not worth the risk to the network. Centralization gives BitCoin a single point of failure, making it much less robust than it is intended to be.
+</p>
+
+<p>DDoS attacks aren't the only way centralized mining pools can hurt BitCoin. If one party obtains over 50% of the network's computing power (like DeepBit did), they can:</p>
+
+<ul>
+	<li>Reverse transactions the party sent while in control.</li>
+	<li>Prevent all or some transactions from gaining confirmations.</li>
+	<li>Prevent some or all other generators from getting any generations.</li>
+</ul>
+<p>(<a href="https://en.bitcoin.it/wiki/Weaknesses#Attacker_has_a_lot_of_computing_power">source</a>)</p>
+<p>
+The community's reactions to the attacks were mostly nonconstructive. They suggested switching to other pools while DeepBit was down, ignoring the inherent threat of centralization. I suggested that a distributed pool should be created, possibly integrated into the BitCoin client software. That idea didn't take off though, probably because it's just too hard to build peer to peer systems.
+</p>
+
+<h2>MTGOX Attacks</h2>
+<p>
+Centralization does not only impact the reliability of the BitCoin network, it degrades the security of BitCoin users. MTGOX, arguably a monopoly BitCoin to U.S. Dollar exchange website, recently had its database compromised. The hash of every MTGOX user's password was released onto the Internet. Thankfully, MTGOX was hashing passwords properly, with salt, so users who used a strong password are completely safe. Nevertheless, it's a good example of how centralization can harm BitCoin - it put a huge dent in it's reputation as a secure and reliable currency. The MTGOX downtime put a stop to most of the BTC to/from USD trades. If the exchange service was decentralized, or even if there were more than just a handful of them, MTGOX users could have switched to one of the others and trading would have continued as usual during the attack.
+</p>
+
+<p>
+BitCoin is money. Malicious hackers want money. Online BitCoin services will continue to be hacked. The BitCoin community must prepare for this by reducing the amount of centralization so when one service gets hacked, it doesn't impact the entire network. Malicious hackers will be more likely to go after a single monopoly service than many small distributed services. Ideally, everything should be peer to peer style decentralized just like BitCoin is, but before that can happen, we need to make it easier to develop P2P applications.
+</p>
+
+<blockquote>
+&#8220;<i>Governments are good at cutting off the heads of a centrally controlled 
+networks like Napster, but <b>pure P2P networks</b> like Gnutella and Tor seem to be 
+holding their own.</i>&#8221; - Satoshi Nakamoto
+</blockquote>
+
+<p>
+If you're a BitCoin user, the best thing you can do is to monitor the popularity of the services you use and switch away when they get too popular.
+</p>
+{% endblock %}
