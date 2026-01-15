@@ -281,7 +281,8 @@
                             </form>
         </div>
                 </div>
-{%- endif %}{% block content %}{% endblock -%}
+{% endif -%}
+{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% block content %}{% endblock %}
 </div>
 </div> <!-- Wrap -->
 {%- if !ctx.is_home() %}
@@ -345,3 +346,4 @@
 
 </body>
 </html>
+

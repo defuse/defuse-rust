@@ -244,6 +244,30 @@ Complex pages requiring significant logic.
 
 ---
 
+## Known Issues / Bugs
+
+- [ ] **File paths are relative to CWD, not binary location**
+  - `hl_file()` and static file serving use relative paths
+  - Server must be started from project directory or paths break
+  - Should resolve paths relative to the binary location instead
+  - Affects: vim highlighting, static files, source files
+
+- [x] **Vim syntax highlighting: dw_cyan colorscheme was never on prod server**
+  - **Problem**: PHP code specified `dw_cyan` colorscheme but it was never installed on
+    the production server. Vim silently fell back to `default` colorscheme.
+  - **Symptom**: Local dev with dw_cyan installed produced different HTML than production.
+    Specifically, dw_cyan defines `String` with only `guifg` (no `ctermfg`), so terminal
+    vim's TOhtml skipped outputting `<span class="String">` entirely for string content.
+  - **Discovery**: Strings showed as `<span class="Constant">` in production but had no
+    span wrapper locally. The default colorscheme links `String` → `Constant` and has
+    proper `ctermfg` definitions, so TOhtml outputs spans correctly.
+  - **Solution**: Changed Rust implementation to use `default` colorscheme instead of
+    `dw_cyan` to match actual production behavior.
+  - **Remaining differences**: Minor vim 9.1 vs 8.2 syntax file differences (e.g., block
+    params highlighted as `Identifier` in old vim, Ruby symbols split differently)
+
+---
+
 ## Testing
 - [ ] Create PHP test vectors for crypto compatibility
 - [ ] URL routing tests - all old URLs must work

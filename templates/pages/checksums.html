@@ -3,13 +3,13 @@
 {% block content %}<h1>Online Text &amp; File Checksum Calculator</h1>
 <p>This page lets you hash ASCII text or a file with many different hash algorithms. Checksums are commonly used to verify the integrety of data. The most common use is to verify that a file has been downloaded without error. The data you enter here is 100% private, neither the data nor hash values are ever recorded.</p>
 <p><strong>Enter some ASCII or UNICODE text...</strong></p>
-<form action="/checksums.htm#checksums" method="post">
-    <textarea name="data" rows="15" cols="40" style="width:100%;">{{ input }}</textarea>
+<form action="checksums.htm#checksums" method="post">
+    <textarea name="data" rows="15" cols="40" style="width:100%;" >{{ input }}</textarea>
     <br />
     <input type="checkbox" name="normalize" value="yes" {% if normalize %}checked{% endif %}/>Remove line endings <br /><input type="submit" name="submit" value="Calculate checksums.." />
 </form>
 <h3>File (5MB MAX)</h3>
-<form action="/checksums.htm#checksums" method="post" enctype="multipart/form-data">
+<form action="checksums.htm#checksums" method="post" enctype="multipart/form-data">
 <input type="file" name="filetohash" /><input type="submit" name="hashfile" value="Calculate checksums..." />
 </form>
 {% if !results.is_empty() %}

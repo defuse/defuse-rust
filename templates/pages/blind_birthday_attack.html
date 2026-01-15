@@ -72,7 +72,7 @@ For a node that has two children, it has one left child and one right child.
     </li>
     <li>There is one node in the tree for each message (one-to-one mapping between nodes and messages).</li>
     <li>
-    For a node in the <i>N</i>th level of the tree (the root is level 1):
+    For a node in the <i>N</i>th level of the tree (the root is level 1): 
     <ul>
         <li>
             If it has a right child, the first <i>N</i> bits of the node's message's HMAC matches the first <i>N</i> bits of the right child's message's HMAC.
@@ -124,6 +124,7 @@ I wrote a Ruby implementation of this attack against HMAC truncated to 32 bits
 source code follows:
 </p>
 
+
 {{ ctx.hl_string("Closest collision so far: 1
 Tree size: 0
 Closest collision so far: 2
@@ -163,7 +164,6 @@ Tree size: 33425
 Found a collision amongst 33425 in 445046 queries!
 Message 1: 8db04aea6b6b8d3a80d93d7064ec78a0bd24a8cba3a56d3c2f8755d8a9b63a40
 Message 2: 99cec515fff6c583134b0942c0e6381ebdb10c07b472f58fd74e1cb0fbb684b8", "text", false)|safe }}
-
 <p>
 Here's the source code:
 </p>

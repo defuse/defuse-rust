@@ -6,3 +6,4 @@ pub mod contact;
 pub mod home;
 pub mod not_found;
 pub mod panic_test;
+pub mod software_security_auditing;

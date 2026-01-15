@@ -58,7 +58,7 @@ impl VimHighlight {
     pub fn for_print_hl_string(file_type: &str, show_lines: bool) -> Self {
         Self {
             caching: true,
-            color_scheme: "dw_cyan".to_string(),
+            color_scheme: "default".to_string(),
             file_type: Some(file_type.to_string()),
             show_lines,
             use_css: true,
@@ -217,9 +217,7 @@ impl VimHighlight {
         args.push("-c");
         args.push(&write_cmd);
         args.push("-c");
-        args.push("q!");
-        args.push("-c");
-        args.push("q!");
+        args.push("q! | q!");
 
         // Input file
         args.push(input_path.to_str().ok_or_else(|| {
@@ -432,7 +430,7 @@ impl std::error::Error for VimHighlightError {}
 pub fn highlight_string(text: &str, file_type: &str, show_lines: bool) -> Result<String, VimHighlightError> {
     let hl = VimHighlight::for_print_hl_string(file_type, show_lines);
     let body = hl.process_text(text, true)?;
-    Ok(format!(r#"<div class="vimhighlight">{}</div>"#, body))
+    Ok(format!("<div class=\"vimhighlight\">{}\n</div>", body))
 }
 
 /// Convenience function matching PHP's printSourceFile
@@ -440,14 +438,14 @@ pub fn highlight_string(text: &str, file_type: &str, show_lines: bool) -> Result
 pub fn highlight_file(path: &Path, show_lines: bool) -> Result<String, VimHighlightError> {
     let mut hl = VimHighlight::new();
     hl.caching = true;
-    hl.color_scheme = "dw_cyan".to_string();
+    hl.color_scheme = "default".to_string();
     hl.show_lines = show_lines;
     hl.use_css = true;
     hl.set_vim_command("vim");
     // file_type is None - let vim auto-detect
 
     let body = hl.process_file(path, true)?;
-    Ok(format!(r#"<div class="vimhighlight">{}</div>"#, body))
+    Ok(format!("<div class=\"vimhighlight\">{}\n</div>", body))
 }
 
 #[cfg(test)]
@@ -475,7 +473,7 @@ mod tests {
     fn test_encode_info() {
         let hl = VimHighlight::for_print_hl_string("ruby", true);
         let info = hl.encode_info();
-        assert!(info.contains("color_scheme:dw_cyan"));
+        assert!(info.contains("color_scheme:default"));
         assert!(info.contains("file_type:ruby"));
         assert!(info.contains("show_lines:true"));
         assert!(info.contains("use_css:true"));
@@ -497,7 +495,7 @@ mod tests {
     fn test_print_hl_string_settings() {
         let hl = VimHighlight::for_print_hl_string("python", false);
         assert!(hl.caching);
-        assert_eq!(hl.color_scheme, "dw_cyan");
+        assert_eq!(hl.color_scheme, "default");
         assert_eq!(hl.file_type, Some("python".to_string()));
         assert!(!hl.show_lines);
         assert!(hl.use_css);
@@ -556,7 +554,7 @@ mod tests {
         // PHP Test 1: Simple Ruby without line numbers
         let mut hl = VimHighlight::new();
         hl.caching = false;
-        hl.color_scheme = "dw_cyan".to_string();
+        hl.color_scheme = "default".to_string();
         hl.show_lines = false;
         hl.use_css = true;
         hl.file_type = Some("ruby".to_string());
@@ -575,7 +573,7 @@ mod tests {
         // PHP Test 2: Ruby with line numbers
         let mut hl = VimHighlight::new();
         hl.caching = false;
-        hl.color_scheme = "dw_cyan".to_string();
+        hl.color_scheme = "default".to_string();
         hl.show_lines = true;
         hl.use_css = true;
         hl.file_type = Some("ruby".to_string());
@@ -594,7 +592,7 @@ mod tests {
         // PHP Test 3: Multi-line Ruby
         let mut hl = VimHighlight::new();
         hl.caching = false;
-        hl.color_scheme = "dw_cyan".to_string();
+        hl.color_scheme = "default".to_string();
         hl.show_lines = false;
         hl.use_css = true;
         hl.file_type = Some("ruby".to_string());
@@ -613,7 +611,7 @@ mod tests {
         // PHP Test 4: Plain text (no highlighting)
         let mut hl = VimHighlight::new();
         hl.caching = false;
-        hl.color_scheme = "dw_cyan".to_string();
+        hl.color_scheme = "default".to_string();
         hl.show_lines = false;
         hl.use_css = true;
         hl.file_type = Some("text".to_string());
@@ -632,7 +630,7 @@ mod tests {
         // PHP Test 5: HTML entities in code
         let mut hl = VimHighlight::new();
         hl.caching = false;
-        hl.color_scheme = "dw_cyan".to_string();
+        hl.color_scheme = "default".to_string();
         hl.show_lines = false;
         hl.use_css = true;
         hl.file_type = Some("ruby".to_string());

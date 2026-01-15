@@ -58,7 +58,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             slug: "checksums",
             title: "Online Text and File Hash Calculator - MD5, SHA1, SHA256, SHA512, WHIRLPOOL Hash Calculator - Defuse Security",
             description: "Online Hash Tool. Calculate hash of file or text. MD5, SHA1, SHA256, SHA512 and more...",
-            keywords: "",
+            keywords: "file hasher, online, hash, md5, sha256, sha1, text hash, checksum",
             legacy_hit_count_id: "pages/services/checksums.php",
             upvote: Some(UpvoteConfig {
                 id: "onlinechecksums",
@@ -66,6 +66,15 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Online Hash Calculator"),
                 description: Some("A tool for computing hashes (MD5, SHA1, SHA2, etc.) of text and files."),
             }),
+        },
+        page! {
+            handler: software_security_auditing,
+            slug: "software-security-auditing",
+            title: "Software Security Auditing",
+            description: "Get your software audited for security bugs.",
+            keywords: "software security, exploits, auditing",
+            legacy_hit_count_id: "pages/services/software-security-auditing.php",
+            upvote: None,
         },
 
         // ===== Research =====
@@ -86,9 +95,9 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         page! {
             handler: cbcmodeiv,
             slug: "cbcmodeiv",
-            title: "Encryption - CBC Mode IV: Secret or Not?",
-            description: "Should the IV in CBC mode be kept secret?",
-            keywords: "cbc mode, iv, initialization vector, encryption, cryptography",
+            title: "Should CBC Mode Initialization Vector Be Secret - Defuse Security",
+            description: "Should the initialization vector used for CBC mode be kept secret?",
+            keywords: "cbc mode, encryption, initialization vector, iv, secret, secure",
             legacy_hit_count_id: "pages/research/cbcmodeiv.php",
             upvote: Some(UpvoteConfig {
                 id: "cbcmodeiv",
