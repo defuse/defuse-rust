@@ -211,6 +211,11 @@ impl VimHighlight {
         args.push("-c");
         args.push(number_cmd);
 
+        // Set tab width to 8 and preserve literal tabs in HTML output
+        // (newer vim versions expand tabs by default when html_use_css=1)
+        args.push("-c");
+        args.push("set tabstop=8 | let g:html_expand_tabs = 0");
+
         // Generate HTML, write it, then quit both buffers
         args.push("-c");
         args.push("run! syntax/2html.vim");

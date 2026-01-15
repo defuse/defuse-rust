@@ -9,5 +9,6 @@ pub mod pocorgtfo;
 pub mod rules_for_working_with_me;
 pub mod the_meaning_of_if;
 pub mod the_universe_is_made_of_cheese;
+pub mod truecrypt_7_1a_hashes;
 pub mod writing_tips;
 pub mod x_plane_combat;

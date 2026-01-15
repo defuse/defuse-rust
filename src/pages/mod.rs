@@ -18,3 +18,4 @@ pub mod security_contact_vulnerability_disclosure;
 pub mod services;
 pub mod software;
 pub mod transparency;
+pub mod vimrc;
