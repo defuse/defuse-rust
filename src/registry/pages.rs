@@ -83,6 +83,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A birthday attack without knowing what the collision actually is."),
             }),
         },
+        page! {
+            handler: cbcmodeiv,
+            slug: "cbcmodeiv",
+            title: "Encryption - CBC Mode IV: Secret or Not?",
+            description: "Should the IV in CBC mode be kept secret?",
+            keywords: "cbc mode, iv, initialization vector, encryption, cryptography",
+            legacy_hit_count_id: "pages/research/cbcmodeiv.php",
+            upvote: Some(UpvoteConfig {
+                id: "cbcmodeiv",
+                category: "defuse_pages",
+                title: Some("Encryption - CBC Mode IV: Secret or Not?"),
+                description: Some("Should the IV in CBC mode be kept secret?"),
+            }),
+        },
 
         // ===== Test pages =====
         page! {

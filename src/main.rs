@@ -58,7 +58,7 @@ async fn main() {
     // Build router with middleware
     let app = Router::new()
         // API endpoints (not pages - handled explicitly)
-        .route("/upvote", post(upvote::post))
+        .route("/upvote.php", post(upvote::post))
         // Static files at original URLs (matching PHP site structure)
         .nest_service("/images", ServeDir::new("static/images"))
         .nest_service("/js", ServeDir::new("static/js"))
