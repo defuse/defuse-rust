@@ -1,4 +1,5 @@
 pub mod about;
+pub mod all_pages;
 pub mod audits;
 pub mod contact;
 pub mod donated;

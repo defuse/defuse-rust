@@ -11,6 +11,7 @@ pub mod cryptographyunderattack;
 pub mod eotp;
 pub mod exploiting_cpp_vtables;
 pub mod filesystem_events_ntfs_permissions;
+pub mod flush_reload_side_channel;
 pub mod godel_second_incompleteness_theorem_by_turing_machines;
 pub mod grc_passwords_not_secure;
 pub mod how_do_we_model_this_robot;

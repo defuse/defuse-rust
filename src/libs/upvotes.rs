@@ -12,6 +12,8 @@ use sha2::{Digest, Sha256};
 use sqlx::MySqlPool;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use super::util::{html_escape, js_escape};
+
 /// Let IP addresses vote again after this many seconds (24 hours)
 const VOTE_OLD_AFTER_SECONDS: i64 = 86400;
 
@@ -264,6 +266,47 @@ impl UpvoteService {
             .collect())
     }
 
+    /// Get all pages for display (for the all-pages listing)
+    pub async fn get_all_pages(
+        &self,
+        category: Option<&str>,
+    ) -> Result<Vec<PageVoteInfo>, sqlx::Error> {
+        let pages = if let Some(cat) = category {
+            sqlx::query_as::<_, (String, String, String, String, String, i32, i32)>(
+                "SELECT permanent_id, category, title, description, canonical_url, upvotes, downvotes
+                 FROM counts
+                 WHERE category = ?
+                 ORDER BY (upvotes - downvotes) DESC"
+            )
+            .bind(cat)
+            .fetch_all(&self.pool)
+            .await?
+        } else {
+            sqlx::query_as::<_, (String, String, String, String, String, i32, i32)>(
+                "SELECT permanent_id, category, title, description, canonical_url, upvotes, downvotes
+                 FROM counts
+                 ORDER BY (upvotes - downvotes) DESC"
+            )
+            .fetch_all(&self.pool)
+            .await?
+        };
+
+        Ok(pages
+            .into_iter()
+            .map(|(permanent_id, category, title, description, canonical_url, upvotes, downvotes)| {
+                PageVoteInfo {
+                    permanent_id,
+                    category,
+                    title,
+                    description,
+                    canonical_url,
+                    upvotes,
+                    downvotes,
+                }
+            })
+            .collect())
+    }
+
     /// Ensure a page exists in the counts table, creating or updating as needed
     pub async fn ensure_page(
         &self,
@@ -315,6 +358,223 @@ impl UpvoteService {
         }
 
         Ok(())
+    }
+
+    // -------------------------------------------------------------------------
+    // HTML Rendering (matches PHP's Upvote::render_list)
+    // -------------------------------------------------------------------------
+
+    /// Get user vote actions for multiple pages at once.
+    /// Returns a map from permanent_id to the user's vote action.
+    pub async fn get_user_actions_batch(
+        &self,
+        pages: &[PageVoteInfo],
+        client_ip: &str,
+    ) -> Result<std::collections::HashMap<String, Option<VoteAction>>, sqlx::Error> {
+        use std::collections::HashMap;
+
+        let mut result = HashMap::new();
+        for page in pages {
+            let action = self.get_user_action(&page.permanent_id, client_ip).await?;
+            result.insert(page.permanent_id.clone(), action);
+        }
+        Ok(result)
+    }
+
+    /// Render a table of page links with upvote arrows (synchronous version).
+    /// Matches PHP's Upvote::render_list() output exactly.
+    ///
+    /// # Arguments
+    /// * `pages` - List of pages to render
+    /// * `page_url` - URL for form actions (current page's canonical URL)
+    /// * `user_actions` - Pre-fetched map of permanent_id -> user's vote action
+    pub fn render_list(
+        pages: &[PageVoteInfo],
+        page_url: &str,
+        user_actions: &std::collections::HashMap<String, Option<VoteAction>>,
+    ) -> String {
+        let mut html = String::new();
+        html.push_str("<table class=\"upvote_pagelist\">");
+
+        for (i, page) in pages.iter().enumerate() {
+            let user_action = user_actions
+                .get(&page.permanent_id)
+                .copied()
+                .flatten();
+
+            if i == 0 {
+                // First row: 12 spaces before <tr>, same line as table
+                html.push_str("            <tr>\n");
+            } else {
+                // Subsequent rows: 20 spaces before <tr>
+                html.push_str("                    <tr>\n");
+            }
+
+            // Render the row content
+            Self::render_list_row(&mut html, page, page_url, user_action);
+
+            // Close the row with 12 spaces
+            html.push_str("            </tr>\n");
+        }
+
+        // Close table with 8 spaces
+        html.push_str("        </table>");
+        html
+    }
+
+    /// Render a single row of the upvote list table.
+    fn render_list_row(
+        html: &mut String,
+        page: &PageVoteInfo,
+        page_url: &str,
+        user_action: Option<VoteAction>,
+    ) {
+        let safe_title = html_escape(&page.title);
+        let safe_description = html_escape(&page.description);
+        let safe_url = html_escape(&page.canonical_url);
+
+        // Arrow cell
+        html.push_str("                <td class=\"upvote_list_arrowcell\">\n");
+        Self::render_arrows_in_list(html, page, page_url, user_action);
+        html.push_str("</td>\n");
+
+        // Title cell
+        html.push_str("                <td class=\"upvote_list_titlecell\">\n");
+        html.push_str(&format!(
+            "                    <a class=\"upvote_list_title\" href=\"{}\">\n",
+            safe_url
+        ));
+        html.push_str(&format!(
+            "                        {}                    </a>\n",
+            safe_title
+        ));
+        html.push_str("                    <div class=\"upvote_list_desc\">\n");
+        html.push_str(&format!(
+            "                        {}                    </div>\n",
+            safe_description
+        ));
+        html.push_str("                </td>\n");
+    }
+
+    /// Render the upvote arrows for list view (up arrow, count, down arrow).
+    fn render_arrows_in_list(
+        html: &mut String,
+        page: &PageVoteInfo,
+        page_url: &str,
+        user_action: Option<VoteAction>,
+    ) {
+        html.push_str("                                <div class=\"upvotearrowsinlist\">\n");
+        Self::render_uparrow(html, &page.permanent_id, page_url, user_action);
+        Self::render_count(html, &page.permanent_id, page.total(), user_action);
+        Self::render_downarrow(html, &page.permanent_id, page_url, user_action);
+        html.push_str("                </div>\n");
+        html.push_str("                        ");
+    }
+
+    /// Render the up arrow form.
+    fn render_uparrow(
+        html: &mut String,
+        permanent_id: &str,
+        page_url: &str,
+        user_action: Option<VoteAction>,
+    ) {
+        let safe_id = html_escape(permanent_id);
+        let js_id = js_escape(permanent_id);
+        let up_form_name = format!("upvoteUpForm{}", safe_id);
+        let up_image_name = format!("upvoteUpImage{}", safe_id);
+
+        let is_selected = user_action == Some(VoteAction::Upvote);
+        let image = if is_selected {
+            "/images/upvote-selected.gif"
+        } else {
+            "/images/upvote.gif"
+        };
+        // Note: PHP adds a trailing space after alt="Upvote" when selected
+        let alt_suffix = if is_selected { " " } else { "" };
+
+        html.push_str("                    <div class=\"upvoteuparrow\">\n");
+        html.push_str(&format!(
+            "            <form \n                action=\"{}\" \n                method=\"post\"\n                onsubmit=\"return upvote.submit('{}', 'up')\"\n                class=\"upvoteform {}\"\n            >\n",
+            html_escape(page_url),
+            js_id,
+            up_form_name
+        ));
+        html.push_str(
+            "                <input type=\"hidden\" name=\"upvotes_direction\" value=\"up\" />\n",
+        );
+        html.push_str(&format!(
+            "                <input type=\"hidden\" name=\"upvotes_id\" value=\"{}\" />\n",
+            safe_id
+        ));
+        html.push_str(&format!(
+            "                                    <input\n                        type=\"image\" src=\"{}\" alt=\"Upvote\"{}\n                        name=\"{}\"\n                    />\n",
+            image, alt_suffix, up_image_name
+        ));
+        html.push_str("                            </form>\n");
+        html.push_str("        </div>\n");
+    }
+
+    /// Render the vote count display.
+    fn render_count(
+        html: &mut String,
+        permanent_id: &str,
+        total: i32,
+        user_action: Option<VoteAction>,
+    ) {
+        let safe_id = html_escape(permanent_id);
+        let counter_name = format!("upvoteCounter{}", safe_id);
+
+        let count_class = match user_action {
+            Some(VoteAction::Upvote) => format!("upvotecount_upvoted {}", counter_name),
+            Some(VoteAction::Downvote) => format!("upvotecount_downvoted {}", counter_name),
+            None => format!("upvotecount {}", counter_name),
+        };
+
+        html.push_str(&format!(
+            "            <div class=\"{}\" >\n            {} \n        </div>\n",
+            count_class, total
+        ));
+    }
+
+    /// Render the down arrow form.
+    fn render_downarrow(
+        html: &mut String,
+        permanent_id: &str,
+        page_url: &str,
+        user_action: Option<VoteAction>,
+    ) {
+        let safe_id = html_escape(permanent_id);
+        let js_id = js_escape(permanent_id);
+        let down_form_name = format!("upvoteDownForm{}", safe_id);
+        let down_image_name = format!("upvoteDownImage{}", safe_id);
+
+        let is_selected = user_action == Some(VoteAction::Downvote);
+        let image = if is_selected {
+            "/images/downvote-selected.gif"
+        } else {
+            "/images/downvote.gif"
+        };
+
+        html.push_str("            <div class=\"upvotedownarrow\">\n");
+        html.push_str(&format!(
+            "            <form \n                action=\"{}\" \n                method=\"post\"\n                onsubmit=\"return upvote.submit('{}', 'down')\"\n                class=\"upvoteform {}\"\n            >\n",
+            html_escape(page_url),
+            js_id,
+            down_form_name
+        ));
+        html.push_str(
+            "                <input type=\"hidden\" name=\"upvotes_direction\" value=\"down\" />\n",
+        );
+        html.push_str(&format!(
+            "                <input type=\"hidden\" name=\"upvotes_id\" value=\"{}\" />\n",
+            safe_id
+        ));
+        html.push_str(&format!(
+            "                                    <input \n                        type=\"image\" src=\"{}\" alt=\"Downvote\"\n                        name=\"{}\"\n                    />\n",
+            image, down_image_name
+        ));
+        html.push_str("                            </form>\n");
+        html.push_str("        </div>\n");
     }
 
     // -------------------------------------------------------------------------

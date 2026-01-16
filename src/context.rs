@@ -5,9 +5,11 @@
 
 use std::path::Path;
 
+use crate::libs::bibliography::Bibliography;
 use crate::libs::phpcount::HitCounts;
 use crate::libs::upvotes::VoteState;
-use crate::libs::{util::html_escape, vim_highlight};
+use crate::libs::util::html_escape;
+use crate::libs::vim_highlight;
 use crate::registry::PageInfo;
 
 /// Common context data available to all page templates.
@@ -59,5 +61,20 @@ impl PageContext {
     pub fn hl_file(&self, path: &str, show_lines: bool) -> String {
         vim_highlight::highlight_file(Path::new(path), show_lines)
             .unwrap_or_else(|e| format!("<pre>Error highlighting file: {}</pre>", html_escape(&e.to_string())))
+    }
+
+    // ===== Bibliography (matches PHP's Bibliography.php) =====
+
+    /// Create a bibliography from a list of references.
+    /// Each tuple is (key, title, authors, date, url).
+    ///
+    /// Usage in template:
+    /// ```jinja2
+    /// {% let bib = ctx.bib(&[("1", "Title", "Authors", "Date", "URL")]) %}
+    /// {{ bib.cite("1")|safe }}
+    /// {{ bib.render()|safe }}
+    /// ```
+    pub fn bib(&self, refs: &[(&str, &str, &str, &str, &str)]) -> Bibliography {
+        Bibliography::new(refs)
     }
 }

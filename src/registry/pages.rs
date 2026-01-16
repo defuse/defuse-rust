@@ -31,6 +31,17 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         alias!("index.html" => ""),
         alias!("index.php" => ""),
 
+        // ===== All pages =====
+        page! {
+            handler: all_pages,
+            slug: "all-pages",
+            title: "",
+            description: "A list of all pages on defuse.ca, sorted by popularity.",
+            keywords: "",
+            legacy_hit_count_id: "pages/all-pages.php",
+            upvote: None,
+        },
+
         // ===== Main pages =====
         page! {
             handler: about,
@@ -385,6 +396,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 category: "defuse_pages",
                 title: Some("File System Events Leak Folder Contents"),
                 description: Some("An information disclosure vulnerability in Windows shared folders that lets you see what's in folers you can't access."),
+            }),
+        },
+        page! {
+            handler: research::flush_reload_side_channel,
+            slug: "flush-reload-side-channel",
+            title: "Implications of the FLUSH+RELOAD Side-Channel Attack",
+            description: "The FLUSH+RELOAD side-channel attack breaks security in multi-user environments.",
+            keywords: "FLUSH+RELOAD, side channel attack, multi-user security",
+            legacy_hit_count_id: "pages/research/flush-reload-side-channel.php",
+            upvote: Some(UpvoteConfig {
+                id: "flushreload",
+                category: "defuse_pages",
+                title: Some("FLUSH+RELOAD: Multi-User Systems are Doomed"),
+                description: Some("The FLUSH+RELOAD side-channel attack breaks the security of multi-user systems."),
             }),
         },
         page! {
@@ -858,8 +883,8 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             upvote: Some(UpvoteConfig {
                 id: "truecrypthashes",
                 category: "defuse_pages",
-                title: None,
-                description: None,
+                title: Some("Hashes of TrueCrypt Version 7.1a Files"),
+                description: Some("Hashes of all files from the last version of TrueCrypt"),
             }),
         },
         page! {
@@ -1168,20 +1193,6 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/encfs.php",
             upvote: Some(UpvoteConfig {
                 id: "auditencfs",
-                category: "defuse_pages",
-                title: Some("EncFS Security Audit"),
-                description: Some("The results of an EncFS security audit."),
-            }),
-        },
-        page! {
-            handler: audits::encfs_old,
-            slug: "audits/encfs-old",
-            title: "EncFS Security Audit",
-            description: "Security audit of the EncFS encrypted filesystem.",
-            keywords: "encfs, security audit, cryptography",
-            legacy_hit_count_id: "pages/audits/encfs-old.php",
-            upvote: Some(UpvoteConfig {
-                id: "auditencfsOLD",
                 category: "defuse_pages",
                 title: Some("EncFS Security Audit"),
                 description: Some("The results of an EncFS security audit."),

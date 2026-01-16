@@ -13,30 +13,30 @@ impl PageHandler for Handler {
         let page_url = ctx.canonical_url();
         let client_ip = ctx.client_ip.clone();
         Box::pin(async move {
-            let top_pages = upvotes
-                .get_top_pages(8, None)
+            let all_pages = upvotes
+                .get_all_pages(None)
                 .await
-                .expect("BUG: Failed to get top pages from database");
+                .expect("BUG: Failed to get all pages from database");
 
             let user_actions = upvotes
-                .get_user_actions_batch(&top_pages, &client_ip)
+                .get_user_actions_batch(&all_pages, &client_ip)
                 .await
                 .expect("BUG: Failed to get user actions");
 
-            let top_pages_html = crate::libs::upvotes::UpvoteService::render_list(
-                &top_pages,
+            let all_pages_html = crate::libs::upvotes::UpvoteService::render_list(
+                &all_pages,
                 &page_url,
                 &user_actions,
             );
 
-            HomePage { ctx, top_pages_html }.into_response()
+            AllPagesPage { ctx, all_pages_html }.into_response()
         })
     }
 }
 
 #[derive(Template)]
-#[template(path = "pages/home.html")]
-struct HomePage {
+#[template(path = "pages/all_pages.html")]
+struct AllPagesPage {
     ctx: PageContext,
-    top_pages_html: String,
+    all_pages_html: String,
 }
