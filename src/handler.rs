@@ -45,6 +45,8 @@ macro_rules! simple_page {
         use $crate::context::PageContext;
         use $crate::handler::{BoxFuture, PageHandler};
         use $crate::app_state::AppState;
+        #[allow(unused_imports)]
+        use $crate::prelude::*;
 
         pub struct Handler;
 

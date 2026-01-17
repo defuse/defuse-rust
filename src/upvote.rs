@@ -22,6 +22,7 @@ pub struct VoteForm {
 }
 
 /// POST /upvote - Process a vote and return XML response
+/// TODO: encapsulate more of this into the upvote library
 pub async fn post(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,

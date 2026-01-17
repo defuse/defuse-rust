@@ -1282,6 +1282,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
     ];
 
     // Build HashMap with lowercase keys for case-insensitive lookup
+    // TODO: make it a loud error if there are entries with the same slug aside from case
     pages
         .iter()
         .map(|p| (p.slug.to_lowercase().leak() as &'static str, p.clone()))

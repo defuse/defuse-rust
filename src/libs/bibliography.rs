@@ -1,15 +1,7 @@
-//! Bibliography system for academic-style citations.
-//!
-//! Matches PHP's Bibliography.php output exactly.
-
 use super::util::html_escape;
 use std::collections::BTreeMap;
 
 /// Bibliography for academic-style citations.
-///
-/// References are stored as pre-rendered HTML, matching PHP's approach.
-/// Created immutably with all references, then used in templates
-/// to generate citation links and the bibliography section.
 #[derive(Debug, Clone)]
 pub struct Bibliography {
     /// Map of key -> rendered HTML for each reference
@@ -22,6 +14,7 @@ impl Bibliography {
     /// Each tuple is (key, title, authors, date, url).
     /// For general references (no author/date), pass empty strings for authors and date.
     pub fn new(refs: &[(&str, &str, &str, &str, &str)]) -> Self {
+        // TODO: instead of passing a big array, add methods for adding citations
         let mut references = BTreeMap::new();
         for (key, title, authors, date, url) in refs {
             let safe_title = html_escape(title);
@@ -56,8 +49,7 @@ impl Bibliography {
         }
     }
 
-    /// Render the full bibliography section.
-    /// Call this at the end of the page.
+    /// Render the full bibliography section as HTML
     pub fn render(&self) -> String {
         let mut html = String::new();
         html.push_str("<div id=\"references\">");

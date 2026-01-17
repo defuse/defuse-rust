@@ -19,4 +19,4 @@ TrueCrypt v7.1a materials</a>.
     </a>
 </p>
 
-{{ ctx.hl_file("static/downloads/truecrypt-hashes.asc", false)|safe }}{% endblock %}
+{{ vim_highlight::highlight_file(Path::new("static/downloads/truecrypt-hashes.asc"), false).unwrap()|safe }}{% endblock %}

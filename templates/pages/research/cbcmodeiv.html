@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}{% let bib = ctx.bib([("1", "Problems with Proposed IP Cryptography", "Phil Rogaway", "April 3, 1995", "http://www.vpnc.org/ietf-ipsec/92.ipsec/msg01847.html"), ("2", "Twitter discussion between @DefuseSec and @tqbf", "", "", "https://twitter.com/tqbf/status/376873119199137792")]) %}<div class="pagedate">
+{% block content %}{% let bib = Bibliography::new([("1", "Problems with Proposed IP Cryptography", "Phil Rogaway", "April 3, 1995", "http://www.vpnc.org/ietf-ipsec/92.ipsec/msg01847.html"), ("2", "Twitter discussion between @DefuseSec and @tqbf", "", "", "https://twitter.com/tqbf/status/376873119199137792")]) %}<div class="pagedate">
 September 8, 2013
 </div>
 <h1>Encryption - CBC Mode IV: Secret or Not?</h1>

@@ -21,7 +21,7 @@ folder, or to the runner's ~/.vim/ folder.
 Once set up, using it is simple:
 </p>
 
-{{ ctx.hl_string("<?php
+{{ vim_highlight::highlight_string("<?php
     require_once('VimHighlight.php');
     $hl = new VimHighlight();
     $hl->caching = true;
@@ -30,7 +30,7 @@ Once set up, using it is simple:
     $hl->use_css = false;
     $hl->setVimCommand(\"vim\");
     echo $hl->processFile(\"file_to_process.php\", true);
-?>", "php", false)|safe }}
+?>", "php", false).unwrap()|safe }}
 <h2>Download</h2>
 
 <p>

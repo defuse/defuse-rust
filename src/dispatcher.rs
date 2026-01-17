@@ -1,11 +1,11 @@
-//! Central dispatcher for all page requests.
+//! Central dispatcher for all registered page requests.
 //!
 //! This module handles routing by looking up pages in the registry and
 //! calling the appropriate handler method based on the HTTP method.
 //!
 //! Hit counting and vote state are fetched here (not in middleware) because
-//! they only apply to formally-defined pages. This matches PHP's approach
-//! and keeps all page-handling logic in one place.
+//! they only apply to formally-defined pages. This matches the PHP version's
+//! approach and keeps all page-handling logic in one place.
 
 use axum::{
     body::Body,
@@ -15,7 +15,8 @@ use axum::{
 };
 use bytes::Bytes;
 use std::net::SocketAddr;
-use tracing::{debug, warn};
+use std::net::IpAddr;
+use tracing::{debug, error};
 
 use crate::app_state::AppState;
 use crate::context::PageContext;
@@ -23,36 +24,15 @@ use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{lookup_page, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
 
-/// Main dispatcher - handles all page requests via the registry.
-///
-/// This is the fallback handler that processes any request not matched
-/// by explicit routes (like /upvote or static files).
+/// Processes any request not matched by explicit routes (like /upvote or static
+/// files). If the request is not for a registered page or what we expect to be
+/// a 404, that's a bug in main.rs.
 pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
 
-    // Look up page in registry
-    let Some(page_info) = lookup_page_from_path(&path) else {
-        // Page not in registry - return 404
-        return render_not_found(&request);
-    };
-
-    // Handle aliases/redirects
-    if let Some(target) = page_info.redirect {
-        let target_info = lookup_page(target)
-            .expect("BUG: redirect target must exist in registry");
-        return Redirect::permanent(&target_info.relative_url()).into_response();
-    }
-
-    // Check if page has a handler implemented
-    let Some(handler) = page_info.handler else {
-        // Page is in registry but not yet implemented - return 404
-        // (stub_page! entries have handler: None)
-        return render_not_found(&request);
-    };
-
     // Extract all data from request BEFORE any async operations
-    // (Request<Body> is not Sync, so can't hold reference across await)
+    // (Request<Body> is not Sync, so we can't hold reference across await)
     let connection_ip = request
         .extensions()
         .get::<ConnectInfo<SocketAddr>>()
@@ -75,11 +55,26 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .unwrap_or("")
         .to_string();
 
+    // Check if we need to 404
+    let Some(page_info) = lookup_page_from_path(&path) else {
+        return render_not_found(client_ip, dnt_enabled);
+    };
+
+    // Handle aliases/redirects
+    if let Some(target) = page_info.redirect {
+        let target_info = lookup_page(target)
+            .expect("BUG: redirect target must exist in registry");
+        return Redirect::permanent(&target_info.relative_url()).into_response();
+    }
+
+    // All non-redirect registry entries MUST have a handler, if not, fail loud.
+    let handler = page_info.handler.unwrap();
+
     // Extract body for POST requests (consumes request)
     let body = if method == Method::POST {
         let (_parts, body) = request.into_parts();
+        // 100MB limit (matches PHP's post_max_size)
         match axum::body::to_bytes(body, 100 * 1024 * 1024).await {
-            // 100MB limit (matches PHP's post_max_size)
             Ok(bytes) => bytes,
             Err(_) => {
                 return (StatusCode::BAD_REQUEST, "Failed to read request body").into_response();
@@ -89,7 +84,8 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         Bytes::new()
     };
 
-    // Now do async operations (hit counting, vote fetching)
+    // Now do async operations
+
     let page_id = page_info.hit_counter_id();
     let hit_counts = record_and_get_hits(&state, page_id, &client_ip, &user_agent).await;
 
@@ -111,6 +107,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
 
     // Dispatch based on HTTP method
     match method {
+        // Axum takes care of not returning the body for HEAD requests
         Method::GET | Method::HEAD => handler.get(ctx, &state).await,
         Method::POST => match handler.post(ctx, &state, body) {
             Some(future) => future.await,
@@ -120,7 +117,6 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
             }
         },
         _ => {
-            // Unsupported method
             (StatusCode::METHOD_NOT_ALLOWED, "Method Not Allowed").into_response()
         }
     }
@@ -135,12 +131,15 @@ async fn record_and_get_hits(
 ) -> HitCounts {
     // Record the hit (errors logged but don't block page render)
     if let Err(e) = state.phpcount.add_hit(page_id, client_ip, user_agent).await {
-        warn!("Failed to record hit for {}: {}", page_id, e);
+        error!("Failed to record hit for {}: {}", page_id, e);
     }
 
     // Fetch counts
     state.phpcount.get_hit_counts(page_id).await
-        .expect("Failed to get hit counts")
+        .unwrap_or_else(|e| {
+            error!("Failed to get hit counts for {}: {}", page_id, e);
+            HitCounts::default()
+        })
 }
 
 /// Fetch vote state for a page with upvoting enabled.
@@ -157,7 +156,8 @@ async fn fetch_vote_state(
     let description = upvote_config
         .description
         .unwrap_or_else(|| page_info.description_or_default());
-    // Use full URL for database storage (matching PHP behavior)
+
+    // In the PHP code, each of these were hard-coded, but we can automatically generate them.
     let page_url = if page_info.slug.is_empty() {
         "https://defuse.ca/".to_string()
     } else if page_info.is_directory() {
@@ -166,7 +166,7 @@ async fn fetch_vote_state(
         format!("https://defuse.ca/{}.htm", page_info.slug)
     };
 
-    // Ensure page exists in database (creates or updates metadata)
+    // Ensure page exists in database (this is how entries for new pages are added)
     if let Err(e) = state
         .upvotes
         .ensure_page(
@@ -178,7 +178,7 @@ async fn fetch_vote_state(
         )
         .await
     {
-        warn!(
+        error!(
             "Failed to ensure page {} in upvotes database: {}",
             upvote_config.id, e
         );
@@ -190,7 +190,7 @@ async fn fetch_vote_state(
         .get_vote_state(upvote_config.id, client_ip)
         .await
         .unwrap_or_else(|e| {
-            warn!(
+            error!(
                 "Failed to get vote counts for {}: {}",
                 upvote_config.id, e
             );
@@ -199,23 +199,7 @@ async fn fetch_vote_state(
 }
 
 /// Render the 404 not found page.
-fn render_not_found(request: &Request<Body>) -> Response {
-    // For 404 pages, we don't record hits or fetch votes
-    let connection_ip = request
-        .extensions()
-        .get::<ConnectInfo<SocketAddr>>()
-        .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
-        .0
-        .ip();
-    let client_ip = client_ip(connection_ip, request.headers());
-
-    let dnt_enabled = request
-        .headers()
-        .get(header::DNT)
-        .and_then(|v| v.to_str().ok())
-        .map(|v| v == "1")
-        .unwrap_or(false);
-
+fn render_not_found(client_ip: String, dnt_enabled: bool) -> Response {
     let ctx = PageContext {
         page_info: &NOT_FOUND_PAGE_INFO,
         client_ip,

@@ -125,7 +125,7 @@ source code follows:
 </p>
 
 
-{{ ctx.hl_string("Closest collision so far: 1
+{{ vim_highlight::highlight_string("Closest collision so far: 1
 Tree size: 0
 Closest collision so far: 2
 Tree size: 1
@@ -163,9 +163,9 @@ Closest collision so far: 32
 Tree size: 33425
 Found a collision amongst 33425 in 445046 queries!
 Message 1: 8db04aea6b6b8d3a80d93d7064ec78a0bd24a8cba3a56d3c2f8755d8a9b63a40
-Message 2: 99cec515fff6c583134b0942c0e6381ebdb10c07b472f58fd74e1cb0fbb684b8", "text", false)|safe }}
+Message 2: 99cec515fff6c583134b0942c0e6381ebdb10c07b472f58fd74e1cb0fbb684b8", "text", false).unwrap()|safe }}
 <p>
 Here's the source code:
 </p>
 
-{{ ctx.hl_file("static/source/blind-birthday.rb", false)|safe }}{% endblock %}
+{{ vim_highlight::highlight_file(Path::new("static/source/blind-birthday.rb"), false).unwrap()|safe }}{% endblock %}

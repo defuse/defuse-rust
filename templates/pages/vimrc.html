@@ -33,7 +33,7 @@
 
 <h2>Synchronization Script</h2>
 
-{{ ctx.hl_file("static/source/vimupdate.sh", false)|safe }}
+{{ vim_highlight::highlight_file(Path::new("static/source/vimupdate.sh"), false).unwrap()|safe }}
 <h2>~/.vimrc</h2>
 
-{{ ctx.hl_file("static/upload/vim/vimrc", false)|safe }}{% endblock %}
+{{ vim_highlight::highlight_file(Path::new("static/upload/vim/vimrc"), false).unwrap()|safe }}{% endblock %}

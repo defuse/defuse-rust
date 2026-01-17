@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block content %}{% let bib = ctx.bib([("1", "FLUSH+RELOAD: a High Resolution, Low Noise, L3 Cache Side-Channel Attack", "Yuval Yarom, Katrina Falkner", "July 18, 2013", "http://eprint.iacr.org/2013/448.pdf"), ("2", "Keyboard Acoustic Emanations", "Dmitry Asonov, Rakesh Agrawal", "2004", "http://rakesh.agrawal-family.com/papers/ssp04kba.pdf"), ("3", "Keyboard Acoustic Emanations Revisited", "Li Zhuang, Feng Zhou, J. D. Tygar", "November 2005", "http://www.cs.berkeley.edu/~tygar/papers/Keyboard_Acoustic_Emanations_Revisited/TISSEC.pdf"), ("4", "Communication Theory of Secrecy Systems", "C. E. Shannon", "October 1949", "http://www3.alcatel-lucent.com/bstj/vol28-1949/articles/bstj28-4-656.pdf")]) %}<div class="pagedate">
+{% block content %}{% 
+    let bib = Bibliography::new([("1", "FLUSH+RELOAD: a High Resolution, Low Noise, L3 Cache Side-Channel Attack", "Yuval Yarom, Katrina Falkner", "July 18, 2013", "http://eprint.iacr.org/2013/448.pdf"), ("2", "Keyboard Acoustic Emanations", "Dmitry Asonov, Rakesh Agrawal", "2004", "http://rakesh.agrawal-family.com/papers/ssp04kba.pdf"), ("3", "Keyboard Acoustic Emanations Revisited", "Li Zhuang, Feng Zhou, J. D. Tygar", "November 2005", "http://www.cs.berkeley.edu/~tygar/papers/Keyboard_Acoustic_Emanations_Revisited/TISSEC.pdf"), ("4", "Communication Theory of Secrecy Systems", "C. E. Shannon", "October 1949", "http://www3.alcatel-lucent.com/bstj/vol28-1949/articles/bstj28-4-656.pdf")]) 
+%}<div class="pagedate">
 September 15, 2013
 </div>
 <h1>FLUSH+RELOAD: Multi-User Systems are Doomed</h1>

@@ -17,10 +17,10 @@ Manual</a>, which is a great reference.
 
 <h2>Makefile</h2>
 <center><strong><a href="/source/Makefile">Download Makefile</a></strong></center>
-{{ ctx.hl_file("static/source/Makefile", true)|safe }}
+{{ vim_highlight::highlight_file(Path::new("static/source/Makefile"), true).unwrap()|safe }}
 <h2>Server</h2>
 <center><strong><a href="/source/server.c">Download server.c</a></strong></center>
-{{ ctx.hl_file("static/source/server.c", true)|safe }}
+{{ vim_highlight::highlight_file(Path::new("static/source/server.c"), true).unwrap()|safe }}
 <h2>Client</h2>
 <center><strong><a href="/source/client.c">Download client.c</a></strong></center>
-{{ ctx.hl_file("static/source/client.c", true)|safe }}{% endblock %}
+{{ vim_highlight::highlight_file(Path::new("static/source/client.c"), true).unwrap()|safe }}{% endblock %}

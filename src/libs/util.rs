@@ -182,6 +182,7 @@ pub fn js_escape(s: &str) -> String {
             result.push(c);
         } else {
             // Escape as \xHH for ASCII, or handle multi-byte chars
+            // TODO: this does not properly handle multi-byte characters!
             for byte in c.to_string().as_bytes() {
                 result.push_str(&format!("\\x{:02X}", byte));
             }
