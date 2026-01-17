@@ -235,7 +235,7 @@
 {%- if let Some(upvote_cfg) = ctx.page_info.upvote %}            <div class="upvotearrows">
                     <div class="upvoteuparrow">
             <form 
-                action="{{ ctx.canonical_url() }}" 
+                action="{{ ctx.page_info.relative_url() }}" 
                 method="post"
                 onsubmit="return upvote.submit('{{ upvote_cfg.id }}', 'up')"
                 class="upvoteform upvoteUpForm{{ upvote_cfg.id }}"
@@ -260,7 +260,7 @@
         </div>
             <div class="upvotedownarrow">
             <form 
-                action="{{ ctx.canonical_url() }}" 
+                action="{{ ctx.page_info.relative_url() }}" 
                 method="post"
                 onsubmit="return upvote.submit('{{ upvote_cfg.id }}', 'down')"
                 class="upvoteform upvoteDownForm{{ upvote_cfg.id }}"

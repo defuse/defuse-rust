@@ -17,7 +17,7 @@ use axum::{
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
-use crate::registry::{lookup_page, canonical_url};
+use crate::registry::lookup_page;
 
 // =============================================================================
 // HARDCODED CONFIGURATION - Matching PHP URLParse.php exactly
@@ -200,12 +200,14 @@ fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
     // Step 4: Handle aliases/redirects
     if let Some(redirect_target) = page_info.redirect {
         // Resolve alias to canonical URL (with .htm anticipation)
-        let canonical = canonical_url(redirect_target);
+        let target_info = lookup_page(redirect_target)
+            .expect("BUG: redirect target must exist in registry");
+        let canonical = target_info.relative_url();
         return Some(append_query(&canonical, query));
     }
 
     // Get the canonical URL for this page
-    let canonical = canonical_url(page_info.slug);
+    let canonical = page_info.relative_url();
 
     let canonical_with_query = append_query(&canonical, query);
 

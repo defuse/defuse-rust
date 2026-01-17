@@ -10,7 +10,7 @@ pub struct Handler;
 impl PageHandler for Handler {
     fn get(&self, ctx: PageContext, state: &AppState) -> BoxFuture {
         let upvotes = state.upvotes.clone();
-        let page_url = ctx.canonical_url();
+        let page_url = ctx.page_info.relative_url();
         let client_ip = ctx.client_ip.clone();
         Box::pin(async move {
             let top_pages = upvotes

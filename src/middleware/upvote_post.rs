@@ -31,14 +31,11 @@ pub async fn upvote_post_middleware(
         return next.run(request).await;
     }
 
-    // Only process upvotes for formally-registered pages with upvoting enabled
-    // (This naturally skips /upvote endpoint since it's not in the registry)
+    // Only process upvotes for known pages (not static files like CSS/JS)
+    // This includes pages that don't have upvoting themselves but display
+    // upvote forms for other pages (like homepage and all-pages).
     let path = request.uri().path();
-    let has_upvoting = lookup_page_from_path(path)
-        .map(|page| page.upvote.is_some())
-        .unwrap_or(false);
-
-    if !has_upvoting {
+    if lookup_page_from_path(path).is_none() {
         return next.run(request).await;
     }
 

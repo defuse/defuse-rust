@@ -21,7 +21,7 @@ use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
 use crate::pages::not_found::NotFoundPage;
-use crate::registry::{canonical_url, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
+use crate::registry::{lookup_page, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
 
 /// Main dispatcher - handles all page requests via the registry.
 ///
@@ -39,8 +39,9 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
 
     // Handle aliases/redirects
     if let Some(target) = page_info.redirect {
-        let canonical = canonical_url(target);
-        return Redirect::permanent(&canonical).into_response();
+        let target_info = lookup_page(target)
+            .expect("BUG: redirect target must exist in registry");
+        return Redirect::permanent(&target_info.relative_url()).into_response();
     }
 
     // Check if page has a handler implemented

@@ -35,18 +35,6 @@ impl PageContext {
         self.page_info.slug.is_empty()
     }
 
-    /// Get the canonical URL for this page
-    pub fn canonical_url(&self) -> String {
-        let p = self.page_info;
-        if p.slug.is_empty() {
-            "https://defuse.ca:443/".to_string()
-        } else if p.is_directory() {
-            format!("https://defuse.ca:443/{}/", p.slug.trim_end_matches('/'))
-        } else {
-            format!("https://defuse.ca:443/{}.htm", p.slug)
-        }
-    }
-
     // ===== Syntax Highlighting (matches PHP's printHlString/printSourceFile) =====
 
     /// Syntax highlight a string. Matches PHP's printHlString($text, $ft, $numbers).

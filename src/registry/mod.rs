@@ -178,6 +178,18 @@ impl PageInfo {
         self.slug.is_empty() || self.slug.ends_with('/')
     }
 
+    /// Get the relative URL path for this page (for form actions, links, etc.)
+    /// Returns paths like "/", "/about.htm", "/audits/"
+    pub fn relative_url(&self) -> String {
+        if self.slug.is_empty() {
+            "/".to_string()
+        } else if self.is_directory() {
+            format!("/{}/", self.slug.trim_end_matches('/'))
+        } else {
+            format!("/{}.htm", self.slug)
+        }
+    }
+
     /// Get the page ID for PHPCount hit tracking
     pub fn hit_counter_id(&self) -> &'static str {
         self.legacy_hit_count_id
@@ -252,28 +264,6 @@ pub fn lookup_page_from_path(path: &str) -> Option<&'static PageInfo> {
     })
 }
 
-/// Get the canonical URL for a page slug
-/// Returns the URL path using the canonical case from the registry,
-/// with .htm extension (or trailing / for directories)
-pub fn canonical_url(slug: &str) -> String {
-    if let Some(info) = lookup_page(slug) {
-        // Use the canonical case from the registry
-        let canonical_slug = info.slug;
-        if canonical_slug.is_empty() {
-            "/".to_string()
-        } else if info.is_directory() {
-            format!("/{}/", canonical_slug.trim_end_matches('/'))
-        } else {
-            format!("/{}.htm", canonical_slug)
-        }
-    } else if slug.is_empty() {
-        "/".to_string()
-    } else {
-        // Unknown page, use provided slug with .htm
-        format!("/{}.htm", slug)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -294,12 +284,6 @@ mod tests {
     fn test_alias_detection() {
         let key = lookup_page("key").unwrap();
         assert_eq!(key.redirect, Some("contact"));
-    }
-
-    #[test]
-    fn test_canonical_url() {
-        assert_eq!(canonical_url(""), "/");
-        assert_eq!(canonical_url("about"), "/about.htm");
     }
 
     #[test]
