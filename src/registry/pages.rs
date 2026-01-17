@@ -1279,6 +1279,15 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "",
             upvote: None,
         },
+        page! {
+            handler: test_directory,
+            slug: "test-directory/",
+            title: "Test Directory",
+            description: "Test page for directory-style URL handling.",
+            keywords: "",
+            legacy_hit_count_id: "",
+            upvote: None,
+        },
     ];
 
     // Build HashMap with lowercase keys for case-insensitive lookup

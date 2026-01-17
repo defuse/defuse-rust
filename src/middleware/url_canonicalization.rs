@@ -17,7 +17,7 @@ use axum::{
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
-use crate::registry::lookup_page;
+use crate::registry::{resolve_path, PathLookupResult};
 
 // =============================================================================
 // HARDCODED CONFIGURATION - Matching PHP URLParse.php exactly
@@ -146,104 +146,16 @@ pub fn is_accepted_host(host: &str) -> bool {
 
 /// Canonicalize the URL path, returning a redirect URL if needed.
 ///
-/// This handles:
-/// - Alias resolution (e.g., /trent → /trustedthirdparty.htm)
-/// - Extension canonicalization (/about → /about.htm)
-/// - .html → .htm redirect
-/// - Case normalization (/About.htm → /about.htm)
-/// - Directory trailing slash (/audits → /audits/)
+/// Uses resolve_path() as the single source of truth for URL canonicalization.
+/// Returns Some(redirect_url) if path needs redirect, None if already canonical or 404.
 fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
-    // Handle root path
-    if path == "/" {
-        return None; // Home page, no redirect needed
-    }
-
-    // Parse the path to extract the page name
-    let path_without_leading_slash = path.strip_prefix('/').unwrap_or(path);
-    let path_lower = path_without_leading_slash.to_lowercase();
-
-    // Check for invalid patterns: /.htm or /foo/.htm (case-insensitive)
-    if path_lower == ".htm" || path_lower == ".html" {
-        return None; // Will 404
-    }
-    if path_lower.ends_with("/.htm") || path_lower.ends_with("/.html") {
-        return None; // Will 404
-    }
-
-    // Detect and strip extension (case-insensitive matching)
-    // .HTM, .Htm, .htm all treated as .htm extension
-    let (name_part, had_htm, had_html) = if path_lower.ends_with(".htm") {
-        // Strip last 4 chars regardless of case
-        (&path_without_leading_slash[..path_without_leading_slash.len() - 4], true, false)
-    } else if path_lower.ends_with(".html") {
-        // Strip last 5 chars regardless of case
-        (&path_without_leading_slash[..path_without_leading_slash.len() - 5], false, true)
-    } else {
-        (path_without_leading_slash, false, false)
-    };
-
-    // Check if it's a directory path (ends with /)
-    let _is_directory_request = name_part.ends_with('/') || path.ends_with('/');
-    let lookup_name = name_part.trim_end_matches('/');
-
-    // Look up the page (case-insensitive)
-    let page_info = lookup_page(lookup_name);
-
-    // If not found without slash, try with slash for directory pages
-    let page_info = page_info.or_else(|| {
-        let with_slash = format!("{}/", lookup_name);
-        lookup_page(&with_slash)
-    });
-
-    let page_info = page_info?;
-
-    // Step 4: Handle aliases/redirects
-    if let Some(redirect_target) = page_info.redirect {
-        // Resolve alias to canonical URL (with .htm anticipation)
-        let target_info = lookup_page(redirect_target)
-            .expect("BUG: redirect target must exist in registry");
-        let canonical = target_info.relative_url();
-        return Some(append_query(&canonical, query));
-    }
-
-    // Get the canonical URL for this page
-    let canonical = page_info.relative_url();
-
-    let canonical_with_query = append_query(&canonical, query);
-
-    // Redirect if:
-    // - Had .html extension (always redirect to .htm)
-    // - Missing .htm extension (non-directory)
-    // - Missing trailing slash (directory)
-    // - Case doesn't match canonical
-    if had_html {
-        // .html → .htm redirect
-        return Some(canonical_with_query);
-    }
-
-    if !page_info.is_directory() {
-        // Non-directory: must have .htm (lowercase)
-        // If had .HTM or .Htm etc, redirect to lowercase .htm
-        if !had_htm || !path.ends_with(".htm") {
-            return Some(canonical_with_query);
+    match resolve_path(path) {
+        PathLookupResult::Canonical(_) => None,
+        PathLookupResult::Redirect { canonical_path, .. } => {
+            Some(append_query(&canonical_path, query))
         }
-        // Check case of the page name part
-        if path != canonical.as_str() {
-            return Some(canonical_with_query);
-        }
-    } else {
-        // Directory: must have trailing /
-        if !path.ends_with('/') {
-            return Some(canonical_with_query);
-        }
-        // Check case (for directory part)
-        if path.to_lowercase() != canonical.to_lowercase() {
-            return Some(canonical_with_query);
-        }
+        PathLookupResult::NotFound => None, // Let dispatcher handle 404
     }
-
-    // URL is already canonical
-    None
 }
 
 /// Build a full redirect URL
@@ -388,5 +300,26 @@ mod tests {
         // Triple slash should not redirect (will 404 naturally)
         let result = canonicalize_url("///about.htm", None);
         assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_directory_page_without_trailing_slash_redirects() {
+        // Directory page without trailing slash should redirect to add it
+        let result = canonicalize_url("/test-directory", None);
+        assert_eq!(result, Some("/test-directory/".to_string()));
+    }
+
+    #[test]
+    fn test_directory_page_with_trailing_slash_no_redirect() {
+        // Directory page with trailing slash is canonical - no redirect
+        let result = canonicalize_url("/test-directory/", None);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_directory_page_htm_extension_not_valid() {
+        // Directory pages should not be accessible via .htm - should 404
+        let result = canonicalize_url("/test-directory.htm", None);
+        assert_eq!(result, None); // No redirect, will 404
     }
 }

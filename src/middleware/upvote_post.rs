@@ -18,7 +18,7 @@ use tracing::debug;
 
 use crate::app_state::AppState;
 use crate::libs::util::client_ip;
-use crate::registry::lookup_page_from_path;
+use crate::registry::{resolve_path, PathLookupResult};
 
 /// Middleware function that handles upvote POST fallback for non-JS users
 pub async fn upvote_post_middleware(
@@ -35,7 +35,7 @@ pub async fn upvote_post_middleware(
     // This includes pages that don't have upvoting themselves but display
     // upvote forms for other pages (like homepage and all-pages).
     let path = request.uri().path();
-    if lookup_page_from_path(path).is_none() {
+    if !matches!(resolve_path(path), PathLookupResult::Canonical(_)) {
         return next.run(request).await;
     }
 

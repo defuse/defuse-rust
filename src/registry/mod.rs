@@ -53,6 +53,8 @@ pub struct PageInfo {
     /// Legacy hit counter ID from PHP version - preserves existing hit counts
     /// This MUST match the ID used in the PHP PHPCount database.
     /// Format: "pages/{file}.php" or "pages/{file}.html"
+    /// TODO: make this an Option and by default use the slug?
+    /// TODO: what does it currently do on empty string (e.g. 404 page)?
     pub legacy_hit_count_id: &'static str,
 
     /// Redirect target - if Some, this page is an alias
@@ -217,7 +219,6 @@ pub const DEFAULT_META_DESCRIPTION: &str = "Defuse Security. Home of PIE Bin, TR
 pub const DEFAULT_META_KEYWORDS: &str = "defuse security, encryption, privacy, programming, code, research";
 
 /// Page info for the 404 Not Found page
-/// This is the ONLY place this should be used - in the 404 handler/dispatcher
 pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
     handler: None, // 404 handler is called directly by dispatcher, not via trait
     slug: "404",
@@ -230,38 +231,112 @@ pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
     upvote: None,
 };
 
-/// Look up a page by name (case-insensitive)
+/// Look up a page by name/slug (case-insensitive)
 pub fn lookup_page(name: &str) -> Option<&'static PageInfo> {
     let lowercase = name.to_lowercase();
     PAGE_REGISTRY.get(lowercase.as_str()).map(|p| p as &'static PageInfo)
 }
 
-/// Extract page name from a URL path and look it up.
-/// Handles stripping leading slash and .htm/.html extensions.
-/// Returns None for paths that don't map to a known page.
-pub fn lookup_page_from_path(path: &str) -> Option<&'static PageInfo> {
-    // Handle root path
-    if path == "/" {
-        return lookup_page("");
+/// Result of resolving a URL path to a page
+#[derive(Debug, Clone)]
+pub enum PathLookupResult {
+    /// Page found and URL is already canonical - serve it
+    Canonical(&'static PageInfo),
+
+    /// Page found but URL should redirect to canonical form
+    Redirect {
+        canonical_path: String,
+    },
+
+    /// Path is invalid or page not found - 404
+    NotFound,
+}
+
+/// Resolve a URL path to a page, determining if a redirect is needed.
+///
+/// This is the single source of truth for URL → page resolution.
+/// Returns:
+/// - `Canonical` if the path matches the page's canonical URL exactly
+/// - `Redirect` if the page exists but the URL should redirect (wrong case, extension, etc.)
+/// - `NotFound` if the path is invalid or no page exists
+pub fn resolve_path(path: &str) -> PathLookupResult {
+    // Handle root path and empty string → home page
+    if path == "/" || path.is_empty() {
+        let page = lookup_page("").expect("home page must exist");
+        let page = resolve_alias(page);
+        let canonical = page.relative_url();
+        return if path == canonical {
+            PathLookupResult::Canonical(page)
+        } else {
+            PathLookupResult::Redirect { canonical_path: canonical }
+        };
     }
 
     let path_without_slash = path.strip_prefix('/').unwrap_or(path);
-    let path_lower = path_without_slash.to_lowercase();
 
-    // Strip .htm or .html extension (case-insensitive)
-    let name = if path_lower.ends_with(".htm") {
-        &path_without_slash[..path_without_slash.len() - 4]
+    // If path ends with /, it's claiming to be a directory - look up directly
+    if path_without_slash.ends_with('/') {
+        return match lookup_page(path_without_slash) {
+            Some(page) => {
+                let page = resolve_alias(page);
+                let canonical = page.relative_url();
+                if path == canonical {
+                    PathLookupResult::Canonical(page)
+                } else {
+                    PathLookupResult::Redirect { canonical_path: canonical }
+                }
+            }
+            None => PathLookupResult::NotFound,
+        };
+    }
+
+    // Detect and strip .htm or .html extension (case-insensitive)
+    let path_lower = path_without_slash.to_lowercase();
+    let (name, had_extension) = if path_lower.ends_with(".htm") {
+        (&path_without_slash[..path_without_slash.len() - 4], true)
     } else if path_lower.ends_with(".html") {
-        &path_without_slash[..path_without_slash.len() - 5]
+        (&path_without_slash[..path_without_slash.len() - 5], true)
     } else {
-        path_without_slash
+        (path_without_slash, false)
     };
 
-    // Try lookup, also try with trailing slash for directories
-    lookup_page(name).or_else(|| {
-        let with_slash = format!("{}/", name.trim_end_matches('/'));
+    // Reject invalid paths like "/.htm" (empty) or "/foo/.htm" (ends with /)
+    if name.is_empty() || name.ends_with('/') {
+        return PathLookupResult::NotFound;
+    }
+
+    // Look up the page, with fallback for directory pages (without extension)
+    let page = lookup_page(name).or_else(|| {
+        // Try with trailing slash for directory pages, but only if no .htm/.html extension
+        if had_extension {
+            return None;
+        }
+        let with_slash = format!("{}/", name);
         lookup_page(&with_slash)
-    })
+    });
+
+    match page {
+        Some(page) => {
+            let page = resolve_alias(page);
+            let canonical = page.relative_url();
+            if path == canonical {
+                PathLookupResult::Canonical(page)
+            } else {
+                PathLookupResult::Redirect { canonical_path: canonical }
+            }
+        }
+        None => PathLookupResult::NotFound,
+    }
+}
+
+/// Resolve alias chains to get the final target page
+fn resolve_alias(page: &'static PageInfo) -> &'static PageInfo {
+    if let Some(target) = page.redirect {
+        let target_page = lookup_page(target).expect("BUG: redirect target must exist");
+        resolve_alias(target_page) // Handle chains
+    } else {
+        page
+    }
 }
 
 #[cfg(test)]
@@ -286,31 +361,318 @@ mod tests {
         assert_eq!(key.redirect, Some("contact"));
     }
 
+    // ==================== resolve_path tests ====================
+
     #[test]
-    fn test_lookup_page_from_path() {
-        use super::lookup_page_from_path;
+    fn test_resolve_path_canonical() {
+        // Canonical URLs should return Canonical
+        assert!(matches!(resolve_path("/"), PathLookupResult::Canonical(_)));
+        assert!(matches!(resolve_path("/about.htm"), PathLookupResult::Canonical(_)));
+        assert!(matches!(resolve_path("/test-directory/"), PathLookupResult::Canonical(_)));
+    }
 
-        // Basic lookup with .htm
-        let info = lookup_page_from_path("/about.htm").unwrap();
-        assert_eq!(info.slug, "about");
+    #[test]
+    fn test_resolve_path_redirects_missing_extension() {
+        // /about should redirect to /about.htm
+        match resolve_path("/about") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/about.htm");
+            }
+            other => panic!("Expected Redirect, got {:?}", other),
+        }
+    }
 
-        // Lookup without extension
-        let info = lookup_page_from_path("/about").unwrap();
-        assert_eq!(info.slug, "about");
+    #[test]
+    fn test_resolve_path_redirects_html_to_htm() {
+        // /about.html should redirect to /about.htm
+        match resolve_path("/about.html") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/about.htm");
+            }
+            other => panic!("Expected Redirect, got {:?}", other),
+        }
+    }
 
-        // Lookup with .html
-        let info = lookup_page_from_path("/about.html").unwrap();
-        assert_eq!(info.slug, "about");
+    #[test]
+    fn test_resolve_path_redirects_wrong_case() {
+        // /About.HTM should redirect to /about.htm
+        match resolve_path("/About.HTM") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/about.htm");
+            }
+            other => panic!("Expected Redirect, got {:?}", other),
+        }
+    }
 
-        // Case-insensitive extension
-        let info = lookup_page_from_path("/about.HTM").unwrap();
-        assert_eq!(info.slug, "about");
+    #[test]
+    fn test_resolve_path_redirects_alias() {
+        // /key should redirect to /contact.htm (key is alias for contact)
+        match resolve_path("/key") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/contact.htm");
+            }
+            other => panic!("Expected Redirect, got {:?}", other),
+        }
+    }
 
-        // Root path
-        let info = lookup_page_from_path("/").unwrap();
-        assert_eq!(info.slug, "");
+    #[test]
+    fn test_resolve_path_redirects_alias_with_extension() {
+        // Aliases should redirect even when accessed with .htm extension
+        // /pphos.htm should redirect to /password-policy-hall-of-shame.htm
+        match resolve_path("/pphos.htm") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/password-policy-hall-of-shame.htm");
+            }
+            other => panic!("Expected Redirect for /pphos.htm, got {:?}", other),
+        }
 
-        // Unknown page returns None
-        assert!(lookup_page_from_path("/nonexistent.htm").is_none());
+        // /pphos (without extension) should also redirect
+        match resolve_path("/pphos") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/password-policy-hall-of-shame.htm");
+            }
+            other => panic!("Expected Redirect for /pphos, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_redirects_directory_missing_slash() {
+        // /test-directory should redirect to /test-directory/
+        match resolve_path("/test-directory") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/test-directory/");
+            }
+            other => panic!("Expected Redirect, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_not_found() {
+        // Unknown pages
+        assert!(matches!(resolve_path("/nonexistent"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/nonexistent.htm"), PathLookupResult::NotFound));
+
+        // Invalid extension-only paths that could trick into finding home page
+        assert!(matches!(resolve_path("/.htm"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/.html"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path(".htm"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path(".html"), PathLookupResult::NotFound));
+
+        // Invalid paths with extension after directory slash
+        assert!(matches!(resolve_path("/test-directory/.htm"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/test-directory/.html"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about/.htm"), PathLookupResult::NotFound));
+
+        // Directory pages are NOT accessible via .htm extension
+        assert!(matches!(resolve_path("/test-directory.htm"), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_double_slashes() {
+        // Double slashes should NOT match pages (strips one slash, leaves "/about")
+        assert!(matches!(resolve_path("//about.htm"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("//about"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("//"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("///about.htm"), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_index_alias() {
+        // "index" is an alias for home page
+        match resolve_path("/index") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/");
+            }
+            other => panic!("Expected Redirect for /index, got {:?}", other),
+        }
+
+        // /index.htm should also redirect to /
+        match resolve_path("/index.htm") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/");
+            }
+            other => panic!("Expected Redirect for /index.htm, got {:?}", other),
+        }
+
+        // /INDEX (wrong case) should redirect to /
+        match resolve_path("/INDEX") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/");
+            }
+            other => panic!("Expected Redirect for /INDEX, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_alias_with_html_extension() {
+        // Alias with .html extension should redirect
+        match resolve_path("/pphos.html") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/password-policy-hall-of-shame.htm");
+            }
+            other => panic!("Expected Redirect for /pphos.html, got {:?}", other),
+        }
+
+        match resolve_path("/key.html") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/contact.htm");
+            }
+            other => panic!("Expected Redirect for /key.html, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_alias_wrong_case() {
+        // Alias with wrong case should redirect
+        match resolve_path("/PPHOS") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/password-policy-hall-of-shame.htm");
+            }
+            other => panic!("Expected Redirect for /PPHOS, got {:?}", other),
+        }
+
+        match resolve_path("/KEY.HTM") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/contact.htm");
+            }
+            other => panic!("Expected Redirect for /KEY.HTM, got {:?}", other),
+        }
+
+        match resolve_path("/Key.Html") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/contact.htm");
+            }
+            other => panic!("Expected Redirect for /Key.Html, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_directory_wrong_case() {
+        // Directory page with wrong case should redirect
+        match resolve_path("/TEST-DIRECTORY/") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/test-directory/");
+            }
+            other => panic!("Expected Redirect for /TEST-DIRECTORY/, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_path_traversal() {
+        // Path traversal attempts should 404 (no pages with these names)
+        assert!(matches!(resolve_path("/../about"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about/../contact"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/./about"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/.."), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/."), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_double_extensions() {
+        // Double extensions should 404 (no page named "about.htm")
+        assert!(matches!(resolve_path("/about.htm.htm"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about.html.htm"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about.htm.html"), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_wrong_extensions() {
+        // Similar but wrong extensions should 404
+        assert!(matches!(resolve_path("/about.htmx"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about.ht"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about.htm1"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about.htmlx"), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_trailing_slash_on_non_directory() {
+        // Adding trailing slash to a non-directory page should 404
+        // (there's no "about/" page, only "about")
+        assert!(matches!(resolve_path("/about/"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/contact/"), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_nested_paths() {
+        // Nested paths should 404 (no nested pages in registry)
+        assert!(matches!(resolve_path("/about/foo"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about/foo.htm"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/foo/bar/baz"), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_index_html_alias_edge_case() {
+        // "index.html" is itself an alias, so /index.html.htm strips .htm,
+        // looks up "index.html" which is an alias to home → redirects to /
+        match resolve_path("/index.html.htm") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/");
+            }
+            other => panic!("Expected Redirect for /index.html.htm, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_empty_string() {
+        // Empty string should return home page (canonical is "/")
+        match resolve_path("") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/");
+            }
+            other => panic!("Expected Redirect for empty string to /, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_without_leading_slash() {
+        // Paths without leading slash should still redirect to canonical
+        // (HTTP paths should always start with "/", but handle gracefully)
+        match resolve_path("about.htm") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/about.htm");
+            }
+            other => panic!("Expected Redirect for about.htm, got {:?}", other),
+        }
+
+        match resolve_path("about") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/about.htm");
+            }
+            other => panic!("Expected Redirect for about, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_mixed_case_extensions() {
+        // Various mixed case extension combinations
+        match resolve_path("/about.HtM") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/about.htm");
+            }
+            other => panic!("Expected Redirect for /about.HtM, got {:?}", other),
+        }
+
+        match resolve_path("/about.hTmL") {
+            PathLookupResult::Redirect { canonical_path } => {
+                assert_eq!(canonical_path, "/about.htm");
+            }
+            other => panic!("Expected Redirect for /about.hTmL, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_whitespace_in_path() {
+        // Paths with whitespace should 404 (no pages have spaces)
+        assert!(matches!(resolve_path("/about "), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/ about"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about .htm"), PathLookupResult::NotFound));
+    }
+
+    #[test]
+    fn test_resolve_path_special_characters() {
+        // Various special characters that should 404
+        assert!(matches!(resolve_path("/about?foo"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about#section"), PathLookupResult::NotFound));
+        assert!(matches!(resolve_path("/about%20page"), PathLookupResult::NotFound));
     }
 }

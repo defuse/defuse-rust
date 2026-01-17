@@ -13,6 +13,7 @@ impl PageHandler for Handler {
         let page_url = ctx.page_info.relative_url();
         let client_ip = ctx.client_ip.clone();
         Box::pin(async move {
+            // TODO: this stuff should just be moved into render_list
             let top_pages = upvotes
                 .get_top_pages(8, None)
                 .await

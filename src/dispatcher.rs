@@ -11,18 +11,17 @@ use axum::{
     body::Body,
     extract::{ConnectInfo, State},
     http::{header, Method, Request, StatusCode},
-    response::{IntoResponse, Redirect, Response},
+    response::{IntoResponse, Response},
 };
 use bytes::Bytes;
 use std::net::SocketAddr;
-use std::net::IpAddr;
 use tracing::{debug, error};
 
 use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
 use crate::pages::not_found::NotFoundPage;
-use crate::registry::{lookup_page, lookup_page_from_path, PageInfo, NOT_FOUND_PAGE_INFO};
+use crate::registry::{resolve_path, PageInfo, PathLookupResult, NOT_FOUND_PAGE_INFO};
 
 /// Processes any request not matched by explicit routes (like /upvote or static
 /// files). If the request is not for a registered page or what we expect to be
@@ -55,17 +54,20 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .unwrap_or("")
         .to_string();
 
-    // Check if we need to 404
-    let Some(page_info) = lookup_page_from_path(&path) else {
-        return render_not_found(client_ip, dnt_enabled);
+    // Resolve path to page (middleware should have already handled all redirects)
+    let page_info = match resolve_path(&path) {
+        PathLookupResult::Canonical(page) => page,
+        PathLookupResult::NotFound => {
+            return render_not_found(client_ip, dnt_enabled);
+        }
+        PathLookupResult::Redirect { canonical_path } => {
+            // Middleware should have already redirected - this is a bug
+            panic!(
+                "BUG: Redirect reached dispatcher - middleware failed to redirect {} -> {}",
+                path, canonical_path
+            );
+        }
     };
-
-    // Handle aliases/redirects
-    if let Some(target) = page_info.redirect {
-        let target_info = lookup_page(target)
-            .expect("BUG: redirect target must exist in registry");
-        return Redirect::permanent(&target_info.relative_url()).into_response();
-    }
 
     // All non-redirect registry entries MUST have a handler, if not, fail loud.
     let handler = page_info.handler.unwrap();

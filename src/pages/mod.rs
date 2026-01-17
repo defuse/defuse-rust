@@ -18,5 +18,6 @@ pub mod scratch;
 pub mod security_contact_vulnerability_disclosure;
 pub mod services;
 pub mod software;
+pub mod test_directory;
 pub mod transparency;
 pub mod vimrc;

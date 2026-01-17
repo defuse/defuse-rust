@@ -14,7 +14,7 @@ use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
 use super::url_canonicalization::is_accepted_host;
-use crate::registry::lookup_page_from_path;
+use crate::registry::{resolve_path, PathLookupResult};
 
 /// Tower layer for security headers
 #[derive(Clone)]
@@ -36,9 +36,10 @@ pub struct SecurityHeadersMiddleware<S> {
 
 /// Check if a page should have no-cache headers based on registry metadata
 fn check_no_cache(path: &str) -> bool {
-    lookup_page_from_path(path)
-        .map(|info| info.no_cache)
-        .unwrap_or(false)
+    match resolve_path(path) {
+        PathLookupResult::Canonical(page) => page.no_cache,
+        _ => false,
+    }
 }
 
 impl<S> Service<Request<Body>> for SecurityHeadersMiddleware<S>
