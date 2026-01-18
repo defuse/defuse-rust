@@ -1,10 +1,14 @@
 pub mod bibliography;
 pub mod big_number_calculator;
+pub mod breach;
 pub mod hashes;
+pub mod html_escape;
+pub mod passgen;
 pub mod phpcount;
 pub mod upvotes;
 pub mod util;
 pub mod vim_highlight;
+pub mod x86_assembler;
 
 pub use phpcount::PhpCountService;
 pub use upvotes::UpvoteService;

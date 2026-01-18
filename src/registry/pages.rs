@@ -195,15 +195,43 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         page! {
             handler: services::big_number_calculator,
             slug: "big-number-calculator",
-            title: "Big Number Calculator",
-            description: "A calculator that can add, subtract, multiply, divide, and exponentiate really big numbers.",
-            keywords: "big number calculator, calculator, arbitrary precision, large numbers",
+            title: "Online Big Number Calculator",
+            description: "Calculate enormous mathematical equations from within your browser.",
+            keywords: "big number calculator, online calculator, bigint, galactic calculator",
             legacy_hit_count_id: "pages/services/big-number-calculator.php",
             upvote: Some(UpvoteConfig {
                 id: "bignumbercalculator",
                 category: "defuse_pages",
                 title: Some("Big Number Calculator"),
                 description: Some("A tool for calculating with huge numbers."),
+            }),
+        },
+        page! {
+            handler: services::html_sanitize,
+            slug: "html-sanitize",
+            title: "Online HTML Sanitizer Tool - htmlspecialchars - Defuse Security",
+            description: "Convert text containing special characters into proper HTML.",
+            keywords: "html sanitizer, htmlspecialchars, htmlencode",
+            legacy_hit_count_id: "pages/services/html-sanitize.php",
+            upvote: Some(UpvoteConfig {
+                id: "onlinehtmlsanitize",
+                category: "defuse_pages",
+                title: Some("HTML Escape Tool"),
+                description: Some("A tool for HTML-escaping text so that it looks and behaves exactly like it does in a text editor."),
+            }),
+        },
+        page! {
+            handler: services::online_x86_assembler,
+            slug: "online-x86-assembler",
+            title: "Online x86 and x64 Intel Instruction Assembler",
+            description: "Easily find out which bytes your x86 ASM instructions assemble to.",
+            keywords: "assembler, opcode finder, opcode lookup, online assembler, x86, intel",
+            legacy_hit_count_id: "pages/services/online-x86-assembler.php",
+            upvote: Some(UpvoteConfig {
+                id: "onlinex86assembler",
+                category: "defuse_pages",
+                title: Some("Online x86 / x64 Assembler"),
+                description: Some("Assemble x86 and x64 code in your browser!"),
             }),
         },
         page! {
@@ -601,6 +629,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "pages/research/research.html",
             upvote: None,
+        },
+        page! {
+            handler: research::mitigating_breach_tls_attack_in_php,
+            slug: "mitigating-breach-tls-attack-in-php",
+            title: "PHP Code for Mitigating the BREACH attack on SSL/TLS.",
+            description: "PHP functions for defending secrets against the BREACH attack.",
+            keywords: "BREACH, BREACH attack, compression side-channel, php source code",
+            legacy_hit_count_id: "pages/research/mitigating-breach-tls-attack-in-php.php",
+            upvote: Some(UpvoteConfig {
+                id: "breachmitigate",
+                category: "defuse_pages",
+                title: Some("Mitigating BREACH in PHP"),
+                description: Some("PHP code for mitigating the BREACH attack."),
+            }),
         },
         page! {
             handler: research::side_channel_attacks_on_everyday_applications,
@@ -1196,6 +1238,24 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/software/winrrng.html",
             upvote: None,
         },
+        page! {
+            handler: software::passgen,
+            slug: "passgen",
+            title: "Secure Windows & Linux Password Generator - Defuse Security",
+            description: "A secure random password generator for Windows,  Linux and Macintosh. Generates ASCII and HEX.",
+            keywords: "password generator, secure, encryption, windows, linux, macintosh",
+            legacy_hit_count_id: "pages/software/passgen.html",
+            upvote: Some(UpvoteConfig {
+                id: "passgen",
+                category: "defuse_pages",
+                title: Some("High-Security Offline Password Generator"),
+                description: Some("A secure random password generator for Windows, Linux, and Mac."),
+            }),
+            no_cache: true,
+        },
+        alias!("passwords" => "passgen"),
+        alias!("password" => "passgen"),
+        alias!("pass" => "passgen"),
 
         // ===== Audits =====
         page! {

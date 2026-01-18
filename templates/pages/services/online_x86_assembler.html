@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}<h1>Online x86 / x64 Assembler and Disassembler</h1>
+
+<p>
+This tool takes x86 or x64 assembly instructions and converts them to their
+binary representation (machine code). It can also go the other way, taking
+a hexadecimal string of machine code and transforming it into a human-readable
+representation of the instructions. It uses GCC and objdump behind the scenes.
+<p>
+
+<p>
+You can use this tool to learn how x86 instructions are encoded or to help with
+shellcode development.
+</p>
+
+<h2>Assemble</h2>
+
+<p>Enter your assembly code using Intel syntax below.</p>
+
+<form action="/online-x86-assembler.htm#disassembly" method="post">
+    <textarea 
+        name="instructions"
+        rows="15" cols="80"
+        style="color: black; background-color: white; border: dashed 1px black; width: 100%;"
+    >{{ instructions }}</textarea>
+    <p style="text-align: right;">
+        Architecture:
+        <input type="radio" name="arch" value="x86" {% if x86_checked %}checked=checked{% endif %} /> x86
+        <input type="radio" name="arch" value="x64" {% if x64_checked %}checked=checked{% endif %} /> x64
+        <input type="submit" name="submit" value="Assemble" />
+    </p>
+</form>
+
+{%- if let Some(result) = assembly_result %}
+<a name="disassembly"></a>
+<div style="padding: 10px;">
+    <div style="font-size: 16pt; padding-bottom: 10px;">Assembly</div>
+    <div style="font-family: monospace;">
+        <p><b>Raw Hex</b> (zero bytes in bold):</p>
+        <p>{{ result.hex_zero_bold|safe }}&nbsp;&nbsp;&nbsp;</p>
+        <p><b>String Literal:</b></p>
+        <p>&quot;{{ result.string_literal }}&quot;</p>
+        <p><b>Array Literal:</b> </p>
+        <p>{{ result.array_literal }}</p>
+    </div>
+    <div style="font-size: 16pt; padding-bottom: 10px; padding-top: 10px;">Disassembly:</div>
+    <div style="font-family: monospace;">
+        <p>{{ self.format_disassembly(result)|safe }}</p>
+    </div>
+</div>
+{%- endif %}
+
+{%- if let Some(err) = error %}
+<a name="disassembly"></a>
+<div style="background-color: #FFCCCC; border: solid red 1px; padding: 10px;">
+    <div style="font-family: monospace;">
+        {{ err|safe }}
+    </div>
+</div>
+{%- endif %}
+
+
+<h2>Disassemble</h2>
+
+<p>
+Paste any hex string that encodes x86 instructions (e.g. a shellcode) below. Any
+"0x"'s are removed from the string and non-hex characters are skipped over, so you
+don't have to remove the double quotes or <code>&quot;\x&quot;</code> if you're
+disassembling a C-style string literal or array!
+</p>
+
+<form action="/online-x86-assembler.htm#disassembly2" method="post">
+    <textarea 
+        name="hexstring"
+        rows="15" cols="80"
+        style="color: black; background-color: white; border: dashed 1px black; width: 100%;"
+    >{{ hexstring }}</textarea>
+    <p style="text-align: right;">
+        Architecture:
+        <input type="radio" name="arch" value="x86" {% if x86_checked %}checked=checked{% endif %} /> x86
+        <input type="radio" name="arch" value="x64" {% if x64_checked %}checked=checked{% endif %} /> x64
+        <input type="submit" name="submit" value="Disassemble" />
+    </p>
+</form>
+
+{%- if let Some(result) = disassembly_result %}
+<a name="disassembly2"></a>
+<div style="padding: 10px;">
+    <div style="font-size: 16pt; padding-bottom: 10px;">Disassembly</div>
+    <div style="font-family: monospace;">
+        <p><b>Raw Hex</b> (zero bytes in bold):</p>
+        <p>{{ result.hex_zero_bold|safe }}&nbsp;&nbsp;&nbsp;</p>
+        <p><b>String Literal:</b></p>
+        <p>&quot;{{ result.string_literal }}&quot;</p>
+        <p><b>Array Literal:</b> </p>
+        <p>{{ result.array_literal }}</p>
+    </div>
+    <div style="font-size: 16pt; padding-bottom: 10px; padding-top: 10px;">Disassembly:</div>
+    <div style="font-family: monospace;">
+        <p>{{ self.format_disassembly(result)|safe }}</p>
+    </div>
+</div>
+{%- endif %}
+
+
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}<h1>High-Security Offline Password Generator</h1>
+
+<div style="border: solid black 1px; margin: 0 auto; width: 700px; padding: 5px;">
+<center><strong>Just want a password?</strong></center>
+    
+    <table style="margin: 0 auto; font-family: monospace;" cellspacing="5px">
+        <tr>
+            <td><strong>ASCII:</strong></td>
+            <td>{{ ascii }}</td>
+        </tr>
+        <tr>
+            <td><strong>Alpha-numeric:</strong></td>
+            <td>{{ alpha }}</td>
+        </tr>
+        <tr>
+            <td><strong>Hex:</strong></td>
+            <td>{{ hex }}</td>
+        </tr>
+    </table>
+    <p style="text-align: center; padding: 0; margin: 0;"><i><a href="/passgen.htm">Refresh</a> the page to <a href="/generating-random-passwords.htm">generate</a> a new set.</i></p>
+</div>
+
+<p>
+Online password generators like
+<a href="http://grc.com/passwords.htm">GRC's Perfect Passwords</a>,
+and the one above, are very convenient, but by using them you must trust them
+not to remember your password and share it with third parties. I invite you to
+download one of my free and open source offline password generators so your pc
+can create strong passwords with the click of a button. Since these utilities
+run on your computer, you can be sure that they won't share your password with
+anyone.
+</p>
+
+<p>
+The Windows GUI version combines data from the Cryptographically Secure Random
+Number Generator (CSPRNG) built into Windows with random mouse movements and
+other system information (CPU usage, memory usage, high-precision timers, etc.)
+to produce extremely secure passwords that are completely unique to you. The
+Linux version creates passwords from true random noise obtained from <a
+href="https://secure.wikimedia.org/wikipedia/en/wiki//dev/random">/dev/random</a>.
+</p>
+
+<h2>Windows Password Generator</h2>
+
+<p>
+This version runs on Windows XP, Windows Vista, Windows 7, Windows 2000, and
+Windows Server 2003+.
+</p>
+
+<center>
+	<a href="/downloads/WinPassGen.exe">
+        <img src="/images/winpassgen.gif"
+             alt="Windows High-Security Random Password Generator"
+             title="The Windows GUI Version of the password generator" />
+    </a>
+    <br />
+    <a href="/downloads/WinPassGen.exe">
+        <img alt="Download Windows Password Generator"
+             title="Click to Download Windows Password Generator"
+             src="/images/download.png" />
+    </a>
+</center>
+
+<p>
+<strong>
+    <a href="/downloads/WinPassGen.exe">Download Windows Password Generator</a> - 104KB.
+</strong>
+</p>
+
+<p>
+<strong>
+    <a href="https://github.com/defuse/WinPassGen">Source Code on GitHub</a>
+</strong>
+</p>
+
+<h2>Command Line Password Generator for Linux, &amp; UNIX</h2>
+
+<p>
+This version works on any UNIX-like operating system with /dev/random. It
+supports the following command-line options:
+</p>
+
+<pre class="code">
+Usage: passgen &lt;type&gt; &lt;optional arguments&gt;
+WARNING: If automated, you MUST check that the exit status is 0.
+Where &lt;type&gt; is one of:
+  -x, --hex				64-character hex string
+  -a, --ascii				64-character ASCII string
+  -n, --alpha				64-character alpha-numeric string
+  -w, --words				10 random words from a list of 6709
+  -h, --help				Show this help menu
+Where &lt;optional arguments&gt; can be:
+  -p, --password-count N		Specify number of passwords to generate
+</pre>
+
+<p>
+<strong>
+    <a href="https://github.com/defuse/passgen">Source Code on GitHub</a>
+</strong>
+</p>
+
+<h3>How to Install on Linux</h3>
+<ol>
+    <li>Clone the Git repository.</li>
+    <li>Run `make`.</li>
+    <li>Run (as root): `install passgen /usr/bin/passgen`.</li>
+</ol>
+{% endblock %}

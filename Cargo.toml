@@ -57,3 +57,9 @@ serde_urlencoded = "0.7.1"
 # Parser for big number calculator
 pest = "2"
 pest_derive = "2"
+
+# Regex for html escape
+regex = "1"
+
+# Cryptographically secure random for passgen
+rand = "0.8"

@@ -21,6 +21,7 @@ pub mod internetdangers;
 pub mod is_security_local;
 pub mod manual_random_number_generator;
 pub mod microsoft_reads_your_skype_messages;
+pub mod mitigating_breach_tls_attack_in_php;
 pub mod onedetection;
 pub mod password_hashing_after_phc;
 pub mod passwordinsecurity;
