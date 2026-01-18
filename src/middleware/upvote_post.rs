@@ -63,13 +63,14 @@ pub async fn upvote_post_middleware(
     let redirect_url = request.uri().to_string();
 
     // Collect the body to parse form data
+    // Limit matches dispatcher's 100MB limit to handle large time capsule submissions
     let (parts, body) = request.into_parts();
-    let bytes = match axum::body::to_bytes(body, 1024 * 16).await {
+    let bytes = match axum::body::to_bytes(body, 100 * 1024 * 1024).await {
         Ok(b) => b,
-        Err(_) => {
-            // Can't read body, just continue with empty body
-            let request = Request::from_parts(parts, Body::empty());
-            return next.run(request).await;
+        Err(e) => {
+            // Failed to read body - return error rather than silently continuing
+            tracing::error!("Failed to read POST body: {}", e);
+            return (axum::http::StatusCode::BAD_REQUEST, "Failed to read request body").into_response();
         }
     };
 

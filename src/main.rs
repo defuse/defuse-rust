@@ -1,4 +1,4 @@
-use axum::{middleware as axum_middleware, routing::{any, get_service, post}, Router};
+use axum::{middleware as axum_middleware, routing::{any, get, get_service, post}, Router};
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -60,6 +60,11 @@ async fn main() {
     let app = Router::new()
         // API endpoints (not pages - handled explicitly)
         .route("/upvote.php", post(upvote::post))
+        // Time capsule archive download
+        .route(
+            "/timecapsule/quantum-computer-time-capsule-download.php",
+            get(pages::services::quantum_computer_time_capsule::download_archive),
+        )
         // Fallback: static files for GET/HEAD, dispatcher for POST and when files not found
         .fallback_service(
             get_service(

@@ -235,6 +235,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             }),
         },
         page! {
+            handler: services::quantum_computer_time_capsule,
+            slug: "quantum-computer-time-capsule",
+            title: "Send a Message to the Future (Digital Time Capsule)",
+            description: "Save a message that will become readable after quantum computers are built.",
+            keywords: "digital time capsule, quantum computers",
+            legacy_hit_count_id: "pages/services/quantum-computer-time-capsule.php",
+            upvote: Some(UpvoteConfig {
+                id: "quantumcomputertimecapsule",
+                category: "defuse_pages",
+                title: Some("Send a Message to the Future"),
+                description: Some("Save a message that will become readable after quantum computers are built."),
+            }),
+        },
+        page! {
             handler: services::software_security_auditing,
             slug: "software-security-auditing",
             title: "Software Security Auditing",

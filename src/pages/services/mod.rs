@@ -2,6 +2,7 @@ pub mod big_number_calculator;
 pub mod checksums;
 pub mod html_sanitize;
 pub mod online_x86_assembler;
+pub mod quantum_computer_time_capsule;
 pub mod services;
 pub mod software_security_auditing;
 pub mod softwaredevelopment;

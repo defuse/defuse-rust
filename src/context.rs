@@ -14,6 +14,8 @@ pub struct PageContext {
     pub dnt_enabled: bool,
     pub hit_counts: HitCounts,
     pub vote_state: VoteState,
+    /// CAPTCHA bypass header for automated testing
+    pub captcha_bypass_header: Option<String>,
 }
 
 impl PageContext {

@@ -56,6 +56,12 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .unwrap_or("")
         .to_string();
 
+    let captcha_bypass_header = request
+        .headers()
+        .get("X-Captcha-Bypass")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+
     // Resolve path to page (middleware should have already handled all redirects)
     let page_info = match resolve_path(&path) {
         PathLookupResult::Canonical(page) => page,
@@ -129,6 +135,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         dnt_enabled,
         hit_counts,
         vote_state,
+        captcha_bypass_header,
     };
 
     // Dispatch based on HTTP method
@@ -232,6 +239,7 @@ fn render_not_found(client_ip: String, dnt_enabled: bool) -> Response {
         dnt_enabled,
         hit_counts: HitCounts::default(),
         vote_state: VoteState::default(),
+        captcha_bypass_header: None,
     };
 
     (StatusCode::NOT_FOUND, NotFoundPage { ctx }).into_response()
