@@ -149,6 +149,11 @@ pub fn is_accepted_host(host: &str) -> bool {
 /// Uses resolve_path() as the single source of truth for URL canonicalization.
 /// Returns Some(redirect_url) if path needs redirect, None if already canonical or 404.
 fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
+    // Check for blog slug redirect first (/blog/slug → /blog/slug.html)
+    if let Some(redirect) = check_blog_slug_redirect(path) {
+        return Some(append_query(&redirect, query));
+    }
+
     match resolve_path(path) {
         PathLookupResult::Canonical(_) => None,
         PathLookupResult::Redirect { canonical_path, .. } => {
@@ -156,6 +161,34 @@ fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
         }
         PathLookupResult::NotFound => None, // Let dispatcher handle 404
     }
+}
+
+/// Check if a blog URL without extension should redirect to .html version.
+/// Returns Some(redirect_path) if /blog/slug should redirect to /blog/slug.html.
+fn check_blog_slug_redirect(path: &str) -> Option<String> {
+    // Only handle /blog/ paths
+    if !path.starts_with("/blog/") {
+        return None;
+    }
+
+    // Skip if already has an extension (contains a dot after /blog/)
+    let after_blog = &path[6..]; // Skip "/blog/"
+    if after_blog.contains('.') || after_blog.is_empty() {
+        return None;
+    }
+
+    // Skip if path ends with / (directory listing)
+    if path.ends_with('/') {
+        return None;
+    }
+
+    // Check if the .html file exists
+    let html_path = format!("static{}.html", path);
+    if std::path::Path::new(&html_path).exists() {
+        return Some(format!("{}.html", path));
+    }
+
+    None
 }
 
 /// Build a full redirect URL
@@ -321,5 +354,41 @@ mod tests {
         // Directory pages should not be accessible via .htm - should 404
         let result = canonicalize_url("/test-directory.htm", None);
         assert_eq!(result, None); // No redirect, will 404
+    }
+
+    #[test]
+    fn test_blog_slug_redirects_when_html_exists() {
+        // Blog slug should redirect to .html if the file exists
+        // This test relies on static/blog/archives.html existing
+        let result = check_blog_slug_redirect("/blog/archives");
+        assert_eq!(result, Some("/blog/archives.html".to_string()));
+    }
+
+    #[test]
+    fn test_blog_slug_no_redirect_when_file_missing() {
+        // Blog slug should NOT redirect if .html file doesn't exist
+        let result = check_blog_slug_redirect("/blog/nonexistent-post-xyz123");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_blog_slug_no_redirect_with_extension() {
+        // Blog URL with .html extension should not redirect (already has extension)
+        let result = check_blog_slug_redirect("/blog/some-post.html");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_blog_slug_no_redirect_non_blog_path() {
+        // Non-blog paths should not be affected
+        let result = check_blog_slug_redirect("/about");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_blog_slug_no_redirect_trailing_slash() {
+        // Blog directory path should not redirect
+        let result = check_blog_slug_redirect("/blog/");
+        assert_eq!(result, None);
     }
 }

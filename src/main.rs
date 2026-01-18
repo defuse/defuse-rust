@@ -15,7 +15,7 @@ mod upvote;
 
 use app_state::AppState;
 use libs::{PhpCountService, UpvoteService};
-use middleware::{upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
+use middleware::{upvote_post_middleware, EtagLayer, SecurityHeadersLayer, UrlCanonicalizationLayer};
 
 #[tokio::main]
 async fn main() {
@@ -77,6 +77,9 @@ async fn main() {
         // Apply middleware layers (outermost first)
         // CatchPanicLayer: ensures a panic in any handler returns 500, not crash
         .layer(CatchPanicLayer::new())
+        // EtagLayer: adds ETag headers to static files (must be after SecurityHeaders
+        // so it can see Cache-Control: no-store and skip ETags for sensitive pages)
+        .layer(EtagLayer)
         .layer(SecurityHeadersLayer)
         // Upvote POST fallback - handles votes when JS is disabled, redirects after
         .layer(axum_middleware::from_fn_with_state(
