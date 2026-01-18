@@ -1,4 +1,5 @@
 pub mod bibliography;
+pub mod big_number_calculator;
 pub mod hashes;
 pub mod phpcount;
 pub mod upvotes;

@@ -193,6 +193,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             }),
         },
         page! {
+            handler: services::big_number_calculator,
+            slug: "big-number-calculator",
+            title: "Big Number Calculator",
+            description: "A calculator that can add, subtract, multiply, divide, and exponentiate really big numbers.",
+            keywords: "big number calculator, calculator, arbitrary precision, large numbers",
+            legacy_hit_count_id: "pages/services/big-number-calculator.php",
+            upvote: Some(UpvoteConfig {
+                id: "bignumbercalculator",
+                category: "defuse_pages",
+                title: Some("Big Number Calculator"),
+                description: Some("A tool for calculating with huge numbers."),
+            }),
+        },
+        page! {
             handler: services::software_security_auditing,
             slug: "software-security-auditing",
             title: "Software Security Auditing",

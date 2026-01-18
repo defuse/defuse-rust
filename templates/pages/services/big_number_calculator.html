@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}<h1>Online Big Number Calculator</h1>
+<form action="/big-number-calculator.htm" method="post">
+    <div style="text-align: center;">
+    <strong>Expression:&nbsp;&nbsp;&nbsp;&nbsp;</strong>
+    <input type="text" name="eqn" style="width:400px;" value="{{ eqn }}"/>
+
+    <input type="submit" name="submit" value="Calculate" />
+
+    <div style="margin: 10px;">
+    <p>
+    Output Base:
+    <select name="base">
+        <option value="dec" {% match base %}{% when OutputBase::Decimal %}selected="selected" {% when _ %}{% endmatch %}>Decimal</option>
+        <option value="hex" {% match base %}{% when OutputBase::Hexadecimal %}selected="selected" {% when _ %}{% endmatch %}>Hexadecimal</option>
+        <option value="oct" {% match base %}{% when OutputBase::Octal %}selected="selected" {% when _ %}{% endmatch %}>Octal</option>
+    </select>
+    <br />
+    <input type="checkbox" name="addspaces" value="yes" {% if add_spaces %}checked="checked" {% endif %}/> Add spaces
+    </p>
+    </div>
+    </div>
+</form>
+
+<table style="margin: 0 auto; margin-bottom: 20px;">
+    <tr><th>Base Prefixes:&nbsp;</th><td>0x - Hexadecimal, 0 - Octal</td></tr>
+    <tr><th>Math Operations:&nbsp;</th><td>+, -, *, /, %, ^, (, )</td></tr>
+    <tr><th>Bitwise Operations:&nbsp;</th><td>OR, AND, XOR, SHL, SHR, &lt;&lt;, &gt;&gt;, |, &amp;</td></tr>
+</table>
+{%- if let Some(res) = result %}
+<div id="bignumber" style="padding: 10px; font-family: monospace; border: solid black 2px;">
+{{ res.output|safe }}</div>
+{%- endif %}
+{% endblock %}

@@ -1,0 +1,56 @@
+// Arithmetic expression grammar for big number calculator.
+//
+// This grammar validates expressions AFTER operator transformation:
+// - ^ has become ** (exponentiation)
+// - xor has become ^ (bitwise XOR)
+// - or has become | (bitwise OR)
+// - and has become & (bitwise AND)
+// - shl has become << (shift left)
+// - shr has become >> (shift right)
+//
+// Security: This parser only accepts valid arithmetic expressions.
+// No method calls, string interpolation, or Ruby code constructs are possible.
+
+WHITESPACE = _{ " " | "\t" }
+
+// Main expression rule - must consume entire input
+expr = { SOI ~ bitwise_or ~ EOI }
+
+// Operator precedence (lowest to highest):
+// | (OR) → ^ (XOR) → & (AND) → <<,>> (shift) → +,- → *,/,% → ** → unary → primary
+
+bitwise_or  = { bitwise_xor ~ ("|" ~ bitwise_xor)* }
+bitwise_xor = { bitwise_and ~ ("^" ~ bitwise_and)* }
+bitwise_and = { shift ~ ("&" ~ shift)* }
+shift       = { additive ~ (shift_op ~ additive)* }
+additive    = { multiplicative ~ (add_op ~ multiplicative)* }
+multiplicative = { power ~ (mult_op ~ power)* }
+
+// Exponentiation is right-associative: 2**3**2 = 2**(3**2) = 512
+power = { unary ~ ("**" ~ power)? }
+
+// Unary +/- can be chained: --5, +-3, etc.
+unary = { ("+"|"-")* ~ primary }
+
+// Primary expressions: numbers or parenthesized expressions
+primary = { number | "(" ~ bitwise_or ~ ")" }
+
+// Operators (order matters for PEG: longer/more specific first)
+shift_op = { "<<" | ">>" }
+add_op   = { "+" | "-" }
+mult_op  = { "/" | "%" | "*" }  // * last so it doesn't match before ** in power rule
+
+// Numbers: floats or integers
+// The @{} makes these atomic (no whitespace allowed inside)
+number = @{ float | integer }
+
+// Float: supports .5, 5., 5.5, and 0.5 forms
+float = @{
+    ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* |  // 5. or 5.5
+    ASCII_DIGIT* ~ "." ~ ASCII_DIGIT+    // .5 or 0.5
+}
+
+// Integer: hex (0x...), or decimal (which Ruby interprets as octal if starts with 0)
+integer = @{ hex_int | decimal_int }
+hex_int = @{ "0" ~ ("x"|"X") ~ ASCII_HEX_DIGIT+ }
+decimal_int = @{ ASCII_DIGIT+ }
