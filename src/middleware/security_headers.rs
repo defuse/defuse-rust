@@ -5,6 +5,8 @@
 //! - X-Frame-Options: SAMEORIGIN
 //! - Strict-Transport-Security (HSTS) - only over HTTPS, not for localhost
 //! - Cache-Control: no-cache (for pages marked with no_cache in registry)
+//!
+//! Also adds Content-Disposition: attachment for /source/ files to force download.
 
 use axum::{
     body::Body,
@@ -83,6 +85,9 @@ where
         let path = req.uri().path().to_string();
         let is_no_cache_page = check_no_cache(&path);
 
+        // Check if this is a /source/ file (should force download)
+        let is_source_file = path.starts_with("/source/");
+
         Box::pin(async move {
             let mut response = inner.call(req).await?;
             let headers = response.headers_mut();
@@ -135,6 +140,15 @@ where
                 headers.insert(
                     header::PRAGMA,
                     "no-cache".parse().unwrap(),
+                );
+            }
+
+            // Content-Disposition for /source/ files
+            // Forces browser to download rather than display inline
+            if is_source_file {
+                headers.insert(
+                    header::CONTENT_DISPOSITION,
+                    "attachment".parse().unwrap(),
                 );
             }
 
