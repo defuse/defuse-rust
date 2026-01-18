@@ -39,6 +39,8 @@ des = "0.8"
 # Form parsing
 serde = { version = "1", features = ["derive"] }
 form_urlencoded = "1"
+multer = "3"
+futures-util = "0.3"
 
 # Config
 dotenvy = "0.15"

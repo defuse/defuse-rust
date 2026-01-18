@@ -14,11 +14,13 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use bytes::Bytes;
+use multer::Multipart;
 use std::net::SocketAddr;
 use tracing::{debug, error};
 
 use crate::app_state::AppState;
 use crate::context::PageContext;
+use crate::handler::{FormField, PostBody};
 use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{resolve_path, PageInfo, PathLookupResult, NOT_FOUND_PAGE_INFO};
@@ -73,17 +75,39 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
     let handler = page_info.handler.unwrap();
 
     // Extract body for POST requests (consumes request)
-    let body = if method == Method::POST {
+    let post_body = if method == Method::POST {
+        // Get Content-Type header before consuming request
+        let content_type = request
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
+
         let (_parts, body) = request.into_parts();
         // 100MB limit (matches PHP's post_max_size)
-        match axum::body::to_bytes(body, 100 * 1024 * 1024).await {
+        let bytes = match axum::body::to_bytes(body, 100 * 1024 * 1024).await {
             Ok(bytes) => bytes,
             Err(_) => {
                 return (StatusCode::BAD_REQUEST, "Failed to read request body").into_response();
             }
+        };
+
+        // Check if multipart and parse accordingly
+        if let Some(boundary) = content_type.as_ref().and_then(|ct| multer::parse_boundary(ct).ok())
+        {
+            match parse_multipart(bytes, &boundary).await {
+                Ok(fields) => PostBody::Multipart { fields },
+                Err(e) => {
+                    error!("Failed to parse multipart: {}", e);
+                    return (StatusCode::BAD_REQUEST, "Failed to parse multipart data")
+                        .into_response();
+                }
+            }
+        } else {
+            PostBody::UrlEncoded(bytes)
         }
     } else {
-        Bytes::new()
+        PostBody::UrlEncoded(Bytes::new())
     };
 
     // Now do async operations
@@ -111,7 +135,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
     match method {
         // Axum takes care of not returning the body for HEAD requests
         Method::GET | Method::HEAD => handler.get(ctx, &state).await,
-        Method::POST => match handler.post(ctx, &state, body) {
+        Method::POST => match handler.post(ctx, &state, post_body) {
             Some(future) => future.await,
             None => {
                 // Handler doesn't support POST - return 405
@@ -211,4 +235,26 @@ fn render_not_found(client_ip: String, dnt_enabled: bool) -> Response {
     };
 
     (StatusCode::NOT_FOUND, NotFoundPage { ctx }).into_response()
+}
+
+/// Parse multipart form data into fields.
+async fn parse_multipart(body: Bytes, boundary: &str) -> Result<Vec<FormField>, multer::Error> {
+    let stream = futures_util::stream::once(async move { Ok::<_, std::io::Error>(body) });
+    let mut multipart = Multipart::new(stream, boundary);
+
+    let mut fields = Vec::new();
+
+    while let Some(field) = multipart.next_field().await? {
+        let name = field.name().unwrap_or("").to_string();
+        let filename = field.file_name().map(|s| s.to_string());
+        let data = Bytes::from(field.bytes().await?);
+
+        fields.push(FormField {
+            name,
+            filename,
+            data,
+        });
+    }
+
+    Ok(fields)
 }

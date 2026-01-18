@@ -12,14 +12,17 @@
 <form action="checksums.htm#checksums" method="post" enctype="multipart/form-data">
 <input type="file" name="filetohash" /><input type="submit" name="hashfile" value="Calculate checksums..." />
 </form>
-{% if !results.is_empty() %}
+{%- if let Some(err) = error %}
+<p style="color: red; font-weight: bold;">{{ err }}</p>
+{%- endif %}
+{%- if !results.is_empty() %}
 <a name="checksums"></a><h2>Checkums</h2>
 <table border="0" cellpadding="10" style="font-family:monospace;">
 {% for result in results %}
     <tr><th>{{ result.algorithm }}</th><td>{{ result.hash }}</td></tr>
 {% endfor %}
 </table>
-{% else %}
+{%- else %}
 <h2>Supported Hash Algorithms</h2><p>{% for algo in supported_algorithms %}{{ algo }} {% endfor %}</p>
-{% endif %}
-{% endblock %}
+{%- endif %}
+{%- endblock %}

@@ -1,4 +1,4 @@
-use axum::{middleware as axum_middleware, routing::{any, post}, Router};
+use axum::{middleware as axum_middleware, routing::{any, get_service, post}, Router};
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -60,11 +60,14 @@ async fn main() {
     let app = Router::new()
         // API endpoints (not pages - handled explicitly)
         .route("/upvote.php", post(upvote::post))
-        // Static files from static/ directory, with dispatcher as fallback for pages
+        // Fallback: static files for GET/HEAD, dispatcher for POST and when files not found
         .fallback_service(
-            ServeDir::new("static")
-                // dispatcher handles the actual registered pages and 404
-                .fallback(any(dispatcher::handle).with_state(state.clone())),
+            get_service(
+                ServeDir::new("static")
+                    .fallback(any(dispatcher::handle).with_state(state.clone())),
+            )
+            .post(dispatcher::handle)
+            .with_state(state.clone()),
         )
         // Apply middleware layers (outermost first)
         // CatchPanicLayer: ensures a panic in any handler returns 500, not crash

@@ -9,8 +9,25 @@ use std::pin::Pin;
 use axum::response::Response;
 use bytes::Bytes;
 
-use crate::context::PageContext;
 use crate::app_state::AppState;
+use crate::context::PageContext;
+
+/// Represents a parsed POST body - either form-urlencoded or multipart.
+#[derive(Debug)]
+pub enum PostBody {
+    /// Standard form-urlencoded data
+    UrlEncoded(Bytes),
+    /// Multipart form data with parsed fields
+    Multipart { fields: Vec<FormField> },
+}
+
+/// A single field from a multipart form submission.
+#[derive(Debug)]
+pub struct FormField {
+    pub name: String,
+    pub filename: Option<String>,
+    pub data: Bytes,
+}
 
 /// A boxed future that returns a Response. Used for trait object compatibility.
 pub type BoxFuture = Pin<Box<dyn Future<Output = Response> + Send>>;
@@ -25,7 +42,7 @@ pub trait PageHandler: Send + Sync + 'static {
 
     /// Handle POST requests. Returns None if POST is not supported (405 Method Not Allowed).
     /// Override this method to handle POST requests.
-    fn post(&self, _ctx: PageContext, _state: &AppState, _body: Bytes) -> Option<BoxFuture> {
+    fn post(&self, _ctx: PageContext, _state: &AppState, _body: PostBody) -> Option<BoxFuture> {
         None
     }
 }

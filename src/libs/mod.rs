@@ -1,4 +1,5 @@
 pub mod bibliography;
+pub mod hashes;
 pub mod phpcount;
 pub mod upvotes;
 pub mod util;
