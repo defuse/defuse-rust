@@ -7,6 +7,7 @@ pub mod passgen;
 pub mod phpcount;
 pub mod recaptcha;
 pub mod timecapsule;
+pub mod trent;
 pub mod upvotes;
 pub mod util;
 pub mod vim_highlight;

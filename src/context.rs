@@ -16,6 +16,8 @@ pub struct PageContext {
     pub vote_state: VoteState,
     /// CAPTCHA bypass header for automated testing
     pub captcha_bypass_header: Option<String>,
+    /// Query string from the URL (without leading ?)
+    pub query_string: Option<String>,
 }
 
 impl PageContext {

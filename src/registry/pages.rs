@@ -284,6 +284,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/scan.php",
             upvote: None,
         },
+        page! {
+            handler: services::trent,
+            slug: "trustedthirdparty",
+            title: "TRENT - FREE Third party Drawing Service - Defuse Security",
+            description: "TRENT, the trusted random number generator for contests and drawings.",
+            keywords: "contest drawing, third party, trusted, lottory, trent, random number generator",
+            legacy_hit_count_id: "pages/services/trustedthirdparty.php",
+            upvote: Some(UpvoteConfig {
+                id: "trent",
+                category: "defuse_pages",
+                title: Some("TRENT - Trusted Random Entropy"),
+                description: Some("A free trusted third party random number generator."),
+            }),
+        },
 
         // ===== Research =====
         page! {

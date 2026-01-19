@@ -31,6 +31,7 @@ use crate::registry::{resolve_path, PageInfo, PathLookupResult, NOT_FOUND_PAGE_I
 pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
+    let query_string = request.uri().query().map(|s| s.to_string());
 
     // Extract all data from request BEFORE any async operations
     // (Request<Body> is not Sync, so we can't hold reference across await)
@@ -136,6 +137,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         hit_counts,
         vote_state,
         captcha_bypass_header,
+        query_string,
     };
 
     // Dispatch based on HTTP method
@@ -240,6 +242,7 @@ fn render_not_found(client_ip: String, dnt_enabled: bool) -> Response {
         hit_counts: HitCounts::default(),
         vote_state: VoteState::default(),
         captcha_bypass_header: None,
+        query_string: None,
     };
 
     (StatusCode::NOT_FOUND, NotFoundPage { ctx }).into_response()
