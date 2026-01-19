@@ -11,6 +11,7 @@ mod middleware;
 mod pages;
 mod prelude;
 mod registry;
+mod special_endpoints;
 mod upvote;
 
 use app_state::AppState;
@@ -65,6 +66,11 @@ async fn main() {
             "/timecapsule/quantum-computer-time-capsule-download.php",
             get(pages::services::quantum_computer_time_capsule::download_archive),
         )
+        // Special utility endpoints
+        .route("/ip.php", get(special_endpoints::ip_php))
+        .route("/ip-insecure.php", get(special_endpoints::ip_insecure_php))
+        .route("/getmyip.php", get(special_endpoints::getmyip_php))
+        .route("/s.php", get(special_endpoints::shout_php))
         // Fallback: static files for GET/HEAD, dispatcher for POST and when files not found
         .fallback_service(
             get_service(
