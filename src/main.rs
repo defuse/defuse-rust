@@ -17,7 +17,7 @@ mod upvote;
 
 use app_state::AppState;
 use libs::{PhpCountService, UpvoteService};
-use middleware::{upvote_post_middleware, EtagLayer, SecurityHeadersLayer, UrlCanonicalizationLayer};
+use middleware::{blocking_middleware, upvote_post_middleware, EtagLayer, SecurityHeadersLayer, UrlCanonicalizationLayer};
 
 #[tokio::main]
 async fn main() {
@@ -99,6 +99,9 @@ async fn main() {
             upvote_post_middleware,
         ))
         .layer(UrlCanonicalizationLayer)
+        // BlockingMiddleware: runs handlers on blocking thread pool for OS preemption
+        // This is innermost so actual request handling gets preemptive scheduling
+        .layer(axum_middleware::from_fn(blocking_middleware))
         .with_state(state);
 
     tracing::info!("Listening on http://{}", listen_addr);

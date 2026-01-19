@@ -374,7 +374,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Should CBC Mode Initialization Vector Be Secret - Defuse Security",
             description: "Should the initialization vector used for CBC mode be kept secret?",
             keywords: "cbc mode, encryption, initialization vector, iv, secret, secure",
-            legacy_hit_count_id: "pages/research/cbcmodeiv.php",
+            legacy_hit_count_id: "pages/research/cbcmodeiv.html",
             upvote: Some(UpvoteConfig {
                 id: "cbcmodeiv",
                 category: "defuse_pages",
