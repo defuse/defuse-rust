@@ -257,6 +257,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/software-security-auditing.php",
             upvote: None,
         },
+        alias!("audits/" => "software-security-auditing"),
         page! {
             handler: services::softwaredevelopment,
             slug: "softwaredevelopment",
@@ -298,6 +299,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A free trusted third party random number generator."),
             }),
         },
+        alias!("trent" => "trustedthirdparty"),
 
         // ===== Research =====
         page! {
