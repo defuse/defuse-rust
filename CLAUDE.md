@@ -66,15 +66,28 @@ defuse-rust/
 
 ## Development Environment Setup
 
-Before running the project, ensure these directories exist:
+### Required Environment Variables
+
+The following environment variables must be set (see `.env.example`):
+
+- `STORAGE_PATH` - Path to storage directory containing:
+  - `vimhl/` - VimHighlight cache
+  - `extras/files/` - Large file downloads (force download)
+  - `extras/files2/` - File downloads (viewable in browser)
+  - `extras/mirrors/` - Mirrored content (force download)
+  - `extras/upload/` - User uploads (force download)
+
+For local development, set `STORAGE_PATH=../storage` to use the storage directory in the parent folder.
+
+### Storage Directory Setup
 
 ```bash
-# VimHighlight cache directory (for syntax highlighting)
-sudo mkdir -p /storage/vimhl
-sudo chown $USER:$USER /storage/vimhl
+# Create storage directories if needed
+mkdir -p ../storage/vimhl
+mkdir -p ../storage/extras/{files,files2,mirrors,upload}
 ```
 
-The cache directory is used by both the PHP original and Rust rewrite for caching vim-generated syntax highlighting output.
+The vimhl cache directory is used for caching vim-generated syntax highlighting output.
 
 ## Key Technical Details
 

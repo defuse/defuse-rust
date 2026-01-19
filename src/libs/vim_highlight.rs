@@ -11,11 +11,22 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::OnceLock;
 use tempfile::NamedTempFile;
 use tracing::{debug, warn};
 
-/// Cache directory for highlighted output (must match PHP's CACHE_DIR)
-const CACHE_DIR: &str = "/storage/vimhl";
+/// Cache directory for highlighted output, derived from STORAGE_PATH env var.
+/// Falls back to /storage/vimhl if STORAGE_PATH is not set (for backwards compatibility).
+fn cache_dir() -> &'static Path {
+    static CACHE_DIR: OnceLock<PathBuf> = OnceLock::new();
+    CACHE_DIR.get_or_init(|| {
+        match std::env::var("STORAGE_PATH") {
+            Ok(storage_path) => PathBuf::from(storage_path).join("vimhl"),
+            Err(_) => PathBuf::from("/storage/vimhl"),
+        }
+    })
+}
+
 const CACHE_SUFFIX: &str = ".highlighted.html";
 
 /// Vim-based syntax highlighter
@@ -91,13 +102,13 @@ impl VimHighlight {
         // Generate cache path based on md5 of content
         // Only use cache if the cache directory exists and is writable
         let cache_path = if self.caching {
-            let cache_dir = Path::new(CACHE_DIR);
-            if cache_dir.exists() {
+            let cache_dir_path = cache_dir();
+            if cache_dir_path.exists() {
                 let hash = self.compute_cache_key(text);
-                Some(PathBuf::from(format!("{}/string-{}{}", CACHE_DIR, hash, CACHE_SUFFIX)))
+                Some(cache_dir_path.join(format!("string-{}{}", hash, CACHE_SUFFIX)))
             } else {
                 // Cache dir doesn't exist, disable caching for this call
-                debug!("Cache directory {} doesn't exist, skipping cache", CACHE_DIR);
+                debug!("Cache directory {:?} doesn't exist, skipping cache", cache_dir_path);
                 None
             }
         } else {
@@ -118,7 +129,7 @@ impl VimHighlight {
             let real_path = input_path.canonicalize()
                 .map_err(|e| VimHighlightError::IoError(e.to_string()))?;
             let hash = format!("{:x}", Md5::digest(real_path.to_string_lossy().as_bytes()));
-            Some(PathBuf::from(format!("{}/path-{}{}", CACHE_DIR, hash, CACHE_SUFFIX)))
+            Some(cache_dir().join(format!("path-{}{}", hash, CACHE_SUFFIX)))
         } else {
             None
         };
@@ -157,7 +168,7 @@ impl VimHighlight {
         if self.caching {
             if let Some(cache_path) = cache_path {
                 if let Some(cached) = self.check_cache(cache_path, input_path, ignore_mtime)? {
-                    debug!("Cache hit for {:?}", input_path);
+                    debug!("Cache hit: {:?}", cache_path);
                     return Ok(if body_only {
                         self.extract_body(&cached)?
                     } else {

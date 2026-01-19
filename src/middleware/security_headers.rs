@@ -6,7 +6,12 @@
 //! - Strict-Transport-Security (HSTS) - only over HTTPS, not for localhost
 //! - Cache-Control: no-cache (for pages marked with no_cache in registry)
 //!
-//! Also adds Content-Disposition: attachment for /source/ files to force download.
+//! Also adds Content-Disposition: attachment for files that should be downloaded:
+//! - /source/ files (source code)
+//! - /files/ (storage: disk images, archives, etc.)
+//! - /mirrors/ (storage: mirrored content)
+//! - /upload/ (storage: user uploads)
+//! Note: /files2/ is intentionally excluded (should be viewable in browser).
 
 use axum::{
     body::Body,
@@ -85,8 +90,12 @@ where
         let path = req.uri().path().to_string();
         let is_no_cache_page = check_no_cache(&path);
 
-        // Check if this is a /source/ file (should force download)
-        let is_source_file = path.starts_with("/source/");
+        // Check if this file should be forced to download
+        // Includes /source/ and storage directories (except /files2/ which is viewable)
+        let is_download_file = path.starts_with("/source/")
+            || path.starts_with("/files/")
+            || path.starts_with("/mirrors/")
+            || path.starts_with("/upload/");
 
         Box::pin(async move {
             let mut response = inner.call(req).await?;
@@ -143,9 +152,9 @@ where
                 );
             }
 
-            // Content-Disposition for /source/ files
+            // Content-Disposition for download files
             // Forces browser to download rather than display inline
-            if is_source_file {
+            if is_download_file {
                 headers.insert(
                     header::CONTENT_DISPOSITION,
                     "attachment".parse().unwrap(),

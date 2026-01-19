@@ -12,6 +12,7 @@ mod pages;
 mod prelude;
 mod registry;
 mod special_endpoints;
+mod storage_routes;
 mod upvote;
 
 use app_state::AppState;
@@ -36,7 +37,10 @@ async fn main() {
     let listen_addr =
         std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:3000".to_string());
 
-    // Connect to databases (fail fast if unavailable)
+    // Required configuration (fail fast if not set)
+    let storage_path = std::path::PathBuf::from(
+        std::env::var("STORAGE_PATH").expect("STORAGE_PATH must be set"),
+    );
     let phpcount_url =
         std::env::var("PHPCOUNT_DATABASE_URL").expect("PHPCOUNT_DATABASE_URL must be set");
     let upvotes_url =
@@ -71,6 +75,8 @@ async fn main() {
         .route("/ip-insecure.php", get(special_endpoints::ip_insecure_php))
         .route("/getmyip.php", get(special_endpoints::getmyip_php))
         .route("/s.php", get(special_endpoints::shout_php))
+        // Storage directories (files, files2, mirrors, upload from STORAGE_PATH)
+        .merge(storage_routes::storage_router(&storage_path))
         // Fallback: static files for GET/HEAD, dispatcher for POST and when files not found
         .fallback_service(
             get_service(
