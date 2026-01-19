@@ -99,6 +99,7 @@ where
 
         Box::pin(async move {
             let mut response = inner.call(req).await?;
+            let is_success = response.status().is_success();
             let headers = response.headers_mut();
 
             // Content-Type: only set for HTML pages, not static assets
@@ -154,7 +155,8 @@ where
 
             // Content-Disposition for download files
             // Forces browser to download rather than display inline
-            if is_download_file {
+            // Only for successful responses - error pages should be displayed, not downloaded
+            if is_download_file && is_success {
                 headers.insert(
                     header::CONTENT_DISPOSITION,
                     "attachment".parse().unwrap(),

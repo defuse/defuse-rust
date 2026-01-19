@@ -76,7 +76,7 @@ async fn main() {
         .route("/getmyip.php", get(special_endpoints::getmyip_php))
         .route("/s.php", get(special_endpoints::shout_php))
         // Storage directories (files, files2, mirrors, upload from STORAGE_PATH)
-        .merge(storage_routes::storage_router(&storage_path))
+        .merge(storage_routes::storage_router(&storage_path, state.clone()))
         // Fallback: static files for GET/HEAD, dispatcher for POST and when files not found
         .fallback_service(
             get_service(
