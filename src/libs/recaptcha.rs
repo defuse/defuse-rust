@@ -34,19 +34,16 @@ pub async fn verify(
         }
     }
 
+    // Get the secret key from environment - fail loudly if not configured
+    // This check happens before the response check so that missing config
+    // is caught even when the user doesn't submit a captcha response
+    let secret = std::env::var("RECAPTCHA_SECRET_KEY")
+        .expect("RECAPTCHA_SECRET_KEY must be set for reCAPTCHA verification");
+
     // Get the reCAPTCHA response - if empty/missing, fail
     let response = match response {
         Some(r) if !r.is_empty() => r,
         _ => return Ok(false),
-    };
-
-    // Get the secret key from environment
-    let secret = match std::env::var("RECAPTCHA_SECRET_KEY") {
-        Ok(s) => s,
-        Err(_) => {
-            tracing::warn!("RECAPTCHA_SECRET_KEY not set, reCAPTCHA verification will fail");
-            return Ok(false);
-        }
     };
 
     // Make request to Google's verification API

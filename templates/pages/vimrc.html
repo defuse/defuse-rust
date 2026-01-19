@@ -36,4 +36,4 @@
 {{ vim_highlight::highlight_file(Path::new("static/source/vimupdate.sh"), false).unwrap()|safe }}
 <h2>~/.vimrc</h2>
 
-{{ vim_highlight::highlight_file(Path::new("static/upload/vim/vimrc"), false).unwrap()|safe }}{% endblock %}
+{{ vim_highlight::highlight_storage_file("upload/vim/vimrc", false).unwrap()|safe }}{% endblock %}

@@ -1303,6 +1303,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             }),
         },
         page! {
+            handler: audits::encfs_old,
+            slug: "audits/encfs-old",
+            title: "EncFS Security Audit",
+            description: "Security audit of the EncFS encrypted filesystem.",
+            keywords: "encfs, security audit, cryptography",
+            legacy_hit_count_id: "pages/audits/encfs-old.php",
+            upvote: Some(UpvoteConfig {
+                id: "auditencfs",
+                category: "defuse_pages",
+                title: Some("EncFS Security Audit"),
+                description: Some("The results of an EncFS security audit."),
+            }),
+        },
+        page! {
             handler: audits::ecryptfs,
             slug: "audits/ecryptfs",
             title: "eCryptfs Security Audit",

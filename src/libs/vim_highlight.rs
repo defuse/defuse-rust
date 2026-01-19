@@ -464,6 +464,23 @@ pub fn highlight_file(path: &Path, show_lines: bool) -> Result<String, VimHighli
     Ok(format!("<div class=\"vimhighlight\">{}\n</div>", body))
 }
 
+/// Get the storage path from environment variable
+fn storage_path() -> &'static Path {
+    static STORAGE_PATH: OnceLock<PathBuf> = OnceLock::new();
+    STORAGE_PATH.get_or_init(|| {
+        std::env::var("STORAGE_PATH")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| PathBuf::from("/storage"))
+    })
+}
+
+/// Highlight a file from the storage directory (STORAGE_PATH/extras/...)
+/// Use this for files that were moved from static/ to the storage directory.
+pub fn highlight_storage_file(relative_path: &str, show_lines: bool) -> Result<String, VimHighlightError> {
+    let full_path = storage_path().join("extras").join(relative_path);
+    highlight_file(&full_path, show_lines)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
