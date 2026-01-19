@@ -16,8 +16,21 @@ mod storage_routes;
 mod upvote;
 
 use app_state::AppState;
-use libs::{PhpCountService, UpvoteService};
+use axum::{
+    http::{header, StatusCode},
+    response::{IntoResponse, Response},
+};
+use libs::{PastebinService, PhpCountService, UpvoteService};
 use middleware::{blocking_middleware, upvote_post_middleware, EtagLayer, SecurityHeadersLayer, UrlCanonicalizationLayer};
+
+/// Create a 301 Moved Permanently redirect response
+fn redirect_301(location: &'static str) -> Response {
+    (
+        StatusCode::MOVED_PERMANENTLY,
+        [(header::LOCATION, location)],
+    )
+        .into_response()
+}
 
 #[tokio::main]
 async fn main() {
@@ -45,6 +58,8 @@ async fn main() {
         std::env::var("PHPCOUNT_DATABASE_URL").expect("PHPCOUNT_DATABASE_URL must be set");
     let upvotes_url =
         std::env::var("UPVOTES_DATABASE_URL").expect("UPVOTES_DATABASE_URL must be set");
+    let pastebin_url =
+        std::env::var("PASTEBIN_DATABASE_URL").expect("PASTEBIN_DATABASE_URL must be set");
 
     tracing::info!("Connecting to PHPCount database...");
     let phpcount = PhpCountService::connect(&phpcount_url)
@@ -58,8 +73,14 @@ async fn main() {
         .expect("Failed to connect to Upvotes database");
     tracing::info!("Upvotes database connected");
 
+    tracing::info!("Connecting to Pastebin database...");
+    let pastebin = PastebinService::connect(&pastebin_url)
+        .await
+        .expect("Failed to connect to Pastebin database");
+    tracing::info!("Pastebin database connected");
+
     // Create application state
-    let state = AppState::new(phpcount, upvotes);
+    let state = AppState::new(phpcount, upvotes, pastebin);
 
     // Build router with middleware
     let app = Router::new()
@@ -75,6 +96,13 @@ async fn main() {
         .route("/ip-insecure.php", get(special_endpoints::ip_insecure_php))
         .route("/getmyip.php", get(special_endpoints::getmyip_php))
         .route("/s.php", get(special_endpoints::shout_php))
+        // Pastebin routes
+        .route("/bin/add.php", post(pages::services::pastebin_add::handler))
+        .route("/bin/", get(|| async { redirect_301("/pastebin.htm") }))
+        .route("/bin", get(|| async { redirect_301("/pastebin.htm") }))
+        .route("/b/", get(pages::services::pastebin_view::bin_index_handler))
+        .route("/b", get(|| async { redirect_301("/pastebin.htm") }))
+        .route("/b/:key", get(pages::services::pastebin_view::handler))
         // Storage directories (files, files2, mirrors, upload from STORAGE_PATH)
         .merge(storage_routes::storage_router(&storage_path, state.clone()))
         // Fallback: static files for GET/HEAD, dispatcher for POST and when files not found

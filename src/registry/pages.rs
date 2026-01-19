@@ -235,6 +235,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             }),
         },
         page! {
+            handler: services::pastebin,
+            slug: "pastebin",
+            title: "Secure Encrypted Pastebin - Defuse Security",
+            description: "A secure pastebin with server-side and client-side encryption.",
+            keywords: "pastebin, encrypted pastebin, secure pastebin, anonymous pastebin",
+            legacy_hit_count_id: "pages/services/pastebin.php",
+            upvote: Some(UpvoteConfig {
+                id: "pastebin",
+                category: "defuse_pages",
+                title: Some("PIE Bin"),
+                description: Some("A pastebin with both client-side and server-side encryption."),
+            }),
+        },
+        page! {
             handler: services::quantum_computer_time_capsule,
             slug: "quantum-computer-time-capsule",
             title: "Send a Message to the Future (Digital Time Capsule)",

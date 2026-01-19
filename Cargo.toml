@@ -36,6 +36,11 @@ crc = "3.2"
 # For LM hash (DES-based)
 des = "0.8"
 
+# For pastebin AES-256-CBC encryption
+aes = "0.8"
+cbc = "0.1"
+hmac = "0.12"
+
 # Form parsing
 serde = { version = "1", features = ["derive"] }
 form_urlencoded = "1"

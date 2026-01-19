@@ -4,6 +4,8 @@ pub mod breach;
 pub mod hashes;
 pub mod html_escape;
 pub mod passgen;
+pub mod pastebin;
+pub mod pastebin_crypto;
 pub mod phpcount;
 pub mod recaptcha;
 pub mod timecapsule;
@@ -13,5 +15,6 @@ pub mod util;
 pub mod vim_highlight;
 pub mod x86_assembler;
 
+pub use pastebin::PastebinService;
 pub use phpcount::PhpCountService;
 pub use upvotes::UpvoteService;
