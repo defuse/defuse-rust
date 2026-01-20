@@ -110,6 +110,22 @@ struct CompletionInfo {
     url: String,
 }
 
+/// Form values for re-populating the form on validation errors
+#[derive(Default)]
+struct FormValues {
+    drawing_num: String,
+    passcode: String,
+    name: String,
+    description: String,
+    lowval: String,
+    highval: String,
+    numgen: String,
+    randlines1: String,
+    randlines2: String,
+    randlines3: String,
+    chosentwice: bool,
+}
+
 /// Drawing view info
 enum DrawingView {
     /// Drawing doesn't exist
@@ -137,6 +153,7 @@ struct TrentPage {
     confirmation: Option<ConfirmationInfo>,
     completion: Option<CompletionInfo>,
     error: Option<String>,
+    form_values: Option<FormValues>,
 }
 
 impl TrentPage {
@@ -149,6 +166,7 @@ impl TrentPage {
             confirmation: None,
             completion: None,
             error: None,
+            form_values: None,
         }
     }
 
@@ -284,6 +302,29 @@ impl TrentPage {
         let file1hash = form.file1hash.clone();
         let file2hash = form.file2hash.clone();
         let file3hash = form.file3hash.clone();
+
+        // Validate that name and description contain only Latin-1 characters.
+        // The database uses latin1 charset, so characters outside 0-255 will fail.
+        if !is_latin1_safe(name) || !is_latin1_safe(description) {
+            self.error = Some(
+                "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
+                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported.".to_string()
+            );
+            self.form_values = Some(FormValues {
+                drawing_num: drawing_num.to_string(),
+                passcode: passcode.to_string(),
+                name: name.to_string(),
+                description: description.to_string(),
+                lowval: lowval.to_string(),
+                highval: highval.to_string(),
+                numgen: numgen.to_string(),
+                randlines1: randlines1.to_string(),
+                randlines2: randlines2.to_string(),
+                randlines3: randlines3.to_string(),
+                chosentwice,
+            });
+            return;
+        }
 
         // Look up drawing
         let drawing = match trent::get_drawing(drawing_num).await {
@@ -629,6 +670,12 @@ impl TrentPage {
 /// Check if a string is a valid SHA256 hex hash (64 hex characters)
 fn is_sha256_hex(s: &str) -> bool {
     s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+/// Check if a string contains only Latin-1 compatible characters (code points 0-255).
+/// The database uses latin1 charset, so characters outside this range will cause errors.
+fn is_latin1_safe(s: &str) -> bool {
+    s.chars().all(|c| (c as u32) <= 255)
 }
 
 /// Form data for TRENT
