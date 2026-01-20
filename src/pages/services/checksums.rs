@@ -440,12 +440,13 @@ fn mysql41_hash(data: &[u8]) -> String {
 /// PHP uses iconv('UTF-8', 'UTF-16LE', $password) which fails silently on
 /// invalid UTF-8, producing an empty string. We match this behavior.
 fn ntlm_hash(password: &[u8]) -> String {
-    // Try to decode as UTF-8, then convert to UTF-16LE
-    // If not valid UTF-8, PHP's iconv returns empty/false, so we hash empty
-    let utf16: Vec<u8> = match std::str::from_utf8(password) {
-        Ok(s) => s.encode_utf16().flat_map(|c| c.to_le_bytes()).collect(),
-        Err(_) => Vec::new(), // Match PHP's iconv failure behavior
-    };
-
-    hex::encode(Md4::digest(&utf16))
+    // NTLM requires valid text - decode as UTF-8, then convert to UTF-16LE
+    // This matches Windows behavior where passwords are always text (UTF-16LE native)
+    match std::str::from_utf8(password) {
+        Ok(s) => {
+            let utf16: Vec<u8> = s.encode_utf16().flat_map(|c| c.to_le_bytes()).collect();
+            hex::encode(Md4::digest(&utf16))
+        }
+        Err(_) => "[error: NTLM requires valid text]".to_string(),
+    }
 }
