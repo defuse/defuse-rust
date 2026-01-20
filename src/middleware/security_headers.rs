@@ -126,6 +126,21 @@ where
                 "SAMEORIGIN".parse().unwrap(),
             );
 
+            // X-Content-Type-Options: nosniff (prevents MIME-type sniffing)
+            headers.insert(
+                header::X_CONTENT_TYPE_OPTIONS,
+                "nosniff".parse().unwrap(),
+            );
+
+            // Referrer-Policy: protects sensitive URLs (like paste keys) from leaking
+            // - Same-origin: full URL (useful for navigation)
+            // - Cross-origin: only origin (protects paths)
+            // - HTTPS→HTTP: no referrer
+            headers.insert(
+                header::REFERRER_POLICY,
+                "strict-origin-when-cross-origin".parse().unwrap(),
+            );
+
             // HSTS: only over HTTPS and not for localhost/accepted hosts
             if is_https && !is_accepted {
                 headers.insert(
