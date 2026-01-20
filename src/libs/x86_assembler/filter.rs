@@ -13,8 +13,8 @@ use std::sync::LazyLock;
 static DECIMAL_FLOAT_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\d+\.\d+").unwrap());
 
-/// Maximum allowed input size in bytes (10KB).
-const MAX_INPUT_SIZE: usize = 10 * 1024;
+/// Maximum allowed input size in bytes (1MB).
+const MAX_INPUT_SIZE: usize = 1024 * 1024;
 
 /// Directives that are considered safe to use.
 ///
@@ -142,10 +142,10 @@ mod tests {
 
     #[test]
     fn test_size_limit() {
-        let large_input = "nop\n".repeat(3000); // > 10KB
+        let large_input = "nop\n".repeat(300000); // > 1MB
         assert!(!is_safe_code(&large_input));
 
-        let small_input = "nop\n".repeat(100);
+        let small_input = "nop\n".repeat(1000);
         assert!(is_safe_code(&small_input));
     }
 

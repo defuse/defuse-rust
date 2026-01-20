@@ -18,6 +18,9 @@ const DEFAULT_LIFETIME_SECS: i64 = 864000;
 /// Maximum lifetime: 6 months in seconds
 const MAX_LIFETIME_SECS: i64 = 15552000;
 
+/// Maximum paste size: 50 MB
+const MAX_PASTE_SIZE: usize = 50 * 1024 * 1024;
+
 #[derive(Deserialize, Default)]
 pub struct AddPasteForm {
     #[serde(default)]
@@ -35,6 +38,11 @@ pub async fn handler(State(state): State<AppState>, Form(form): Form<AddPasteFor
     // Check for empty paste
     if form.paste.is_empty() {
         return (StatusCode::OK, "Empty post!").into_response();
+    }
+
+    // Check paste size limit
+    if form.paste.len() > MAX_PASTE_SIZE {
+        return (StatusCode::BAD_REQUEST, "Paste too large (max 50 MB)").into_response();
     }
 
     // Normalize line endings (CRLF -> LF, CR -> LF)

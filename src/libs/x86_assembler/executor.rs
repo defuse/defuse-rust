@@ -6,10 +6,16 @@
 //! validated public API in mod.rs.
 
 use std::fs;
-use std::process::Command;
+use std::time::Duration;
+use tokio::process::Command;
+use tokio::time::timeout;
 use tempfile::TempDir;
 
 use super::parser::{parse_objdump_output, AssemblyResult};
+
+/// Timeout for GCC/objdump processes (30 seconds).
+/// This is a defense-in-depth measure; with input filtering, these should complete in seconds.
+const PROCESS_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Architecture for assembly/disassembly.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,6 +49,8 @@ pub enum AssemblerError {
     UnsafeCode,
     /// GCC or objdump failed with an error message.
     AssemblyFailure(String),
+    /// Process timed out.
+    Timeout,
     /// Internal error (temp file creation, etc.)
     InternalError(String),
 }
@@ -56,6 +64,7 @@ impl std::fmt::Display for AssemblerError {
                  The period (.) character must not appear anywhere in your source code."
             ),
             AssemblerError::AssemblyFailure(msg) => write!(f, "{}", msg),
+            AssemblerError::Timeout => write!(f, "Assembly timed out. Please try simpler input."),
             AssemblerError::InternalError(msg) => write!(f, "Internal error: {}", msg),
         }
     }
@@ -75,7 +84,7 @@ impl std::fmt::Display for AssemblerError {
 ///
 /// # Returns
 /// The assembled result or an error.
-pub(super) fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
+pub(super) async fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
     // Create a temporary directory for our files.
     // Using TempDir ensures cleanup even on error.
     let temp_dir = TempDir::new()
@@ -93,15 +102,25 @@ pub(super) fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyResult, 
     fs::write(&source_path, &asm_source)
         .map_err(|e| AssemblerError::InternalError(format!("Failed to write source: {}", e)))?;
 
-    // Assemble with GCC
-    let gcc_output = Command::new("gcc")
-        .arg(arch.gcc_flag())
-        .arg("-c")
-        .arg(&source_path)
-        .arg("-o")
-        .arg(&obj_path)
-        .output()
-        .map_err(|e| AssemblerError::InternalError(format!("Failed to run gcc: {}", e)))?;
+    // Assemble with GCC (with timeout)
+    let gcc_result = timeout(
+        PROCESS_TIMEOUT,
+        Command::new("gcc")
+            .arg(arch.gcc_flag())
+            .arg("-c")
+            .arg(&source_path)
+            .arg("-o")
+            .arg(&obj_path)
+            .kill_on_drop(true)
+            .output(),
+    )
+    .await;
+
+    let gcc_output = match gcc_result {
+        Err(_) => return Err(AssemblerError::Timeout),
+        Ok(result) => result
+            .map_err(|e| AssemblerError::InternalError(format!("Failed to run gcc: {}", e)))?,
+    };
 
     if !gcc_output.status.success() {
         // Clean up the error message to remove temp file paths
@@ -110,15 +129,25 @@ pub(super) fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyResult, 
         return Err(AssemblerError::AssemblyFailure(cleaned));
     }
 
-    // Disassemble with objdump
-    let objdump_output = Command::new("objdump")
-        .arg("-z")           // Show zero bytes
-        .arg("-M")
-        .arg("intel")        // Intel syntax
-        .arg("-d")           // Disassemble
-        .arg(&obj_path)
-        .output()
-        .map_err(|e| AssemblerError::InternalError(format!("Failed to run objdump: {}", e)))?;
+    // Disassemble with objdump (with timeout)
+    let objdump_result = timeout(
+        PROCESS_TIMEOUT,
+        Command::new("objdump")
+            .arg("-z")           // Show zero bytes
+            .arg("-M")
+            .arg("intel")        // Intel syntax
+            .arg("-d")           // Disassemble
+            .arg(&obj_path)
+            .kill_on_drop(true)
+            .output(),
+    )
+    .await;
+
+    let objdump_output = match objdump_result {
+        Err(_) => return Err(AssemblerError::Timeout),
+        Ok(result) => result
+            .map_err(|e| AssemblerError::InternalError(format!("Failed to run objdump: {}", e)))?,
+    };
 
     if !objdump_output.status.success() {
         return Err(AssemblerError::AssemblyFailure("Disassembly failed".to_string()));
@@ -143,7 +172,7 @@ pub(super) fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyResult, 
 ///
 /// # Returns
 /// The disassembly result or an error.
-pub(super) fn disassemble_unsafe(binary: &[u8], arch: Arch) -> Result<AssemblyResult, AssemblerError> {
+pub(super) async fn disassemble_unsafe(binary: &[u8], arch: Arch) -> Result<AssemblyResult, AssemblerError> {
     if binary.is_empty() {
         return Err(AssemblerError::AssemblyFailure("No data to disassemble".to_string()));
     }
@@ -157,19 +186,29 @@ pub(super) fn disassemble_unsafe(binary: &[u8], arch: Arch) -> Result<AssemblyRe
     fs::write(&binary_path, binary)
         .map_err(|e| AssemblerError::InternalError(format!("Failed to write binary: {}", e)))?;
 
-    // Disassemble with objdump in binary mode
-    let objdump_output = Command::new("objdump")
-        .arg("-z")                    // Show zero bytes
-        .arg("-b")
-        .arg("binary")                // Input is raw binary
-        .arg("-m")
-        .arg(arch.objdump_arch())     // Target architecture
-        .arg("-M")
-        .arg("intel")                 // Intel syntax
-        .arg("-D")                    // Disassemble all sections
-        .arg(&binary_path)
-        .output()
-        .map_err(|e| AssemblerError::InternalError(format!("Failed to run objdump: {}", e)))?;
+    // Disassemble with objdump in binary mode (with timeout)
+    let objdump_result = timeout(
+        PROCESS_TIMEOUT,
+        Command::new("objdump")
+            .arg("-z")                    // Show zero bytes
+            .arg("-b")
+            .arg("binary")                // Input is raw binary
+            .arg("-m")
+            .arg(arch.objdump_arch())     // Target architecture
+            .arg("-M")
+            .arg("intel")                 // Intel syntax
+            .arg("-D")                    // Disassemble all sections
+            .arg(&binary_path)
+            .kill_on_drop(true)
+            .output(),
+    )
+    .await;
+
+    let objdump_output = match objdump_result {
+        Err(_) => return Err(AssemblerError::Timeout),
+        Ok(result) => result
+            .map_err(|e| AssemblerError::InternalError(format!("Failed to run objdump: {}", e)))?,
+    };
 
     if !objdump_output.status.success() {
         return Err(AssemblerError::AssemblyFailure("Disassembly failed".to_string()));

@@ -48,13 +48,14 @@ pub use parser::AssemblyResult;
 /// # Errors
 /// - `UnsafeCode` if the input is too large or contains unsafe directives
 /// - `AssemblyFailure` if GCC fails to compile the code
-pub fn assemble(code: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
+/// - `Timeout` if GCC or objdump takes too long
+pub async fn assemble(code: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
     // Validate input before executing
     if !filter::is_safe_code(code) {
         return Err(AssemblerError::UnsafeCode);
     }
 
-    executor::assemble_unsafe(code, arch)
+    executor::assemble_unsafe(code, arch).await
 }
 
 /// Disassemble a hex string into x86/x64 instructions.
@@ -75,7 +76,8 @@ pub fn assemble(code: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError
 ///
 /// # Errors
 /// - `AssemblyFailure` if objdump fails or input is invalid
-pub fn disassemble(hex_input: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
+/// - `Timeout` if objdump takes too long
+pub async fn disassemble(hex_input: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
     // Parse the hex input into binary data
     let binary = parse_hex_input(hex_input)?;
 
@@ -85,7 +87,7 @@ pub fn disassemble(hex_input: &str, arch: Arch) -> Result<AssemblyResult, Assemb
         ));
     }
 
-    executor::disassemble_unsafe(&binary, arch)
+    executor::disassemble_unsafe(&binary, arch).await
 }
 
 /// Parse various hex input formats into binary data.
@@ -171,16 +173,16 @@ mod tests {
         assert_eq!(result, vec![0x90]);
     }
 
-    #[test]
-    fn test_assemble_unsafe_code_rejected() {
-        let result = assemble(".include \"/etc/passwd\"", Arch::X86);
+    #[tokio::test]
+    async fn test_assemble_unsafe_code_rejected() {
+        let result = assemble(".include \"/etc/passwd\"", Arch::X86).await;
         assert!(matches!(result, Err(AssemblerError::UnsafeCode)));
     }
 
-    #[test]
-    fn test_assemble_large_input_rejected() {
-        let large = "nop\n".repeat(3000);
-        let result = assemble(&large, Arch::X86);
+    #[tokio::test]
+    async fn test_assemble_large_input_rejected() {
+        let large = "nop\n".repeat(300000); // > 1MB
+        let result = assemble(&large, Arch::X86).await;
         assert!(matches!(result, Err(AssemblerError::UnsafeCode)));
     }
 }

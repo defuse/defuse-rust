@@ -18,6 +18,9 @@ use crate::libs::trent;
 /// Maximum file size: 10MB
 const MAX_FILE_SIZE: usize = 10 * 1024 * 1024;
 
+/// Maximum name/description size: 1MB each
+const MAX_TEXT_FIELD_SIZE: usize = 1024 * 1024;
+
 pub struct Handler;
 
 impl PageHandler for Handler {
@@ -321,6 +324,12 @@ impl TrentPage {
                 chosentwice,
             });
         };
+
+        // Validate name and description size
+        if name.len() > MAX_TEXT_FIELD_SIZE || description.len() > MAX_TEXT_FIELD_SIZE {
+            set_error(self, "Name and description must each be less than 1 MB.".to_string());
+            return;
+        }
 
         // Validate that name and description contain only Latin-1 characters.
         // The database uses latin1 charset, so characters outside 0-255 will fail.

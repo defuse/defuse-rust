@@ -20,6 +20,10 @@ const PROCESS_TIMEOUT: Duration = Duration::from_secs(8);
 /// CPU time limit for ulimit (slightly longer than wall-clock to allow for overhead).
 const ULIMIT_CPU_SECONDS: u32 = 10;
 
+/// Virtual memory limit in KB (256 MB).
+/// Prevents DoS attacks that try to exhaust memory faster than CPU limits can catch.
+const ULIMIT_VMEM_KB: u32 = 262144;
+
 /// Evaluation error types.
 #[derive(Debug)]
 pub(super) enum EvalError {
@@ -84,14 +88,18 @@ end"#,
         expr, ruby_base, ruby_base, ruby_base
     );
 
-    // Execute Ruby with ulimit for CPU time protection.
+    // Execute Ruby with ulimit for CPU time and memory protection.
     // We use sh -c to get ulimit support.
     let shell_command = format!(
-        "ulimit -t {}; ruby -e {}",
+        "ulimit -t {} -v {}; ruby -e {}",
         ULIMIT_CPU_SECONDS,
+        ULIMIT_VMEM_KB,
         shell_escape(&ruby_code)
     );
 
+    // Note: If the timeout fires, the sh/ruby process becomes orphaned until
+    // ulimit -t kills it (~2 seconds later). This is fine - ulimits are
+    // kernel-enforced and persist on orphaned processes.
     let result = timeout(
         PROCESS_TIMEOUT,
         Command::new("sh")

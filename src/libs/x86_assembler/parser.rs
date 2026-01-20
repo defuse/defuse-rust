@@ -98,12 +98,20 @@ pub fn parse_objdump_output(objdump_output: &str, is_disassembly: bool) -> Resul
         }
     }
 
-    // Clean up: uppercase, remove whitespace
+    // Clean up: uppercase
     let hex_bytes = hex_bytes.to_uppercase();
-    let hex_bytes = hex_bytes.replace(' ', "").replace('\t', "");
 
-    // Create bold version with <b>00</b> for null bytes
-    let hex_zero_bold = hex_bytes.replace("00", "<b>00</b>");
+    // Replace "00" with placeholder BEFORE removing spaces.
+    // This ensures we only match actual 00 bytes, not cross-byte patterns like "F00F".
+    // (Matching PHP's approach: replace while bytes are still space-separated)
+    let hex_with_marker = hex_bytes.replace("00", "ZERO");
+
+    // Now remove whitespace
+    let hex_bytes = hex_bytes.replace(' ', "").replace('\t', "");
+    let hex_with_marker = hex_with_marker.replace(' ', "").replace('\t', "");
+
+    // Create bold version by replacing the marker with <b>00</b>
+    let hex_zero_bold = hex_with_marker.replace("ZERO", "<b>00</b>");
 
     // Create string literal: "\x90\x90..."
     let string_literal = build_string_literal(&hex_bytes);
@@ -198,8 +206,24 @@ mod tests {
 
     #[test]
     fn test_hex_zero_bold() {
-        let hex = "90009090";
-        let bold = hex.replace("00", "<b>00</b>");
-        assert_eq!(bold, "90<b>00</b>9090");
+        // Helper to simulate the bold logic (must match parse_objdump_output)
+        fn make_bold(hex_with_spaces: &str) -> String {
+            let upper = hex_with_spaces.to_uppercase();
+            let with_marker = upper.replace("00", "ZERO");
+            let with_marker = with_marker.replace(' ', "").replace('\t', "");
+            with_marker.replace("ZERO", "<b>00</b>")
+        }
+
+        // Actual 00 byte gets bolded
+        assert_eq!(make_bold("90 00 90 90"), "90<b>00</b>9090");
+
+        // Cross-byte pattern F00F should NOT be bolded (F0 and 0F are separate bytes)
+        assert_eq!(make_bold("F0 0F"), "F00F");
+
+        // But F0 00 0F should bold the middle byte
+        assert_eq!(make_bold("F0 00 0F"), "F0<b>00</b>0F");
+
+        // Multiple 00 bytes
+        assert_eq!(make_bold("00 00 00"), "<b>00</b><b>00</b><b>00</b>");
     }
 }

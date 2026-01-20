@@ -50,12 +50,12 @@ impl PageHandler for Handler {
 
                     // Check which operation was requested
                     if form.submit.as_deref() == Some("Assemble") && !form.instructions.is_empty() {
-                        match x86_assembler::assemble(&form.instructions, arch) {
+                        match x86_assembler::assemble(&form.instructions, arch).await {
                             Ok(result) => assembly_result = Some(result),
                             Err(e) => error = Some(format_error(&e)),
                         }
                     } else if form.submit.as_deref() == Some("Disassemble") && !form.hexstring.is_empty() {
-                        match x86_assembler::disassemble(&form.hexstring, arch) {
+                        match x86_assembler::disassemble(&form.hexstring, arch).await {
                             Ok(result) => disassembly_result = Some(result),
                             Err(e) => error = Some(format_error(&e)),
                         }
