@@ -31,6 +31,23 @@ pub(super) enum EvalError {
     TooLarge,
 }
 
+/// Type of the evaluation result.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(super) enum ResultType {
+    Integer,
+    Float,
+    Rational,
+}
+
+/// Successful evaluation result.
+#[derive(Debug)]
+pub(super) struct EvalSuccess {
+    /// The computed result as a string.
+    pub value: String,
+    /// The type of the result.
+    pub result_type: ResultType,
+}
+
 /// Execute a pre-validated expression in Ruby. **DANGEROUS - DO NOT CALL DIRECTLY.**
 ///
 /// # Security
@@ -46,15 +63,25 @@ pub(super) enum EvalError {
 pub(super) async fn evaluate_unsafe_requires_prior_validation(
     expr: &str,
     base: OutputBase,
-) -> Result<String, EvalError> {
+) -> Result<EvalSuccess, EvalError> {
     let ruby_base = base.ruby_base();
 
     // Build Ruby code to evaluate the expression.
     // In Ruby 3.x, Fixnum and Bignum are unified into Integer.
-    // Float results are printed directly, Integer results are converted to the specified base.
+    // We detect Float, Rational, and Integer types and format accordingly:
+    // - Float: prefixed with FLOAT:, always decimal (base conversion not supported)
+    // - Rational: prefixed with RATIONAL:, formatted as "num / den" with base conversion
+    // - Integer: converted to the specified base
     let ruby_code = format!(
-        "x = ({}); puts x.is_a?(Float) ? x : x.to_s({})",
-        expr, ruby_base
+        r#"x = ({});
+if x.is_a?(Float)
+  puts "FLOAT:" + x.to_s
+elsif x.is_a?(Rational)
+  puts "RATIONAL:" + x.numerator.to_s({}) + " / " + x.denominator.to_s({})
+else
+  puts x.to_s({})
+end"#,
+        expr, ruby_base, ruby_base, ruby_base
     );
 
     // Execute Ruby with ulimit for CPU time protection.
@@ -101,7 +128,23 @@ pub(super) async fn evaluate_unsafe_requires_prior_validation(
                         return Err(EvalError::TooLarge);
                     }
 
-                    Ok(result.to_string())
+                    // Check for type prefixes
+                    if let Some(float_value) = result.strip_prefix("FLOAT:") {
+                        Ok(EvalSuccess {
+                            value: float_value.to_string(),
+                            result_type: ResultType::Float,
+                        })
+                    } else if let Some(rational_value) = result.strip_prefix("RATIONAL:") {
+                        Ok(EvalSuccess {
+                            value: rational_value.to_string(),
+                            result_type: ResultType::Rational,
+                        })
+                    } else {
+                        Ok(EvalSuccess {
+                            value: result.to_string(),
+                            result_type: ResultType::Integer,
+                        })
+                    }
                 }
             }
         }
@@ -127,15 +170,15 @@ mod tests {
     #[ignore]
     async fn test_basic_arithmetic() {
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("2+2", OutputBase::Decimal).await.unwrap(),
+            evaluate_unsafe_requires_prior_validation("2+2", OutputBase::Decimal).await.unwrap().value,
             "4"
         );
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("10-3", OutputBase::Decimal).await.unwrap(),
+            evaluate_unsafe_requires_prior_validation("10-3", OutputBase::Decimal).await.unwrap().value,
             "7"
         );
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("6*7", OutputBase::Decimal).await.unwrap(),
+            evaluate_unsafe_requires_prior_validation("6*7", OutputBase::Decimal).await.unwrap().value,
             "42"
         );
     }
@@ -145,11 +188,11 @@ mod tests {
     async fn test_floor_division() {
         // Ruby uses floor division
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("10/3", OutputBase::Decimal).await.unwrap(),
+            evaluate_unsafe_requires_prior_validation("10/3", OutputBase::Decimal).await.unwrap().value,
             "3"
         );
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("-10/3", OutputBase::Decimal).await.unwrap(),
+            evaluate_unsafe_requires_prior_validation("-10/3", OutputBase::Decimal).await.unwrap().value,
             "-4"
         );
     }
@@ -159,7 +202,7 @@ mod tests {
     async fn test_modulo() {
         // Ruby modulo: result has same sign as divisor
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("-7%3", OutputBase::Decimal).await.unwrap(),
+            evaluate_unsafe_requires_prior_validation("-7%3", OutputBase::Decimal).await.unwrap().value,
             "2"
         );
     }
@@ -168,7 +211,7 @@ mod tests {
     #[ignore]
     async fn test_hex_output() {
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("255", OutputBase::Hexadecimal).await.unwrap(),
+            evaluate_unsafe_requires_prior_validation("255", OutputBase::Hexadecimal).await.unwrap().value,
             "ff"
         );
     }
@@ -177,7 +220,7 @@ mod tests {
     #[ignore]
     async fn test_big_numbers() {
         let result = evaluate_unsafe_requires_prior_validation("2**100", OutputBase::Decimal).await.unwrap();
-        assert!(result.starts_with("1267650600228229401496703205376"));
+        assert!(result.value.starts_with("1267650600228229401496703205376"));
     }
 
     #[tokio::test]

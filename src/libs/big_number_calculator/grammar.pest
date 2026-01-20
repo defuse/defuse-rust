@@ -40,15 +40,20 @@ shift_op = { "<<" | ">>" }
 add_op   = { "+" | "-" }
 mult_op  = { "/" | "%" | "*" }  // * last so it doesn't match before ** in power rule
 
-// Numbers: floats or integers
+// Numbers: floats, rationals, or integers
 // The @{} makes these atomic (no whitespace allowed inside)
-number = @{ float | integer }
+// Order matters in PEG: more specific patterns first
+number = @{ float | rational | integer }
 
 // Float: supports .5, 5., 5.5, and 0.5 forms
 float = @{
     ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* |  // 5. or 5.5
     ASCII_DIGIT* ~ "." ~ ASCII_DIGIT+    // .5 or 0.5
 }
+
+// Rational: integer with 'r' suffix (Ruby's Rational literal)
+// e.g., 1r, 2r, 100r - used for exact fractions like 1r/2
+rational = @{ decimal_int ~ "r" }
 
 // Integer: hex (0x...), or decimal (which Ruby interprets as octal if starts with 0)
 integer = @{ hex_int | decimal_int }

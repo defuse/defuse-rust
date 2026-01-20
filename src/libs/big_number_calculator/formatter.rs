@@ -51,26 +51,6 @@ pub fn group_digits(text: &str, interval: usize) -> String {
     result
 }
 
-/// Break long lines at the specified length with <br /> tags.
-///
-/// For example, with line_length=60, a 150 character string becomes
-/// three lines separated by <br /> tags.
-pub fn break_lines(text: &str, line_length: usize) -> String {
-    if line_length == 0 || text.len() <= line_length {
-        return text.to_string();
-    }
-
-    let mut result = Vec::new();
-    let mut start = 0;
-
-    while start < text.len() {
-        let end = std::cmp::min(start + line_length, text.len());
-        result.push(&text[start..end]);
-        start = end;
-    }
-
-    result.join("<br />")
-}
 
 #[cfg(test)]
 mod tests {
@@ -113,21 +93,4 @@ mod tests {
         assert_eq!(group_digits("-12345678", 3), "-&nbsp;12 345 678");
     }
 
-    #[test]
-    fn test_break_lines_short() {
-        assert_eq!(break_lines("short", 60), "short");
-    }
-
-    #[test]
-    fn test_break_lines_exact() {
-        let text = "a".repeat(60);
-        assert_eq!(break_lines(&text, 60), text);
-    }
-
-    #[test]
-    fn test_break_lines_long() {
-        let text = "a".repeat(150);
-        let expected = format!("{}<br />{}<br />{}", "a".repeat(60), "a".repeat(60), "a".repeat(30));
-        assert_eq!(break_lines(&text, 60), expected);
-    }
 }

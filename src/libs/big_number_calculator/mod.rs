@@ -11,9 +11,10 @@ mod filter;
 mod formatter;
 mod parser;
 
-// Note: EvalError is intentionally NOT re-exported.
+
+// Note: EvalError, EvalSuccess, and ResultType are intentionally NOT re-exported.
 // The evaluator module is internal to this module for security reasons.
-use evaluator::EvalError;
+use evaluator::{EvalError, EvalSuccess, ResultType};
 
 /// Output base for the calculation result.
 #[derive(Debug, Clone, Copy, Default)]
@@ -100,16 +101,39 @@ pub async fn calculate(expr: &str, options: &CalculatorOptions) -> CalculatorRes
         evaluator::evaluate_unsafe_requires_prior_validation(&transformed, options.base).await;
 
     match eval_result {
-        Ok(result) => {
+        Ok(EvalSuccess { value, result_type }) => {
             // Step 5: Format output
-            let formatted = if options.add_spaces && result != "true" && result != "false" {
-                formatter::group_digits(&result, options.base.grouping_interval())
+            let (formatted, is_multiline_rational) = if options.add_spaces && value != "true" && value != "false" {
+                // For rationals, only group the numerator and denominator parts, not the " / "
+                if result_type == ResultType::Rational {
+                    (format_rational_with_grouping(&value, options.base.grouping_interval()), true)
+                } else {
+                    (formatter::group_digits(&value, options.base.grouping_interval()), false)
+                }
             } else {
-                formatter::break_lines(&result, 60)
+                // No formatting needed - CSS word-break handles wrapping
+                (value, false)
+            };
+
+            // Add warning if float result with non-decimal base
+            let output = if result_type == ResultType::Float && !matches!(options.base, OutputBase::Decimal) {
+                format!(
+                    "{}\n\n\n(Note: Floating-point results are always displayed in decimal.)",
+                    formatted
+                )
+            } else {
+                formatted
+            };
+
+            // Wrap multiline rationals in right-aligned div for proper alignment
+            let html_output = if is_multiline_rational {
+                format!("<div style=\"text-align: right;\">{}</div>", newlines_to_br(&output))
+            } else {
+                newlines_to_br(&output)
             };
 
             CalculatorResult {
-                output: formatted,
+                output: html_output,
                 is_error: false,
             }
         }
@@ -126,4 +150,25 @@ pub async fn calculate(expr: &str, options: &CalculatorOptions) -> CalculatorRes
             is_error: true,
         },
     }
+}
+
+/// Format a rational result with digit grouping.
+/// Input is "num / den", output groups each part on separate lines:
+/// numerator
+///  /
+/// denominator
+fn format_rational_with_grouping(value: &str, interval: usize) -> String {
+    if let Some((num, den)) = value.split_once(" / ") {
+        let num_grouped = formatter::group_digits(num.trim(), interval);
+        let den_grouped = formatter::group_digits(den.trim(), interval);
+        format!("{}\n / \n{}", num_grouped, den_grouped)
+    } else {
+        // Fallback if not in expected format
+        formatter::group_digits(value, interval)
+    }
+}
+
+/// Convert newlines to `<br />` for HTML display.
+fn newlines_to_br(s: &str) -> String {
+    s.replace('\n', "<br />")
 }

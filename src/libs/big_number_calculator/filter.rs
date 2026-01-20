@@ -8,14 +8,16 @@
 //! The whitelist is restrictive enough that arbitrary Ruby code cannot be injected.
 
 /// Character whitelist for TRANSFORMED expressions.
-/// Matches PHP exactly: "1234567890abcdefABCDEF()*^|&%/+-<>. x"
+/// Based on PHP: "1234567890abcdefABCDEF()*^|&%/+-<>. x"
+/// Extended with 'r' for Ruby's Rational suffix (e.g., 1r/2)
 ///
 /// After transformation:
 /// - Input is lowercased, so A-F rarely appear (but included for PHP parity)
 /// - 'x' is for hex prefix (0xff)
+/// - 'r' is for rational suffix (1r, 2r, etc.)
 /// - Operators: ( ) * ^ | & % / + - < > .
 /// - Space for separating tokens
-const WHITELIST: &str = "1234567890abcdefABCDEF()*^|&%/+-<>. x";
+const WHITELIST: &str = "1234567890abcdefABCDEFr()*^|&%/+-<>. x";
 
 /// Check if the expression contains only allowed characters.
 ///
@@ -85,6 +87,8 @@ mod tests {
         assert!(is_safe("5 ^ 3"));   // XOR transformed to ^
         assert!(is_safe("5 & 3"));   // AND transformed to &
         assert!(is_safe("2**10"));   // ^ transformed to **
+        assert!(is_safe("1r/2"));    // Rational suffix
+        assert!(is_safe("2r**-3"));  // Rational with exponent
     }
 
     #[test]

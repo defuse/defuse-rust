@@ -85,6 +85,15 @@ mod tests {
     }
 
     #[test]
+    fn test_rationals() {
+        assert!(validate("1r").is_ok());
+        assert!(validate("1r/2").is_ok());
+        assert!(validate("2r**-3").is_ok());
+        assert!(validate("(1r/2)*3").is_ok());
+        assert!(validate("1r/2 + 1r/4").is_ok());
+    }
+
+    #[test]
     fn test_whitespace() {
         assert!(validate(" 2 + 2 ").is_ok());
         assert!(validate("2  +  2").is_ok());

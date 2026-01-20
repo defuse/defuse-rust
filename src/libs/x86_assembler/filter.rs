@@ -3,9 +3,15 @@
 //! This module implements a whitelist-based filter that ensures only safe
 //! GAS (GNU Assembler) directives are allowed. This is critical for security
 //! since the code will be passed to GCC for compilation.
-//!
-//! The filtering logic must match the PHP implementation exactly for
-//! compatibility with the original defuse.ca site.
+
+use regex::Regex;
+use std::sync::LazyLock;
+
+/// Regex to match decimal floating-point literals like 1.0, 3.14159, etc.
+/// This is used to allow floating-point arguments to .double directive.
+/// Pattern requires digits on both sides of the decimal point.
+static DECIMAL_FLOAT_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\d+\.\d+").unwrap());
 
 /// Maximum allowed input size in bytes (10KB).
 const MAX_INPUT_SIZE: usize = 10 * 1024;
@@ -32,18 +38,18 @@ const SAFE_DIRECTIVES: &[&str] = &[
 ///
 /// 1. Size limit: Input must be under 10KB
 /// 2. Remove all safe directives from the code
-/// 3. Reject if `#APP` or `#NO_APP` appears (GAS special comments)
-/// 4. Reject if any `.` character remains after filtering
+/// 3. Remove decimal floating-point literals (e.g., 1.0, 3.14159)
+/// 4. Reject if `#APP` or `#NO_APP` appears (GAS special comments)
+/// 5. Reject if any `.` character remains after filtering
 ///
 /// This ensures only basic instructions and whitelisted directives are allowed.
 ///
-/// # Known Quirk (TODO: Fix in future)
+/// ## Security Note on Decimal Float Removal
 ///
-/// The PHP implementation has a bug where `.double 1.0` fails because after
-/// removing `.double`, the remaining ` 1.0` still contains a period. This is
-/// arguably a bug since floating-point literals should be allowed with `.double`,
-/// but we replicate this behavior for exact compatibility.
-/// See: tests/online_x86_assembler.rs `assemble_double_directive_with_decimal`
+/// The decimal float regex `\d+\.\d+` is safe because it requires digits on
+/// BOTH sides of the period. Dangerous directives like `.include` start with
+/// `.` followed by letters, not digits, so they cannot be hidden within a
+/// decimal pattern.
 pub fn is_safe_code(code: &str) -> bool {
     // Check size limit
     if code.len() >= MAX_INPUT_SIZE {
@@ -55,6 +61,11 @@ pub fn is_safe_code(code: &str) -> bool {
     for directive in SAFE_DIRECTIVES {
         filtered = filtered.replace(directive, "");
     }
+
+    // Remove decimal floating-point literals (e.g., 1.0, 3.14159)
+    // This allows .double directive to take floating-point arguments.
+    // Safe because the pattern requires digits on both sides of the period.
+    filtered = DECIMAL_FLOAT_REGEX.replace_all(&filtered, "").to_string();
 
     // Reject if GAS special comments are present.
     // These have special meaning to the assembler and could be dangerous.
@@ -139,10 +150,21 @@ mod tests {
     }
 
     #[test]
-    fn test_double_with_decimal_quirk() {
-        // This is a known PHP quirk - .double 1.0 fails because
-        // after removing .double, " 1.0" still contains a period.
-        // We replicate this for compatibility.
-        assert!(!is_safe_code(".double 1.0"));
+    fn test_double_with_decimal() {
+        // .double with floating-point literals should work
+        assert!(is_safe_code(".double 1.0"));
+        assert!(is_safe_code(".double 3.14159"));
+        assert!(is_safe_code(".double 1.5, 2.5, 3.5"));
+        assert!(is_safe_code(".double 1.0e10")); // Scientific notation
+        assert!(is_safe_code(".double -1.0")); // Negative
+    }
+
+    #[test]
+    fn test_decimal_removal_security() {
+        // Ensure decimal removal can't be exploited to hide directives
+        // These should all be rejected because the directive remains visible
+        assert!(!is_safe_code(".in1.0clude \"/etc/passwd\""));
+        assert!(!is_safe_code("1.0.fill 1000"));
+        assert!(!is_safe_code(".1.0include \"x\"")); // .1 doesn't match \d+\.\d+
     }
 }

@@ -30,7 +30,7 @@
 </table>
 
 {%- if let Some(res) = result %}
-<div id="bignumber" style="padding: 10px; font-family: monospace; border: solid black 2px;">
+<div id="bignumber" style="padding: 10px; font-family: monospace; border: solid black 2px;{% if !add_spaces %} word-break: break-all;{% endif %}">
 {{ res.output|safe }}</div>
 {%- endif %}
 
