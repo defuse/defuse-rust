@@ -303,16 +303,13 @@ impl TrentPage {
         let file2hash = form.file2hash.clone();
         let file3hash = form.file3hash.clone();
 
-        // Validate that name and description contain only Latin-1 characters.
-        // The database uses latin1 charset, so characters outside 0-255 will fail.
-        if !is_latin1_safe(name) || !is_latin1_safe(description) {
-            self.error = Some(
-                "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
-                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported.".to_string()
-            );
-            self.form_values = Some(FormValues {
+        // Helper to set error and repopulate form values
+        // Note: passcode is intentionally NOT repopulated for security
+        let mut set_error = |page: &mut TrentPage, msg: String| {
+            page.error = Some(msg);
+            page.form_values = Some(FormValues {
                 drawing_num: drawing_num.to_string(),
-                passcode: passcode.to_string(),
+                passcode: String::new(), // Don't repopulate passcode for security
                 name: name.to_string(),
                 description: description.to_string(),
                 lowval: lowval.to_string(),
@@ -323,6 +320,15 @@ impl TrentPage {
                 randlines3: randlines3.to_string(),
                 chosentwice,
             });
+        };
+
+        // Validate that name and description contain only Latin-1 characters.
+        // The database uses latin1 charset, so characters outside 0-255 will fail.
+        if !is_latin1_safe(name) || !is_latin1_safe(description) {
+            set_error(self,
+                "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
+                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported.".to_string()
+            );
             return;
         }
 
@@ -330,12 +336,12 @@ impl TrentPage {
         let drawing = match trent::get_drawing(drawing_num).await {
             Ok(Some(d)) => d,
             Ok(None) => {
-                self.error = Some(format!("Drawing #{} does not exist.", drawing_num));
+                set_error(self, format!("Drawing #{} does not exist.", drawing_num));
                 return;
             }
             Err(e) => {
                 tracing::error!("Database error: {}", e);
-                self.error = Some(format!("Drawing #{} does not exist.", drawing_num));
+                set_error(self, format!("Drawing #{} does not exist.", drawing_num));
                 return;
             }
         };
@@ -343,13 +349,13 @@ impl TrentPage {
         // Validate password
         let password_hash = trent::hash_password(passcode);
         if password_hash != drawing.passwordhash {
-            self.error = Some(format!("Incorrect password for drawing #{}.", drawing_num));
+            set_error(self, format!("Incorrect password for drawing #{}.", drawing_num));
             return;
         }
 
         // Check if already complete
         if drawing.complete {
-            self.error = Some(format!(
+            set_error(self, format!(
                 "The random numbers for drawing #{} have already been chosen.",
                 drawing_num
             ));
@@ -360,7 +366,7 @@ impl TrentPage {
         let drawing_time = drawing.starttime + drawing.reviewtime;
         if trent::now() < drawing_time {
             let date = trent::format_date(drawing_time);
-            self.error = Some(format!(
+            set_error(self, format!(
                 "The review period for drawing #{} is not complete. You will be able to do the drawing after {}",
                 drawing_num, date
             ));
@@ -369,26 +375,26 @@ impl TrentPage {
 
         // Validate range
         if lowval >= highval && numgen != 0 {
-            self.error = Some("The number range is invalid.".to_string());
+            set_error(self, "The number range is invalid.".to_string());
             return;
         }
 
         // Check for negative values
         if numgen < 0 || randlines1 < 0 || randlines2 < 0 || randlines3 < 0 {
-            self.error = Some("We couldn't possibly generate a NEGATIVE amount of random numbers...".to_string());
+            set_error(self, "We couldn't possibly generate a NEGATIVE amount of random numbers...".to_string());
             return;
         }
 
         // Check max values
         if numgen > 1000 || randlines1 > 1000 || randlines2 > 1000 || randlines3 > 1000 {
-            self.error = Some("Sorry, we can only generate 1000 random numbers at a time.".to_string());
+            set_error(self, "Sorry, we can only generate 1000 random numbers at a time.".to_string());
             return;
         }
 
         // Check file sizes (for uploaded files)
         for (_, (_, data)) in &files {
             if data.len() > MAX_FILE_SIZE {
-                self.error = Some("Sorry, maximum file size is 10MB.".to_string());
+                set_error(self, "Sorry, maximum file size is 10MB.".to_string());
                 return;
             }
         }
@@ -404,7 +410,7 @@ impl TrentPage {
                 || !Self::enough_lines(&file2_content, randlines2 as usize)
                 || !Self::enough_lines(&file3_content, randlines3 as usize)
             {
-                self.error = Some(
+                set_error(self,
                     "One of the files doesn't have enough lines to be able to choose the requested number of lines."
                         .to_string(),
                 );
