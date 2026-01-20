@@ -30,7 +30,7 @@ gost94 = "0.10"
 hex = "0.4"
 
 # Checksums
-adler = "1.0"
+adler2 = "2.0"
 crc = "3.2"
 
 # For LM hash (DES-based)

@@ -271,7 +271,7 @@ fn compute_hashes_bytes(bytes: &[u8]) -> Vec<HashResult> {
 
 /// Adler-32 checksum
 fn adler32(data: &[u8]) -> u32 {
-    adler::adler32_slice(data)
+    adler2::adler32_slice(data)
 }
 
 /// CRC-32 - PHP's hash('crc32') uses CRC-32/BZIP2 (non-reflected), output in big-endian
