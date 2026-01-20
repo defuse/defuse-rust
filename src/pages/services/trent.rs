@@ -261,8 +261,8 @@ impl TrentPage {
             Ok((drawing_num, password)) => {
                 let drawing_date = trent::format_date(trent::now() + review_time);
                 let url = format!(
-                    "https://defuse.ca/trustedthirdparty.htm?drawingnum={}",
-                    drawing_num
+                    "{}/trustedthirdparty.htm?drawingnum={}",
+                    self.ctx.url_prefix, drawing_num
                 );
                 self.reservation = Some(ReservationInfo {
                     drawing_num,
@@ -660,8 +660,8 @@ impl TrentPage {
         }
 
         let url = format!(
-            "https://defuse.ca/trustedthirdparty.htm?drawingnum={}",
-            drawing_num
+            "{}/trustedthirdparty.htm?drawingnum={}",
+            self.ctx.url_prefix, drawing_num
         );
         self.completion = Some(CompletionInfo { drawing_num, url });
     }

@@ -57,6 +57,20 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .unwrap_or("")
         .to_string();
 
+    let host = request
+        .headers()
+        .get(header::HOST)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("defuse.ca");
+
+    // Build URL prefix - use http for localhost, https for everything else
+    let scheme = if host.starts_with("localhost") || host.starts_with("127.0.0.1") {
+        "http"
+    } else {
+        "https"
+    };
+    let url_prefix = format!("{}://{}", scheme, host);
+
     let captcha_bypass_header = request
         .headers()
         .get("X-Captcha-Bypass")
@@ -138,6 +152,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         vote_state,
         captcha_bypass_header,
         query_string,
+        url_prefix,
     };
 
     // Dispatch based on HTTP method
@@ -243,6 +258,7 @@ fn render_not_found(client_ip: String, dnt_enabled: bool) -> Response {
         vote_state: VoteState::default(),
         captcha_bypass_header: None,
         query_string: None,
+        url_prefix: "https://defuse.ca".to_string(),
     };
 
     (StatusCode::NOT_FOUND, NotFoundPage { ctx }).into_response()

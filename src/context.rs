@@ -18,6 +18,8 @@ pub struct PageContext {
     pub captcha_bypass_header: Option<String>,
     /// Query string from the URL (without leading ?)
     pub query_string: Option<String>,
+    /// URL prefix for building absolute URLs (e.g., "https://defuse.ca" or "http://localhost:3000")
+    pub url_prefix: String,
 }
 
 impl PageContext {
