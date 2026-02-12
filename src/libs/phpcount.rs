@@ -76,7 +76,9 @@ impl PhpCountService {
         // Ensure page has counter entries
         self.create_counts_if_not_present(page_id).await?;
 
-        // Check if this is a unique hit
+        // TODO: Race condition — two concurrent requests from the same IP can
+        // both see "unique" before either calls log_hit(), double-counting the
+        // unique hit. Same bug exists in the PHP version.
         if self.is_unique_hit(page_id, client_ip).await? {
             self.count_hit(page_id, true).await?;
             self.log_hit(page_id, client_ip).await?;
@@ -89,30 +91,53 @@ impl PhpCountService {
     }
 
     /// Get all hit counts for a page (page hits, unique hits, and site totals).
+    ///
+    /// Per-page counts use LIMIT 1 to match PHP's GetHits() which calls
+    /// fetch() (returning just the first row). This makes the code tolerant
+    /// of duplicate rows in the hits table — since count_hit() increments all
+    /// rows for a (pageid, isunique) pair, all duplicates stay in sync, so
+    /// reading any one gives the correct count.
+    ///
+    /// Site-wide totals use SUM across all rows, matching PHP's GetTotalHits()
+    /// which fetches all rows and sums in a loop.
     pub async fn get_hit_counts(&self, page_id: &str) -> Result<HitCounts, sqlx::Error> {
         // Ensure page exists first
         self.create_counts_if_not_present(page_id).await?;
 
-        // Single query to get all counts
-        // Note: SUM() returns DECIMAL in MySQL, so we cast to UNSIGNED
-        let result: (u64, u64, u64, u64) = sqlx::query_as(
-            "SELECT
-                CAST(COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 0 THEN hitcount END), 0) AS UNSIGNED),
-                CAST(COALESCE(SUM(CASE WHEN pageid = ? AND isunique = 1 THEN hitcount END), 0) AS UNSIGNED),
-                CAST(COALESCE(SUM(CASE WHEN isunique = 0 THEN hitcount END), 0) AS UNSIGNED),
-                CAST(COALESCE(SUM(CASE WHEN isunique = 1 THEN hitcount END), 0) AS UNSIGNED)
-            FROM hits"
+        // Per-page counts: read one row each, like PHP's GetHits()
+        let page_hits: (u64,) = sqlx::query_as(
+            "SELECT hitcount FROM hits WHERE pageid = ? AND isunique = 0 LIMIT 1"
         )
-        .bind(page_id)
         .bind(page_id)
         .fetch_one(&self.pool)
         .await?;
 
+        let unique_hits: (u64,) = sqlx::query_as(
+            "SELECT hitcount FROM hits WHERE pageid = ? AND isunique = 1 LIMIT 1"
+        )
+        .bind(page_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        // Site-wide totals: sum all rows, like PHP's GetTotalHits()
+        // TODO: This will double-count hits if there are duplicate rows.
+        let total_hits: (u64,) = sqlx::query_as(
+            "SELECT CAST(COALESCE(SUM(hitcount), 0) AS UNSIGNED) FROM hits WHERE isunique = 0"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let total_unique_hits: (u64,) = sqlx::query_as(
+            "SELECT CAST(COALESCE(SUM(hitcount), 0) AS UNSIGNED) FROM hits WHERE isunique = 1"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
         Ok(HitCounts {
-            page_hits: result.0,
-            unique_hits: result.1,
-            total_hits: result.2,
-            total_unique_hits: result.3,
+            page_hits: page_hits.0,
+            unique_hits: unique_hits.0,
+            total_hits: total_hits.0,
+            total_unique_hits: total_unique_hits.0,
         })
     }
 
@@ -165,27 +190,16 @@ impl PhpCountService {
         let ids_hash = Self::id_hash(page_id, client_ip);
         let now = Self::now();
 
-        // Check if entry exists (time column is BIGINT UNSIGNED)
-        let exists: Option<(u64,)> = sqlx::query_as(
-            "SELECT time FROM nodupes WHERE ids_hash = ?"
+        // Use INSERT ... ON DUPLICATE KEY UPDATE to avoid race conditions
+        // between concurrent requests with the same page+IP hash.
+        sqlx::query(
+            "INSERT INTO nodupes (ids_hash, time) VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE time = VALUES(time)"
         )
         .bind(&ids_hash)
-        .fetch_optional(&self.pool)
+        .bind(now)
+        .execute(&self.pool)
         .await?;
-
-        if exists.is_some() {
-            sqlx::query("UPDATE nodupes SET time = ? WHERE ids_hash = ?")
-                .bind(now)
-                .bind(&ids_hash)
-                .execute(&self.pool)
-                .await?;
-        } else {
-            sqlx::query("INSERT INTO nodupes (ids_hash, time) VALUES (?, ?)")
-                .bind(&ids_hash)
-                .bind(now)
-                .execute(&self.pool)
-                .await?;
-        }
 
         Ok(())
     }
@@ -216,6 +230,7 @@ impl PhpCountService {
         .await?;
 
         if exists.is_none() {
+            // TODO: A race condition could result in duplicate rows.
             sqlx::query("INSERT INTO hits (pageid, isunique, hitcount) VALUES (?, 0, 0)")
                 .bind(page_id)
                 .execute(&self.pool)
@@ -231,6 +246,7 @@ impl PhpCountService {
         .await?;
 
         if exists.is_none() {
+            // TODO: A race condition could result in duplicate rows.
             sqlx::query("INSERT INTO hits (pageid, isunique, hitcount) VALUES (?, 1, 0)")
                 .bind(page_id)
                 .execute(&self.pool)
