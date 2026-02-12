@@ -70,8 +70,13 @@ async fn main() {
         .expect("Failed to connect to Upvotes database");
     tracing::info!("Upvotes database connected");
 
+    tracing::info!("Connecting to Pastebin database...");
+    libs::pastebin::ensure_db_connection_works()
+        .await
+        .expect("Failed to connect to Pastebin database");
+    tracing::info!("Pastebin database connected");
+
     // Create application state
-    // Note: PastebinService lazily initializes its own connection pool on first use
     let state = AppState::new(phpcount, upvotes);
 
     // Build router with middleware

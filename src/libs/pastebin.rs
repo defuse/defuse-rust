@@ -37,6 +37,13 @@ async fn get_pool() -> Result<&'static MySqlPool, PastebinError> {
     Ok(POOL.get_or_init(|| pool))
 }
 
+/// Connect to the database eagerly at startup to fail fast if misconfigured.
+/// This populates the OnceLock so subsequent calls to get_pool() are instant.
+pub async fn ensure_db_connection_works() -> Result<(), PastebinError> {
+    get_pool().await?;
+    Ok(())
+}
+
 /// Default lifetime: 10 days in seconds
 const DEFAULT_LIFETIME_SECS: i64 = 864000;
 
