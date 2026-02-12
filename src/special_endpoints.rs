@@ -1,4 +1,4 @@
-//! Special utility endpoints
+//! One-off endpoints that were laying around in the PHP impl's root.
 //!
 //! Simple PHP endpoints that don't use the normal page framework:
 //! - /ip.php - Raw IP address

@@ -13,7 +13,7 @@ use std::path::Path;
 use tower_http::services::ServeDir;
 
 use crate::app_state::AppState;
-use crate::dispatcher;
+use crate::registered_page_handler;
 
 /// Build a router for storage directory routes.
 ///
@@ -23,10 +23,11 @@ use crate::dispatcher;
 /// Uses the dispatcher as a fallback for 404s so that missing files
 /// show the proper site 404 page instead of a bare error.
 pub fn storage_router(storage_path: &Path, state: AppState) -> Router<AppState> {
+    // /storage itself contains credentials, only ever serve dirs in "storage/extras"!
     let extras_path = storage_path.join("extras");
 
     // Create a fallback service that renders our 404 page
-    let not_found = any(dispatcher::handle).with_state(state);
+    let not_found = any(registered_page_handler::handle).with_state(state);
 
     Router::new()
         .nest_service(

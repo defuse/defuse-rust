@@ -1,20 +1,21 @@
 //! Request context - extracted once per request, shared with all templates.
-//!
-//! PageContext contains all per-request data needed by templates: page metadata,
-//! client info, hit counts, and vote state. It is constructed by the dispatcher.
 
 use crate::libs::phpcount::HitCounts;
 use crate::libs::upvotes::VoteState;
 use crate::registry::PageInfo;
 
 #[derive(Debug, Clone)]
+/// PageContext contains all per-request data needed by templates: page
+/// metadata, client info, hit counts, and vote state. It is constructed by
+/// registered_page_handler.
 pub struct PageContext {
+    /// PageInfo holds all the page metadata (title, keywords, description, etc.)
     pub page_info: &'static PageInfo,
     pub client_ip: String,
     pub dnt_enabled: bool,
     pub hit_counts: HitCounts,
     pub vote_state: VoteState,
-    /// CAPTCHA bypass header for automated testing
+    /// CAPTCHA bypass header (256-bit secret) for automated testing
     pub captcha_bypass_header: Option<String>,
     /// Query string from the URL (without leading ?)
     pub query_string: Option<String>,

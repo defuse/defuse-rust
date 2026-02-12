@@ -22,13 +22,15 @@ pub struct VoteForm {
 }
 
 /// POST /upvote - Process a vote and return XML response
-/// TODO: encapsulate more of this into the upvote library
 pub async fn post(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Form(form): Form<VoteForm>,
 ) -> Response {
+
+    // AUDIT: encapsulate more of this into the upvote library
+
     let client_ip = client_ip(addr.ip(), &headers);
 
     // Process the vote

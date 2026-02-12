@@ -18,23 +18,6 @@ Examples:
 - `Fix template syntax for Askama compatibility`
 - `Update base template to match original PHP layout`
 
-## Documentation Location
-
-**All project documentation goes in `docs/`**
-
-When creating new markdown files for:
-- Requirements specifications
-- Design decisions
-- Implementation notes
-- TODO/tracking files
-
-Place them in the `docs/` folder, not the project root.
-
-Current docs:
-- `docs/DESIGN_DECISIONS.md` - Architectural choices and rationale
-- `docs/TODO.md` - Project progress tracker
-- `docs/URL_ROUTING_REQUIREMENTS.md` - URL routing system specification
-
 ## Project Structure
 
 ```

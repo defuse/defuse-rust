@@ -1,7 +1,7 @@
 //! PageHandler trait for registry-driven routing.
 //!
-//! All page handlers implement this trait. The dispatcher calls the appropriate
-//! method based on the HTTP method of the request.
+//! All registered pages implement this trait. The registered_page_handler calls
+//! the appropriate method based on the HTTP method of the request.
 
 use std::future::Future;
 use std::pin::Pin;
@@ -29,13 +29,12 @@ pub struct FormField {
     pub data: Bytes,
 }
 
-/// A boxed future that returns a Response. Used for trait object compatibility.
 pub type BoxFuture = Pin<Box<dyn Future<Output = Response> + Send>>;
 
-/// Trait for page handlers. Implement this for each page.
+/// Each registered page implements this trait to define its request handlers.
 ///
-/// The dispatcher looks up the handler in the registry and calls the appropriate
-/// method based on the HTTP request method.
+/// Code in registered_page_handler.rs looks up the handler in the registry and
+/// calls the appropriate method based on the HTTP request method.
 pub trait PageHandler: Send + Sync + 'static {
     /// Handle GET requests.
     fn get(&self, ctx: PageContext, state: &AppState) -> BoxFuture;
@@ -48,6 +47,9 @@ pub trait PageHandler: Send + Sync + 'static {
 }
 
 /// Macro for simple pages that just render a template with PageContext.
+///
+/// You can also look at this macro as an example of how to define a page
+/// with custom handler logic.
 ///
 /// Usage:
 /// ```ignore

@@ -16,13 +16,12 @@ use tempfile::NamedTempFile;
 use tracing::{debug, warn};
 
 /// Cache directory for highlighted output, derived from STORAGE_PATH env var.
-/// Falls back to /storage/vimhl if STORAGE_PATH is not set (for backwards compatibility).
 fn cache_dir() -> &'static Path {
     static CACHE_DIR: OnceLock<PathBuf> = OnceLock::new();
     CACHE_DIR.get_or_init(|| {
         match std::env::var("STORAGE_PATH") {
             Ok(storage_path) => PathBuf::from(storage_path).join("vimhl"),
-            Err(_) => PathBuf::from("/storage/vimhl"),
+            Err(_) => panic!("STORAGE_PATH env var not set!"),
         }
     })
 }
@@ -470,7 +469,7 @@ fn storage_path() -> &'static Path {
     STORAGE_PATH.get_or_init(|| {
         std::env::var("STORAGE_PATH")
             .map(PathBuf::from)
-            .unwrap_or_else(|_| PathBuf::from("/storage"))
+            .expect("STORAGE_PATH env var not set!")
     })
 }
 

@@ -1,11 +1,11 @@
-//! Central dispatcher for all registered page requests.
+//! Central dispatcher for all *registered* page requests. See main.rs for the
+//! full router setup.
 //!
 //! This module handles routing by looking up pages in the registry and
 //! calling the appropriate handler method based on the HTTP method.
 //!
 //! Hit counting and vote state are fetched here (not in middleware) because
-//! they only apply to formally-defined pages. This matches the PHP version's
-//! approach and keeps all page-handling logic in one place.
+//! they only apply to formally-defined pages.
 
 use axum::{
     body::Body,
@@ -25,16 +25,20 @@ use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{resolve_path, PageInfo, PathLookupResult, NOT_FOUND_PAGE_INFO};
 
-/// Processes any request not matched by explicit routes (like /upvote or static
-/// files). If the request is not for a registered page or what we expect to be
-/// a 404, that's a bug in main.rs.
+/// Main registered page handler. This is set as a fallback in main.rs so that
+/// it runs whenever the request is not matched by another handler (e.g. static
+/// files, pastebin endpoints, etc.). If we get here and we expect anything
+/// other than a registered page or a 404, it's a bug in main.rs.
+///
+/// Handles both GETs and POSTs for registered pages.
 pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
     let query_string = request.uri().query().map(|s| s.to_string());
 
-    // Extract all data from request BEFORE any async operations
-    // (Request<Body> is not Sync, so we can't hold reference across await)
+    // Extract all data from request BEFORE any async operations.
+    // Request<Body> is not Sync, so we can't hold a reference across an await.
+
     let connection_ip = request
         .extensions()
         .get::<ConnectInfo<SocketAddr>>()
@@ -63,7 +67,9 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .and_then(|v| v.to_str().ok())
         .unwrap_or("defuse.ca");
 
-    // Build URL prefix - use http for localhost, https for everything else
+    // Build URL prefix. Use http for localhost, https for everything else.
+    // This might be wrong if the dev environment is using a different domain
+    // but it's conservative to be safe.
     let scheme = if host.starts_with("localhost") || host.starts_with("127.0.0.1") {
         "http"
     } else {
@@ -77,14 +83,19 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
 
-    // Resolve path to page (middleware should have already handled all redirects)
+    // Look up the registered page.
+    //
+    // Middleware will have already normalized e.g. /abouT -> /about.htm and the
+    // router will have already handled requests to static files, other API
+    // endpoitns, etc. So all that's left are actual registered pages or URLs
+    // which should 404.
     let page_info = match resolve_path(&path) {
         PathLookupResult::Canonical(page) => page,
         PathLookupResult::NotFound => {
             return render_not_found(client_ip, dnt_enabled);
         }
         PathLookupResult::Redirect { canonical_path } => {
-            // Middleware should have already redirected - this is a bug
+            // Middleware should have already redirected. This is a bug.
             panic!(
                 "BUG: Redirect reached dispatcher - middleware failed to redirect {} -> {}",
                 path, canonical_path
@@ -95,8 +106,9 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
     // All non-redirect registry entries MUST have a handler, if not, fail loud.
     let handler = page_info.handler.unwrap();
 
-    // Extract body for POST requests (consumes request)
+    // Extract body for POST requests.
     let post_body = if method == Method::POST {
+
         // Get Content-Type header before consuming request
         let content_type = request
             .headers()
@@ -105,7 +117,9 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
             .map(|s| s.to_string());
 
         let (_parts, body) = request.into_parts();
+
         // 100MB limit (matches PHP's post_max_size)
+        // AUDIT: Is this limit only being applied after this has all been loaded into memory?
         let bytes = match axum::body::to_bytes(body, 100 * 1024 * 1024).await {
             Ok(bytes) => bytes,
             Err(_) => {
@@ -117,7 +131,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         if let Some(boundary) = content_type.as_ref().and_then(|ct| multer::parse_boundary(ct).ok())
         {
             match parse_multipart(bytes, &boundary).await {
-                Ok(fields) => PostBody::Multipart { fields },
+                Ok(fields) => Some(PostBody::Multipart { fields }),
                 Err(e) => {
                     error!("Failed to parse multipart: {}", e);
                     return (StatusCode::BAD_REQUEST, "Failed to parse multipart data")
@@ -125,17 +139,19 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
                 }
             }
         } else {
-            PostBody::UrlEncoded(bytes)
+            Some(PostBody::UrlEncoded(bytes))
         }
     } else {
-        PostBody::UrlEncoded(Bytes::new())
+        None
     };
 
     // Now do async operations
 
+    // Count the hit
     let page_id = page_info.hit_counter_id();
     let hit_counts = record_and_get_hits(&state, page_id, &client_ip, &user_agent).await;
 
+    // Get upvote counts and arrow state (based on IP)
     let vote_state = if let Some(upvote_config) = &page_info.upvote {
         fetch_vote_state(&state, page_info, upvote_config, &client_ip).await
     } else {
@@ -159,7 +175,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
     match method {
         // Axum takes care of not returning the body for HEAD requests
         Method::GET | Method::HEAD => handler.get(ctx, &state).await,
-        Method::POST => match handler.post(ctx, &state, post_body) {
+        Method::POST => match handler.post(ctx, &state, post_body.unwrap()) {
             Some(future) => future.await,
             None => {
                 // Handler doesn't support POST - return 405
@@ -184,7 +200,7 @@ async fn record_and_get_hits(
         error!("Failed to record hit for {}: {}", page_id, e);
     }
 
-    // Fetch counts
+    // Get hit counts
     state.phpcount.get_hit_counts(page_id).await
         .unwrap_or_else(|e| {
             error!("Failed to get hit counts for {}: {}", page_id, e);
@@ -199,7 +215,15 @@ async fn fetch_vote_state(
     upvote_config: &crate::registry::UpvoteConfig,
     client_ip: &str,
 ) -> VoteState {
+
+    // AUDIT: This should exist in the upvote library, same with stuff in upvote.rs
+
     // Get title/description from upvote config override or page defaults
+
+    // Pages can have different titles and descriptions for the upvote system
+    // so that e.g. on the homepage or the list of all pages, they can have 
+    // shorter titles to fit horizontally vs. the title for the browser's title
+    // bar could be longer.
     let title = upvote_config
         .title
         .unwrap_or_else(|| page_info.title_or_default());
@@ -216,7 +240,8 @@ async fn fetch_vote_state(
         format!("https://defuse.ca/{}.htm", page_info.slug)
     };
 
-    // Ensure page exists in database (this is how entries for new pages are added)
+    // Ensure page exists in the upvote database.
+    // This is how entries for new pages are added automatically.
     if let Err(e) = state
         .upvotes
         .ensure_page(
@@ -234,9 +259,8 @@ async fn fetch_vote_state(
         );
     }
 
-    // Fetch vote counts and user's vote
-    state
-        .upvotes
+    // Fetch vote counts and user's vote state (by IP)
+    state.upvotes
         .get_vote_state(upvote_config.id, client_ip)
         .await
         .unwrap_or_else(|e| {
