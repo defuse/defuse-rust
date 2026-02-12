@@ -14,7 +14,7 @@ impl Bibliography {
     /// Each tuple is (key, title, authors, date, url).
     /// For general references (no author/date), pass empty strings for authors and date.
     pub fn new(refs: &[(&str, &str, &str, &str, &str)]) -> Self {
-        // TODO: instead of passing a big array, add methods for adding citations
+        // AUDIT: instead of passing a big array, add more-usable methods for adding citations
         let mut references = BTreeMap::new();
         for (key, title, authors, date, url) in refs {
             let safe_title = html_escape(title);
