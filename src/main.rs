@@ -76,6 +76,18 @@ async fn main() {
         .expect("Failed to connect to Pastebin database");
     tracing::info!("Pastebin database connected");
 
+    tracing::info!("Connecting to TRENT database...");
+    libs::trent::ensure_db_connection_works()
+        .await
+        .expect("Failed to connect to TRENT database");
+    tracing::info!("TRENT database connected");
+
+    tracing::info!("Connecting to Time Capsule database...");
+    libs::timecapsule::ensure_db_connection_works()
+        .await
+        .expect("Failed to connect to Time Capsule database");
+    tracing::info!("Time Capsule database connected");
+
     // Create application state
     let state = AppState::new(phpcount, upvotes);
 

@@ -12,8 +12,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// Global connection pool - lazily initialized on first use
 static POOL: OnceLock<MySqlPool> = OnceLock::new();
 
+/// Connect to the database eagerly at startup to fail fast if misconfigured.
+pub async fn ensure_db_connection_works() -> Result<(), sqlx::Error> {
+    get_pool().await?;
+    Ok(())
+}
+
 /// Get or create the database connection pool
-pub async fn get_pool() -> Result<&'static MySqlPool, sqlx::Error> {
+async fn get_pool() -> Result<&'static MySqlPool, sqlx::Error> {
     if let Some(pool) = POOL.get() {
         return Ok(pool);
     }

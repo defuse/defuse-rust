@@ -26,6 +26,12 @@ pub struct Drawing {
     pub userprintout: String,
 }
 
+/// Connect to the database eagerly at startup to fail fast if misconfigured.
+pub async fn ensure_db_connection_works() -> Result<(), sqlx::Error> {
+    get_pool().await?;
+    Ok(())
+}
+
 /// Get or create the database connection pool
 async fn get_pool() -> Result<&'static MySqlPool, sqlx::Error> {
     if let Some(pool) = POOL.get() {
