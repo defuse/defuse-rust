@@ -9,14 +9,13 @@
 //! Also handles bin.defuse.ca subdomain redirects.
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query},
     http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
 use serde::Deserialize;
 
-use crate::app_state::AppState;
-use crate::libs::pastebin::{format_timeleft, PastebinError};
+use crate::libs::pastebin::{format_timeleft, PastebinError, PastebinService};
 
 #[derive(Deserialize, Default)]
 pub struct ViewQuery {
@@ -31,7 +30,6 @@ const DELETE_SECRET_HASH: &str = "a7c61e0ed10927d12ed8fa6c080874b31d1b589e679f8a
 
 /// Handler for GET /b/{key}
 pub async fn handler(
-    State(state): State<AppState>,
     Path(key): Path<String>,
     Query(query): Query<ViewQuery>,
     headers: HeaderMap,
@@ -50,16 +48,24 @@ pub async fn handler(
         return redirect_301("/pastebin.htm");
     }
 
+    let pastebin = match PastebinService::new().await {
+        Ok(svc) => svc,
+        Err(e) => {
+            tracing::error!("Failed to connect to pastebin database: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        }
+    };
+
     // Check for delete request with secret
     if let Some(delete_secret) = &query.delete {
         let hash = sha256_hex(delete_secret);
         if hash == DELETE_SECRET_HASH {
-            let _ = state.pastebin.delete_paste(&key).await;
+            let _ = pastebin.delete_paste(&key).await;
         }
     }
 
     // Fetch the paste
-    let paste_result = state.pastebin.get_paste(&key).await;
+    let paste_result = pastebin.get_paste(&key).await;
 
     // Check if raw mode requested
     let is_raw = query.raw.as_deref() == Some("true");

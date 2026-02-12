@@ -12,10 +12,30 @@
 //! ```
 
 use sqlx::MySqlPool;
+use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::pastebin_crypto::{decrypt, encrypt, get_database_id, CryptoError};
 use super::passgen::generate_alphanumeric_password;
+
+/// Global connection pool - lazily initialized on first use
+static POOL: OnceLock<MySqlPool> = OnceLock::new();
+
+/// Get or create the database connection pool
+async fn get_pool() -> Result<&'static MySqlPool, PastebinError> {
+    if let Some(pool) = POOL.get() {
+        return Ok(pool);
+    }
+
+    let url = std::env::var("PASTEBIN_DATABASE_URL")
+        .expect("PASTEBIN_DATABASE_URL must be set for pastebin");
+    let pool = MySqlPool::connect(&url)
+        .await
+        .map_err(PastebinError::DatabaseError)?;
+
+    // Race-safe: if another task initialized first, use theirs and drop ours
+    Ok(POOL.get_or_init(|| pool))
+}
 
 /// Default lifetime: 10 days in seconds
 const DEFAULT_LIFETIME_SECS: i64 = 864000;
@@ -75,19 +95,14 @@ pub struct PasteInfo {
 
 #[derive(Clone)]
 pub struct PastebinService {
-    pool: MySqlPool,
+    pool: &'static MySqlPool,
 }
 
 impl PastebinService {
-    /// Create a new PastebinService with the given database pool
-    pub fn new(pool: MySqlPool) -> Self {
-        Self { pool }
-    }
-
-    /// Connect to the database and create a new service
-    pub async fn connect(database_url: &str) -> Result<Self, sqlx::Error> {
-        let pool = MySqlPool::connect(database_url).await?;
-        Ok(Self::new(pool))
+    /// Create a new PastebinService instance.
+    /// The database connection pool is lazily initialized on first call and reused thereafter.
+    pub async fn new() -> Result<Self, PastebinError> {
+        Ok(Self { pool: get_pool().await? })
     }
 
     /// Create a new paste and return the URL key.
@@ -124,7 +139,7 @@ impl PastebinService {
             let exists: Option<(String,)> =
                 sqlx::query_as("SELECT token FROM pastes WHERE token = ?")
                     .bind(&token)
-                    .fetch_optional(&self.pool)
+                    .fetch_optional(self.pool)
                     .await?;
 
             if exists.is_none() {
@@ -156,7 +171,7 @@ impl PastebinService {
             .bind(&data)
             .bind(expiration)
             .bind(if jscrypt { 1i8 } else { 0i8 })
-            .execute(&self.pool)
+            .execute(self.pool)
             .await?;
 
         Ok(url_key)
@@ -176,7 +191,7 @@ impl PastebinService {
         let result: Option<(String, i64, i8)> =
             sqlx::query_as("SELECT data, time, jscrypt FROM pastes WHERE token = ?")
                 .bind(&token)
-                .fetch_optional(&self.pool)
+                .fetch_optional(self.pool)
                 .await?;
 
         match result {
@@ -212,7 +227,7 @@ impl PastebinService {
         let now = Self::now();
         sqlx::query("DELETE FROM pastes WHERE time < ?")
             .bind(now)
-            .execute(&self.pool)
+            .execute(self.pool)
             .await?;
         Ok(())
     }
@@ -222,7 +237,7 @@ impl PastebinService {
         let token = get_database_id(url_key);
         sqlx::query("DELETE FROM pastes WHERE token = ?")
             .bind(&token)
-            .execute(&self.pool)
+            .execute(self.pool)
             .await?;
         Ok(())
     }

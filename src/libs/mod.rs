@@ -15,6 +15,5 @@ pub mod util;
 pub mod vim_highlight;
 pub mod x86_assembler;
 
-pub use pastebin::PastebinService;
 pub use phpcount::PhpCountService;
 pub use upvotes::UpvoteService;

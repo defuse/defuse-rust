@@ -3,14 +3,13 @@
 //! Endpoint: POST /bin/add.php
 
 use axum::{
-    extract::State,
     http::{header, StatusCode},
     response::{IntoResponse, Response},
     Form,
 };
 use serde::Deserialize;
 
-use crate::app_state::AppState;
+use crate::libs::pastebin::PastebinService;
 
 /// Default lifetime: 10 days in seconds
 const DEFAULT_LIFETIME_SECS: i64 = 864000;
@@ -34,7 +33,7 @@ pub struct AddPasteForm {
 }
 
 /// Handler for POST /bin/add.php
-pub async fn handler(State(state): State<AppState>, Form(form): Form<AddPasteForm>) -> Response {
+pub async fn handler(Form(form): Form<AddPasteForm>) -> Response {
     // Check for empty paste
     if form.paste.is_empty() {
         return (StatusCode::OK, "Empty post!").into_response();
@@ -69,9 +68,16 @@ pub async fn handler(State(state): State<AppState>, Form(form): Form<AddPasteFor
         }
     };
 
+    let pastebin = match PastebinService::new().await {
+        Ok(svc) => svc,
+        Err(e) => {
+            tracing::error!("Failed to connect to pastebin database: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create paste").into_response();
+        }
+    };
+
     // Create the paste
-    match state
-        .pastebin
+    match pastebin
         .create_paste(&text, jscrypt, Some(lifetime_secs), short_url)
         .await
     {
