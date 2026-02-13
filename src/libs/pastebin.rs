@@ -162,15 +162,11 @@ impl PastebinService {
         // Calculate expiration time
         let expiration = Self::now() + lifetime;
 
-        // Encrypt or store as-is for jscrypt
+        // Always server-side encrypt, even for jscrypt pastes (matching PHP behavior).
+        // This protects jscrypt ciphertext from offline password cracking if the
+        // database is compromised.
         let token = get_database_id(&url_key);
-        let data = if jscrypt {
-            // For jscrypt, store the client-encrypted data as-is
-            text.to_string()
-        } else {
-            // Server-side encryption
-            encrypt(&url_key, text)
-        };
+        let data = encrypt(&url_key, text);
 
         // Insert into database
         sqlx::query("INSERT INTO pastes (token, data, time, jscrypt) VALUES (?, ?, ?, ?)")
@@ -211,13 +207,10 @@ impl PastebinService {
                     return Err(PastebinError::NotFound);
                 }
 
-                let text = if jscrypt {
-                    // Return as-is for client-side decryption
-                    data
-                } else {
-                    // Decrypt server-side encrypted data
-                    decrypt(url_key, &data)?
-                };
+                // Always decrypt server-side encryption (applied to all pastes).
+                // For jscrypt pastes, this returns the client-side ciphertext
+                // which the browser then decrypts with the user's password.
+                let text = decrypt(url_key, &data)?;
 
                 Ok(PasteInfo {
                     text,
