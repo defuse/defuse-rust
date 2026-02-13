@@ -19,16 +19,16 @@ use tower::{Layer, Service};
 
 use crate::registry::{resolve_path, PathLookupResult};
 
-// =============================================================================
-// HARDCODED CONFIGURATION - Matching PHP URLParse.php exactly
-// =============================================================================
-
 /// The canonical hostname - all other hosts redirect here
 pub const MASTER_HOST: &str = "defuse.ca";
 
 /// Hosts that bypass redirects (for local development)
 /// These hosts skip host canonicalization AND HTTPS enforcement
 /// Note: Must include port for non-standard ports (e.g., "localhost:3000")
+///
+/// DO NOT add the real domain name (e.g. "defuse.ca") since that would cause
+/// security_headers.rs to not add HSTS headers when it should.
+/// TODO: Rename this and is_accepted_host() to be more clear that they are DEV hosts only
 pub const ACCEPTED_HOSTS: &[&str] = &[
     "localhost",
     "localhost:3000",

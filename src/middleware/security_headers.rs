@@ -154,17 +154,20 @@ where
             // Cache control for sensitive pages (marked with no_cache in registry)
             // SECURITY: Prevents browsers from caching sensitive content
             if is_no_cache_page {
+                headers.remove(header::EXPIRES);
+                headers.remove(header::CACHE_CONTROL);
+                headers.remove(header::PRAGMA);
                 headers.insert(
                     header::EXPIRES,
-                    "Mon, 01 Jan 1990 00:00:00 GMT".parse().unwrap(),
+                    header::HeaderValue::from_static("Mon, 01 Jan 1990 00:00:00 GMT"),
                 );
                 headers.insert(
                     header::CACHE_CONTROL,
-                    "no-cache, no-store, must-revalidate".parse().unwrap(),
+                    header::HeaderValue::from_static("no-cache, no-store, must-revalidate"),
                 );
                 headers.insert(
                     header::PRAGMA,
-                    "no-cache".parse().unwrap(),
+                    header::HeaderValue::from_static("no-cache"),
                 );
             }
 

@@ -135,7 +135,8 @@ async fn main() {
 
         // The way middleware works is that the outermost layer sees the request
         // first, passes on to the next layer, eventually arriving at the
-        // innermost middleware, then the stack unwinds.
+        // innermost middleware, then the stack unwinds. Here, the outermost
+        // layers come first.
 
         // Makes sure any panic results in a 500 error rather than a crash.
         .layer(CatchPanicLayer::new())
@@ -155,9 +156,10 @@ async fn main() {
         //  - /abouT -> /about.htm
         //  - etc.
         .layer(UrlCanonicalizationLayer)
+
         // BlockingMiddleware: runs handlers on blocking thread pool for OS preemption
         // This is innermost so actual request handling gets preemptive scheduling
-
+        //
         // Runs handlers on Tokio's blocking thread pool so the OS can preempt
         // CPU-bound work (e.g. hashing large files on the checksums page).
         // Without this, a long computation would block the async runtime and
