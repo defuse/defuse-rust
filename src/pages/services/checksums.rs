@@ -1,3 +1,6 @@
+//! WARNING: This source file contains AI-generated implementations of hash
+//! functions which HAVE NOT BEEN REVIEWED FOR SECURITY.
+
 use askama::Template;
 use axum::response::IntoResponse;
 use serde::Deserialize;
@@ -60,6 +63,30 @@ const SUPPORTED_ALGORITHMS: &[&str] = &[
     "tiger160,3", "tiger160,4",
     "tiger192,3", "tiger192,4",
 ];
+
+#[derive(Template)]
+#[template(path = "pages/services/checksums.html")]
+struct ChecksumsPage {
+    ctx: PageContext,
+    input: String,
+    normalize: bool,
+    results: Vec<HashResult>,
+    error: Option<String>,
+    supported_algorithms: &'static [&'static str],
+}
+
+pub struct HashResult {
+    pub algorithm: &'static str,
+    pub hash: String,
+}
+
+#[derive(Deserialize, Default)]
+struct ChecksumsForm {
+    #[serde(default)]
+    data: String,
+    #[serde(default)]
+    normalize: Option<String>,
+}
 
 pub struct Handler;
 
@@ -168,29 +195,6 @@ async fn handle_multipart_post(ctx: PageContext, fields: Vec<FormField>) -> axum
     .into_response()
 }
 
-#[derive(Template)]
-#[template(path = "pages/services/checksums.html")]
-struct ChecksumsPage {
-    ctx: PageContext,
-    input: String,
-    normalize: bool,
-    results: Vec<HashResult>,
-    error: Option<String>,
-    supported_algorithms: &'static [&'static str],
-}
-
-pub struct HashResult {
-    pub algorithm: &'static str,
-    pub hash: String,
-}
-
-#[derive(Deserialize, Default)]
-struct ChecksumsForm {
-    #[serde(default)]
-    data: String,
-    #[serde(default)]
-    normalize: Option<String>,
-}
 
 // =============================================================================
 // Hash computation

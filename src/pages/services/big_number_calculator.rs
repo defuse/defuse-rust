@@ -20,7 +20,7 @@ impl PageHandler for Handler {
                 ctx,
                 eqn: String::new(),
                 base: OutputBase::Decimal,
-                add_spaces: true, // Default to checked (matches PHP GET behavior)
+                add_spaces: true, // Default to checked
                 result: None,
             }
             .into_response()
@@ -31,6 +31,7 @@ impl PageHandler for Handler {
         Some(Box::pin(async move {
             match body {
                 PostBody::UrlEncoded(bytes) => {
+                    // TODO: Give an error instead of unwrap_or_default()
                     let form: CalculatorForm =
                         serde_urlencoded::from_bytes(&bytes).unwrap_or_default();
 

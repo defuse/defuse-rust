@@ -28,7 +28,6 @@ impl PageHandler for Handler {
                 tab_width: 8,
                 br_checked: true,
                 submitted: false,
-                error: None,
                 source_html,
             }
             .into_response()
@@ -51,11 +50,12 @@ impl PageHandler for Handler {
                         // Invalid tab width
                         return HtmlSanitizePage {
                             ctx,
-                            data: "Invalid tab width.".to_string(),
+                            // TODO: this method of error handling is not ideal,
+                            // since it erases the contents the user entered.
+                            data: "ERROR: Invalid tab width.".to_string(),
                             tab_width: 8,
                             br_checked: form.br.is_some(),
                             submitted: form.sanitize.is_some(),
-                            error: None,
                             source_html,
                         }
                         .into_response();
@@ -72,11 +72,11 @@ impl PageHandler for Handler {
                         tab_width: tab_width as u32,
                         br_checked: br_tags,
                         submitted: form.sanitize.is_some(),
-                        error: None,
                         source_html,
                     }
                     .into_response()
                 }
+                // There are no file uploads, just show the page.
                 PostBody::Multipart { .. } => {
                     let source_html = get_source_html();
 
@@ -86,7 +86,6 @@ impl PageHandler for Handler {
                         tab_width: 8,
                         br_checked: true,
                         submitted: false,
-                        error: None,
                         source_html,
                     }
                     .into_response()
@@ -112,7 +111,6 @@ struct HtmlSanitizePage {
     tab_width: u32,
     br_checked: bool,
     submitted: bool,
-    error: Option<String>,
     source_html: String,
 }
 
