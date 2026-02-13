@@ -7,8 +7,6 @@
 //! - Case normalization (redirect to canonical case from registry)
 //! - Alias resolution (redirects)
 //!
-//! CRITICAL: Configuration is HARDCODED to match PHP behavior exactly.
-//! See docs/URL_ROUTING_REQUIREMENTS.md for full specification.
 
 use axum::{
     body::Body,
@@ -28,8 +26,7 @@ pub const MASTER_HOST: &str = "defuse.ca";
 ///
 /// DO NOT add the real domain name (e.g. "defuse.ca") since that would cause
 /// security_headers.rs to not add HSTS headers when it should.
-/// TODO: Rename this and is_accepted_host() to be more clear that they are DEV hosts only
-pub const ACCEPTED_HOSTS: &[&str] = &[
+pub const DEV_HOSTS: &[&str] = &[
     "localhost",
     "localhost:3000",
     "localhost:8080",
@@ -88,7 +85,6 @@ where
         let mut inner = self.inner.clone();
 
         Box::pin(async move {
-            // Extract request info
             let host = req
                 .headers()
                 .get(header::HOST)
@@ -96,8 +92,6 @@ where
                 .unwrap_or("")
                 .to_string();
 
-            // Get host without port for MASTER_HOST comparison
-            // (MASTER_HOST is "defuse.ca" without port)
             let host_without_port = host.split(':').next().unwrap_or("").to_lowercase();
 
             let is_https = req
@@ -111,21 +105,21 @@ where
             let path = uri.path();
             let query = uri.query();
 
-            // ACCEPTED_HOSTS comparison uses FULL host (with port) to match PHP behavior
+            // DEV_HOSTS comparison uses FULL host (with port) to match PHP behavior
             // e.g., "defuse:10443" must match exactly
-            let is_accepted_host = is_accepted_host(&host);
+            let is_dev_host = is_dev_host(&host);
 
             // Step 1: Host canonicalization
-            // If not master host and not an accepted host, redirect to master
-            if !is_accepted_host && host_without_port != MASTER_HOST && !host_without_port.is_empty() {
-                // ANTICIPATE: Use HTTPS if FORCE_HTTPS is true or already on HTTPS
+            // If not master host and not a dev host, redirect to master
+            if !is_dev_host && host_without_port != MASTER_HOST && !host_without_port.is_empty() {
+                // Use HTTPS if FORCE_HTTPS is true or already on HTTPS
                 let use_https = FORCE_HTTPS || is_https;
                 let redirect_url = build_redirect_url(use_https, MASTER_HOST, path, query);
                 return Ok(redirect_301(&redirect_url));
             }
 
-            // Step 2: HTTPS enforcement (skip for accepted hosts)
-            if FORCE_HTTPS && !is_https && !is_accepted_host {
+            // Step 2: HTTPS enforcement (skip for dev hosts)
+            if FORCE_HTTPS && !is_https && !is_dev_host {
                 let redirect_url = build_redirect_url(true, &host_without_port, path, query);
                 return Ok(redirect_301(&redirect_url));
             }
@@ -141,9 +135,9 @@ where
     }
 }
 
-/// Check if a host is in the accepted hosts list (localhost, dev hosts, etc.)
-pub fn is_accepted_host(host: &str) -> bool {
-    ACCEPTED_HOSTS.iter().any(|h| h.eq_ignore_ascii_case(host))
+/// Check if a host is in the dev hosts list (localhost, dev hosts, etc.)
+pub fn is_dev_host(host: &str) -> bool {
+    DEV_HOSTS.iter().any(|h| h.eq_ignore_ascii_case(host))
 }
 
 /// Canonicalize the URL path, returning a redirect URL if needed.
@@ -174,6 +168,7 @@ fn check_blog_slug_redirect(path: &str) -> Option<String> {
     }
 
     // Skip if already has an extension (contains a dot after /blog/)
+    // This would break if blog slugs contained ., but they do not.
     let after_blog = &path[6..]; // Skip "/blog/"
     if after_blog.contains('.') || after_blog.is_empty() {
         return None;
@@ -226,12 +221,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_accepted_hosts() {
-        assert!(is_accepted_host("localhost"));
-        assert!(is_accepted_host("LOCALHOST"));
-        assert!(is_accepted_host("127.0.0.1"));
-        assert!(!is_accepted_host("defuse.ca"));
-        assert!(!is_accepted_host("evil.com"));
+    fn test_dev_hosts() {
+        assert!(is_dev_host("localhost"));
+        assert!(is_dev_host("LOCALHOST"));
+        assert!(is_dev_host("127.0.0.1"));
+        assert!(!is_dev_host("defuse.ca"));
+        assert!(!is_dev_host("evil.com"));
     }
 
     #[test]
@@ -313,14 +308,14 @@ mod tests {
     }
 
     #[test]
-    fn test_accepted_host_with_port() {
-        // Full host:port should match ACCEPTED_HOSTS entry
-        assert!(is_accepted_host("defuse:10443"));
-        assert!(is_accepted_host("DEFUSE:10443"));
+    fn test_dev_host_with_port() {
+        // Full host:port should match DEV_HOSTS entry
+        assert!(is_dev_host("defuse:10443"));
+        assert!(is_dev_host("DEFUSE:10443"));
         // Without port should match entries without port
-        assert!(is_accepted_host("localhost"));
+        assert!(is_dev_host("localhost"));
         // But "defuse" without port should also match "defuse" entry
-        assert!(is_accepted_host("defuse"));
+        assert!(is_dev_host("defuse"));
     }
 
     #[test]

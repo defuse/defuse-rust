@@ -20,7 +20,7 @@ use axum::{
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
-use super::url_canonicalization::is_accepted_host;
+use super::url_canonicalization::is_dev_host;
 use crate::registry::{resolve_path, PathLookupResult};
 
 /// Tower layer for security headers
@@ -83,7 +83,7 @@ where
             .map(|p| p == "https")
             .unwrap_or(false);
 
-        let is_accepted = is_accepted_host(&host);
+        let is_dev = is_dev_host(&host);
 
         // Check if this page should not be cached (lookup from registry)
         // SECURITY: Some pages like passgen must not be cached
@@ -141,8 +141,8 @@ where
                 "strict-origin-when-cross-origin".parse().unwrap(),
             );
 
-            // HSTS: only over HTTPS and not for localhost/accepted hosts
-            if is_https && !is_accepted {
+            // HSTS: only over HTTPS and not for localhost/dev hosts
+            if is_https && !is_dev {
                 headers.insert(
                     header::STRICT_TRANSPORT_SECURITY,
                     "max-age=31536000; includeSubDomains; preload"
