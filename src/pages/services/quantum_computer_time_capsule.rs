@@ -18,6 +18,15 @@ use crate::libs::util::html_escape;
 
 pub struct Handler;
 
+#[derive(Template)]
+#[template(path = "pages/services/quantum_computer_time_capsule.html")]
+struct QuantumTimeCapsulePage {
+    ctx: PageContext,
+    result: SubmissionResult,
+    message_count: String,
+    last_message_ago: String,
+}
+
 /// Form submission result state
 #[derive(Default)]
 struct SubmissionResult {
@@ -93,7 +102,7 @@ async fn get_archive_stats() -> (String, String) {
 async fn process_submission(bytes: &[u8], ctx: &PageContext) -> SubmissionResult {
     let form: TimeCapsuleForm = serde_urlencoded::from_bytes(bytes).unwrap_or_default();
 
-    // If no ciphertext, this isn't a message submission (maybe an upvote)
+    // If no ciphertext, this isn't a message submission
     if form.ciphertext.is_empty() {
         return SubmissionResult::default();
     }
@@ -164,15 +173,6 @@ async fn process_submission(bytes: &[u8], ctx: &PageContext) -> SubmissionResult
             }
         }
     }
-}
-
-#[derive(Template)]
-#[template(path = "pages/services/quantum_computer_time_capsule.html")]
-struct QuantumTimeCapsulePage {
-    ctx: PageContext,
-    result: SubmissionResult,
-    message_count: String,
-    last_message_ago: String,
 }
 
 impl QuantumTimeCapsulePage {
@@ -247,6 +247,12 @@ pub async fn download_archive() -> Response {
 
 /// Build the full archive content
 async fn build_archive_content() -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+
+    // DO NOT CHANGE THIS.
+    // We must produce output that is byte-for-byte identical to past versions,
+    // because various hashes of the first N lines of the file are written to
+    // blockchains so that dates can be validated by historians.
+
     let mut content = String::new();
 
     // Header
