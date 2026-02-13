@@ -1422,6 +1422,17 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         },
     ];
 
+    // Validate upvote IDs are valid CSS class names (they're used in class attributes in templates)
+    for p in pages {
+        if let Some(upvote) = &p.upvote {
+            assert!(
+                is_valid_css_class(upvote.id),
+                "Upvote ID '{}' for page '{}' is not a valid CSS class name",
+                upvote.id, p.slug
+            );
+        }
+    }
+
     // Build HashMap with lowercase keys for case-insensitive lookup
     // TODO: make it a loud error if there are entries with the same slug aside from case
     pages
@@ -1429,3 +1440,17 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         .map(|p| (p.slug.to_lowercase().leak() as &'static str, p.clone()))
         .collect()
 });
+
+/// Check if a string is a valid CSS class name.
+/// Must start with a letter, underscore, or hyphen, then only letters, digits, underscores, or hyphens.
+fn is_valid_css_class(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+    let mut chars = s.chars();
+    let first = chars.next().unwrap();
+    if !first.is_ascii_alphabetic() && first != '_' && first != '-' {
+        return false;
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+}
