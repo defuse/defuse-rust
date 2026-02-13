@@ -6,7 +6,6 @@
 //! - GET /b/ - Redirect to /pastebin.htm
 //! - GET /b - Redirect to /pastebin.htm
 //!
-//! Also handles bin.defuse.ca subdomain redirects.
 
 use axum::{
     extract::{Path, Query},
@@ -16,6 +15,7 @@ use axum::{
 use serde::Deserialize;
 
 use crate::libs::pastebin::{format_timeleft, PastebinError, PastebinService};
+use crate::libs::util::html_escape;
 
 #[derive(Deserialize, Default)]
 pub struct ViewQuery {
@@ -34,14 +34,9 @@ pub async fn handler(
     Query(query): Query<ViewQuery>,
     headers: HeaderMap,
 ) -> Response {
-    // Check for bin.defuse.ca subdomain
-    if let Some(host) = headers.get(header::HOST).and_then(|h| h.to_str().ok()) {
-        if host.contains("bin.defuse.ca") {
-            // Redirect to defuse.ca/b/{key}
-            let location = format!("https://defuse.ca/b/{}", key);
-            return redirect_301(&location);
-        }
-    }
+    // We've removed the bin.defuse.ca/key -> defuse.ca/b/key redirect since
+    // these URLs haven't been generated in years and the maximum post lifetime
+    // is 6 months.
 
     // Handle empty key (redirect to pastebin main page)
     if key.is_empty() {
@@ -442,15 +437,6 @@ us</a>.
 </html>"#.to_string()
 }
 
-/// Escape HTML special characters
-fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#039;")
-}
-
 /// Escape a string for use in JavaScript string literal
 /// Matches PHP's js_string_escape function
 fn js_string_escape(data: &str) -> String {
@@ -468,18 +454,8 @@ fn js_string_escape(data: &str) -> String {
     safe
 }
 
-/// Handler for /b/ redirect
-pub async fn bin_index_handler(headers: HeaderMap) -> Response {
-    // Check for bin.defuse.ca subdomain
-    if let Some(host) = headers.get(header::HOST).and_then(|h| h.to_str().ok()) {
-        if host.contains("bin.defuse.ca") {
-            return redirect_301("https://defuse.ca/pastebin.htm");
-        }
-    }
-    redirect_301("/pastebin.htm")
-}
-
 /// Create a 301 Moved Permanently redirect response
+/// TODO: this is duplicate code, move it into a utility
 fn redirect_301(location: &str) -> Response {
     Response::builder()
         .status(StatusCode::MOVED_PERMANENTLY)

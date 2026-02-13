@@ -15,6 +15,8 @@ use std::sync::OnceLock;
 use tempfile::NamedTempFile;
 use tracing::{debug, warn};
 
+use super::util::html_escape;
+
 /// Cache directory for highlighted output, derived from STORAGE_PATH env var.
 fn cache_dir() -> &'static Path {
     static CACHE_DIR: OnceLock<PathBuf> = OnceLock::new();
@@ -400,14 +402,6 @@ fn extract_attribute<'a>(tag: &'a str, attr: &str) -> Option<&'a str> {
     let rest = &tag[start..];
     let end = rest.find('"')?;
     Some(&rest[..end])
-}
-
-/// Simple HTML entity escaping
-fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
 }
 
 /// Simple HTML entity unescaping

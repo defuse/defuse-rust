@@ -108,7 +108,7 @@ async fn main() {
         .route("/bin/add.php", post(pages::services::pastebin_add::handler))
         .route("/bin/", get(|| async { redirect_301("/pastebin.htm") }))
         .route("/bin", get(|| async { redirect_301("/pastebin.htm") }))
-        .route("/b/", get(pages::services::pastebin_view::bin_index_handler))
+        .route("/b/", get(|| async { redirect_301("/pastebin.htm") }))
         .route("/b", get(|| async { redirect_301("/pastebin.htm") }))
         .route("/b/:key", get(pages::services::pastebin_view::handler))
 
@@ -140,6 +140,9 @@ async fn main() {
 
         // Makes sure any panic results in a 500 error rather than a crash.
         .layer(CatchPanicLayer::new())
+
+        // TODO: Add a middleware rejecting posts and such above 100MB to match old PHP behavior and DoS defense.
+        // TODO: There is already an implementation of this in registered_page_handler, but it does not apply globally.
 
         // Adds ETag headers to static files 
         // Must wrap SecurityHeaders so it can see Cache-Control: no-store and skip ETags for sensitive pages.
