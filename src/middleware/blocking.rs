@@ -20,5 +20,5 @@ pub async fn blocking_middleware(request: Request, next: Next) -> Response {
     let handle = Handle::current();
     tokio::task::spawn_blocking(move || handle.block_on(next.run(request)))
         .await
-        .expect("blocking task panicked")
+        .expect("blocking execution of a handler panicked")
 }

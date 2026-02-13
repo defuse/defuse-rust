@@ -8,11 +8,27 @@ use std::sync::LazyLock;
 
 use super::{alias, page, PageInfo, UpvoteConfig};
 
-/// The page registry - all pages on the site
+/// Registry for all "normal" pages on the site. See main.rs for special routes.
 ///
-/// Keys are LOWERCASE for case-insensitive lookup.
-/// The `slug` field in PageInfo stores the canonical case for URLs.
-/// Empty string "" is the home page.
+/// Specify:
+///     handler: e.g. `about` expands to crate::pages::about::Handler
+///     slug: the URL slug
+///     title: the page title (or "" to use default)
+///     description: the HTML metadata description ("" for default)
+///     keywords: keywords for HTML metadata ("" for default)
+///     legacy_hit_count_id: file path in the old PHP codebase, key for hit counter
+///     upvote: upvote metadata (specify this for new pages and it just works)
+///
+/// Or use alias! to create a redirect.
+///
+/// For new pages, set legacy_hit_count_id to the slug (TODO: automatically use
+/// the slug) when legacy_hit_count_id is unset.
+///
+/// Slugs are matched case-insensitively, so do not add pages with slugs that
+/// differ only by case. You may still use uppercase characters in slugs,
+/// the case as defined below will be used for generating canonical URLs.
+///
+/// Empty string "" slug is the home page.
 pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::new(|| {
     let pages: &[PageInfo] = &[
         // ===== Home page =====
@@ -61,6 +77,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/contact.html",
             upvote: None,
         },
+        // I've linked to my PGP key this way
         alias!("key" => "contact"),
         page! {
             handler: donated,
@@ -1408,7 +1425,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Panic Test",
             description: "Test page that panics during rendering.",
             keywords: "",
-            legacy_hit_count_id: "",
+            legacy_hit_count_id: "panic-test",
             upvote: None,
         },
         page! {
@@ -1417,7 +1434,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Test Directory",
             description: "Test page for directory-style URL handling.",
             keywords: "",
-            legacy_hit_count_id: "",
+            legacy_hit_count_id: "test-directory",
             upvote: None,
         },
     ];
@@ -1433,8 +1450,14 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         }
     }
 
-    // Build HashMap with lowercase keys for case-insensitive lookup
-    // TODO: make it a loud error if there are entries with the same slug aside from case
+    // Make sure hit count IDs get set for new pages.
+    // TODO: Make it an option and automatically use the slug if it's None.
+    pages.iter().for_each(|p| assert!(!p.legacy_hit_count_id.is_empty() || p.redirect.is_some()));
+
+    // TODO: make it a loud error if there are entries with colliding lowercased slugs
+
+    // Key on the lowercased slug for case-insensitive matching.
+    // The proper-case version of the slug is still used for generating canonical URLs.
     pages
         .iter()
         .map(|p| (p.slug.to_lowercase().leak() as &'static str, p.clone()))
@@ -1449,7 +1472,8 @@ fn is_valid_css_class(s: &str) -> bool {
     }
     let mut chars = s.chars();
     let first = chars.next().unwrap();
-    if !first.is_ascii_alphabetic() && first != '_' && first != '-' {
+    // This is stricter than CSS, since CSS allows e.g. "-abc" but not "-12a"
+    if !first.is_ascii_alphabetic() {
         return false;
     }
     chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')

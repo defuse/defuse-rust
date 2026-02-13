@@ -13,23 +13,25 @@ pub use pages::PAGE_REGISTRY;
 
 use crate::handler::PageHandler;
 
-/// Configuration for page upvoting
-/// If a page has this, it will show vote arrows
+/// Configuration for page upvoting. If a page has this, it will show vote arrows.
+/// Database records for upvotes are added automatically if missing, so just
+/// defining this on a page is sufficient to add it to the system.
 #[derive(Debug, Clone)]
 pub struct UpvoteConfig {
     /// Unique page ID for the upvote system (must be valid CSS class name)
     pub id: &'static str,
     /// Category for grouping pages (e.g., "defuse_pages", "audits")
     pub category: &'static str,
-    /// Optional title override (if None, uses page title)
+    /// Optional title override, if None, uses the page's title
     pub title: Option<&'static str>,
-    /// Optional description override (if None, uses page description)
+    /// Optional description override, if None, uses the page's description
     pub description: Option<&'static str>,
 }
 
-// NOTE: No constructors for UpvoteConfig - use struct literal syntax for explicitness
-
 /// Information about a single page
+///
+/// NOTE: Every page must explicitly specify all fields including `upvote`.
+/// This prevents accidentally omitting upvote config for pages that should have it.
 pub struct PageInfo {
     /// The handler for this page (implements PageHandler trait).
     /// None for aliases (they redirect, don't render).
@@ -50,11 +52,15 @@ pub struct PageInfo {
     /// Meta keywords (empty = use DEFAULT_META_KEYWORDS)
     pub keywords: &'static str,
 
-    /// Legacy hit counter ID from PHP version - preserves existing hit counts
+    /// Legacy hit counter ID from PHP version.
+    /// PHP used the actual include()'d filename as the hit count key.
+    /// So, in this rust version, we need to provide the legacy file paths.
+    ///
     /// This MUST match the ID used in the PHP PHPCount database.
     /// Format: "pages/{file}.php" or "pages/{file}.html"
+    ///
+    /// For new pages, manually set it equal to the slug.
     /// TODO: make this an Option and by default use the slug?
-    /// TODO: what does it currently do on empty string (e.g. 404 page)?
     pub legacy_hit_count_id: &'static str,
 
     /// Redirect target - if Some, this page is an alias
@@ -87,7 +93,7 @@ impl Clone for PageInfo {
     }
 }
 
-// Manual Debug implementation - trait objects can't derive Debug
+// Manual Debug implementation - dyn PageHandler doesn't implement Debug
 impl std::fmt::Debug for PageInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("PageInfo")
@@ -100,8 +106,6 @@ impl std::fmt::Debug for PageInfo {
     }
 }
 
-// NOTE: No Default impl - every page must explicitly specify all fields including `upvote`.
-// This prevents accidentally omitting upvote config for pages that should have it.
 
 /// Helper macro for defining alias pages (redirects)
 macro_rules! alias {
@@ -182,6 +186,7 @@ impl PageInfo {
 
     /// Get the relative URL path for this page (for form actions, links, etc.)
     /// Returns paths like "/", "/about.htm", "/audits/"
+    /// Includes the leading "/".
     pub fn relative_url(&self) -> String {
         if self.slug.is_empty() {
             "/".to_string()
@@ -305,9 +310,10 @@ pub fn resolve_path(path: &str) -> PathLookupResult {
         return PathLookupResult::NotFound;
     }
 
-    // Look up the page, with fallback for directory pages (without extension)
+    // Look up the page, with fallback for directory pages
     let page = lookup_page(name).or_else(|| {
         // Try with trailing slash for directory pages, but only if no .htm/.html extension
+        // e.g. we don't want audits.htm to serve the audits/ directory
         if had_extension {
             return None;
         }
