@@ -235,6 +235,11 @@ pub fn select_random_lines(
     if total_lines == 0 || num_lines == 0 {
         return Vec::new();
     }
+    assert!(
+        allow_repeat || num_lines <= total_lines,
+        "cannot select {} unique lines from a file with only {} lines",
+        num_lines, total_lines,
+    );
 
     let mut results = Vec::with_capacity(num_lines);
     let mut excluded: Vec<usize> = Vec::new();

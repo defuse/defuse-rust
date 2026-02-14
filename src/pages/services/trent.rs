@@ -114,7 +114,7 @@ struct CompletionInfo {
 }
 
 /// Form values for re-populating the form on validation errors
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct FormValues {
     drawing_num: String,
     passcode: String,
@@ -196,7 +196,7 @@ impl TrentPage {
             }
             Err(e) => {
                 tracing::error!("Database error viewing drawing: {}", e);
-                self.drawing_view = Some(DrawingView::NotFound(drawing_num));
+                self.error = Some("Database error. Please try again.".to_string());
             }
         }
     }
@@ -281,6 +281,12 @@ impl TrentPage {
         }
     }
 
+    /// Set an error message and repopulate form values
+    fn set_error(&mut self, msg: String, form_values: &FormValues) {
+        self.error = Some(msg);
+        self.form_values = Some(form_values.clone());
+    }
+
     /// Handle drawing creation (both confirmation step and completion)
     async fn handle_create(
         &mut self,
@@ -306,37 +312,34 @@ impl TrentPage {
         let file2hash = form.file2hash.clone();
         let file3hash = form.file3hash.clone();
 
-        // Helper to set error and repopulate form values
-        // Note: passcode is intentionally NOT repopulated for security
-        let mut set_error = |page: &mut TrentPage, msg: String| {
-            page.error = Some(msg);
-            page.form_values = Some(FormValues {
-                drawing_num: drawing_num.to_string(),
-                passcode: String::new(), // Don't repopulate passcode for security
-                name: name.to_string(),
-                description: description.to_string(),
-                lowval: lowval.to_string(),
-                highval: highval.to_string(),
-                numgen: numgen.to_string(),
-                randlines1: randlines1.to_string(),
-                randlines2: randlines2.to_string(),
-                randlines3: randlines3.to_string(),
-                chosentwice,
-            });
+        // Form values for repopulating on error (passcode intentionally blank)
+        let form_values = FormValues {
+            drawing_num: drawing_num.to_string(),
+            passcode: String::new(),
+            name: name.to_string(),
+            description: description.to_string(),
+            lowval: lowval.to_string(),
+            highval: highval.to_string(),
+            numgen: numgen.to_string(),
+            randlines1: randlines1.to_string(),
+            randlines2: randlines2.to_string(),
+            randlines3: randlines3.to_string(),
+            chosentwice,
         };
 
         // Validate name and description size
         if name.len() > MAX_TEXT_FIELD_SIZE || description.len() > MAX_TEXT_FIELD_SIZE {
-            set_error(self, "Name and description must each be less than 1 MB.".to_string());
+            self.set_error("Name and description must each be less than 1 MB.".to_string(), &form_values);
             return;
         }
 
         // Validate that name and description contain only Latin-1 characters.
         // The database uses latin1 charset, so characters outside 0-255 will fail.
         if !is_latin1_safe(name) || !is_latin1_safe(description) {
-            set_error(self,
+            self.set_error(
                 "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
-                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported.".to_string()
+                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported.".to_string(),
+                &form_values,
             );
             return;
         }
@@ -345,12 +348,12 @@ impl TrentPage {
         let drawing = match trent::get_drawing(drawing_num).await {
             Ok(Some(d)) => d,
             Ok(None) => {
-                set_error(self, format!("Drawing #{} does not exist.", drawing_num));
+                self.set_error(format!("Drawing #{} does not exist.", drawing_num), &form_values);
                 return;
             }
             Err(e) => {
                 tracing::error!("Database error: {}", e);
-                set_error(self, format!("Drawing #{} does not exist.", drawing_num));
+                self.set_error(format!("Drawing #{} does not exist.", drawing_num), &form_values);
                 return;
             }
         };
@@ -358,16 +361,16 @@ impl TrentPage {
         // Validate password
         let password_hash = trent::hash_password(passcode);
         if password_hash != drawing.passwordhash {
-            set_error(self, format!("Incorrect password for drawing #{}.", drawing_num));
+            self.set_error(format!("Incorrect password for drawing #{}.", drawing_num), &form_values);
             return;
         }
 
         // Check if already complete
         if drawing.complete {
-            set_error(self, format!(
+            self.set_error(format!(
                 "The random numbers for drawing #{} have already been chosen.",
                 drawing_num
-            ));
+            ), &form_values);
             return;
         }
 
@@ -375,43 +378,52 @@ impl TrentPage {
         let drawing_time = drawing.starttime + drawing.reviewtime;
         if trent::now() < drawing_time {
             let date = trent::format_date(drawing_time);
-            set_error(self, format!(
+            self.set_error(format!(
                 "The review period for drawing #{} is not complete. You will be able to do the drawing after {}",
                 drawing_num, date
-            ));
+            ), &form_values);
             return;
         }
 
         // Validate range
         if lowval >= highval && numgen != 0 {
-            set_error(self, "The number range is invalid.".to_string());
+            self.set_error("The number range is invalid.".to_string(), &form_values);
             return;
         }
 
         // Check for negative values
         if numgen < 0 || randlines1 < 0 || randlines2 < 0 || randlines3 < 0 {
-            set_error(self, "We couldn't possibly generate a NEGATIVE amount of random numbers...".to_string());
+            self.set_error("We couldn't possibly generate a NEGATIVE amount of random numbers...".to_string(), &form_values);
             return;
         }
 
         // Check max values
         if numgen > 1000 || randlines1 > 1000 || randlines2 > 1000 || randlines3 > 1000 {
-            set_error(self, "Sorry, we can only generate 1000 random numbers at a time.".to_string());
+            self.set_error("Sorry, we can only generate 1000 random numbers at a time.".to_string(), &form_values);
             return;
         }
 
         // Check file sizes (for uploaded files)
         for (_, (_, data)) in &files {
             if data.len() > MAX_FILE_SIZE {
-                set_error(self, "Sorry, maximum file size is 10MB.".to_string());
+                self.set_error("Sorry, maximum file size is 10MB.".to_string(), &form_values);
                 return;
             }
         }
 
         // Get file contents (either from upload or from temp storage)
-        let file1_content = self.get_file_content("file1", &file1hash, &files).await;
-        let file2_content = self.get_file_content("file2", &file2hash, &files).await;
-        let file3_content = self.get_file_content("file3", &file3hash, &files).await;
+        let file1_content = self.get_file_content("file1", &file1hash, drawing_num, &files).await;
+        let file2_content = self.get_file_content("file2", &file2hash, drawing_num, &files).await;
+        let file3_content = self.get_file_content("file3", &file3hash, drawing_num, &files).await;
+
+        // Check that files are provided when random lines are requested
+        if (randlines1 > 0 && file1_content.is_none())
+            || (randlines2 > 0 && file2_content.is_none())
+            || (randlines3 > 0 && file3_content.is_none())
+        {
+            self.set_error("Please upload a file for each set of random lines requested.".to_string(), &form_values);
+            return;
+        }
 
         // Check if files have enough lines (when no_line_repeat)
         if no_line_repeat {
@@ -419,9 +431,10 @@ impl TrentPage {
                 || !Self::enough_lines(&file2_content, randlines2 as usize)
                 || !Self::enough_lines(&file3_content, randlines3 as usize)
             {
-                set_error(self,
+                self.set_error(
                     "One of the files doesn't have enough lines to be able to choose the requested number of lines."
                         .to_string(),
+                    &form_values,
                 );
                 return;
             }
@@ -449,6 +462,11 @@ impl TrentPage {
                 no_line_repeat,
             )
             .await;
+
+            // Clean up temp files now that the drawing is complete (or failed)
+            delete_temp_file(drawing_num, &file1hash).await;
+            delete_temp_file(drawing_num, &file2hash).await;
+            delete_temp_file(drawing_num, &file3hash).await;
         } else {
             // Show confirmation page
             self.show_confirmation(
@@ -477,6 +495,7 @@ impl TrentPage {
         &self,
         field_name: &str,
         hash: &str,
+        drawing_num: i32,
         files: &HashMap<String, (String, Vec<u8>)>,
     ) -> Option<Vec<u8>> {
         // First check if we have an uploaded file
@@ -486,7 +505,7 @@ impl TrentPage {
 
         // Check if we have a hash and can load from temp
         if is_sha256_hex(hash) {
-            let path = format!("/tmp/{}", hash);
+            let path = temp_path(drawing_num, hash);
             if let Ok(data) = tokio::fs::read(&path).await {
                 return Some(data);
             }
@@ -524,9 +543,9 @@ impl TrentPage {
         chosentwice: bool,
     ) {
         // Compute hashes and save files to temp
-        let (file1hash, file1_info) = self.process_file("file1", files, file1_content).await;
-        let (file2hash, file2_info) = self.process_file("file2", files, file2_content).await;
-        let (file3hash, file3_info) = self.process_file("file3", files, file3_content).await;
+        let (file1hash, file1_info) = self.process_file("file1", drawing_num, files, file1_content).await;
+        let (file2hash, file2_info) = self.process_file("file2", drawing_num, files, file2_content).await;
+        let (file3hash, file3_info) = self.process_file("file3", drawing_num, files, file3_content).await;
 
         self.confirmation = Some(ConfirmationInfo {
             drawing_num,
@@ -553,6 +572,7 @@ impl TrentPage {
     async fn process_file(
         &self,
         field_name: &str,
+        drawing_num: i32,
         files: &HashMap<String, (String, Vec<u8>)>,
         content: &Option<Vec<u8>>,
     ) -> (String, FileInfo) {
@@ -561,7 +581,7 @@ impl TrentPage {
             let size = trent::format_bytes(data.len() as u64);
 
             // Save to temp
-            let path = format!("/tmp/{}", hash);
+            let path = temp_path(drawing_num, &hash);
             if let Err(e) = tokio::fs::write(&path, data).await {
                 tracing::error!("Failed to write temp file: {}", e);
             }
@@ -685,6 +705,19 @@ impl TrentPage {
 /// Check if a string is a valid SHA256 hex hash (64 hex characters)
 fn is_sha256_hex(s: &str) -> bool {
     s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+/// Build the temp file path for a given drawing and content hash.
+/// Includes the drawing number so concurrent drawings don't share temp files.
+fn temp_path(drawing_num: i32, hash: &str) -> String {
+    format!("/tmp/trent-{}-{}", drawing_num, hash)
+}
+
+/// Delete a temp file by its hash (best-effort, ignores errors)
+async fn delete_temp_file(drawing_num: i32, hash: &str) {
+    if is_sha256_hex(hash) {
+        let _ = tokio::fs::remove_file(temp_path(drawing_num, hash)).await;
+    }
 }
 
 /// Check if a string contains only Latin-1 compatible characters (code points 0-255).
