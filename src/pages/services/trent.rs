@@ -113,6 +113,25 @@ struct CompletionInfo {
     url: String,
 }
 
+/// Per-file input for a drawing (hash, content, and number of random lines)
+struct FileInput {
+    hash: String,
+    content: Option<Vec<u8>>,
+    randlines: i32,
+}
+
+/// Validated parameters for creating/completing a drawing
+struct DrawingParams {
+    drawing_num: i32,
+    name: String,
+    description: String,
+    files: [FileInput; 3],
+    lowval: i32,
+    highval: i32,
+    numgen: i32,
+    chosentwice: bool,
+}
+
 /// Form values for re-populating the form on validation errors
 #[derive(Clone, Default)]
 struct FormValues {
@@ -412,81 +431,64 @@ impl TrentPage {
         }
 
         // Get file contents (either from upload or from temp storage)
-        let file1_content = self.get_file_content("file1", &file1hash, drawing_num, &files).await;
-        let file2_content = self.get_file_content("file2", &file2hash, drawing_num, &files).await;
-        let file3_content = self.get_file_content("file3", &file3hash, drawing_num, &files).await;
-
-        // Check that files are provided when random lines are requested
-        if (randlines1 > 0 && file1_content.is_none())
-            || (randlines2 > 0 && file2_content.is_none())
-            || (randlines3 > 0 && file3_content.is_none())
-        {
-            self.set_error("Please upload a file for each set of random lines requested.".to_string(), &form_values);
-            return;
+        let file_hashes = [file1hash, file2hash, file3hash];
+        let file_randlines = [randlines1, randlines2, randlines3];
+        let field_names = ["file1", "file2", "file3"];
+        let mut file_contents: [Option<Vec<u8>>; 3] = [None, None, None];
+        for i in 0..3 {
+            file_contents[i] = self.get_file_content(field_names[i], &file_hashes[i], drawing_num, &files).await;
         }
 
-        // Check if files have enough lines (when no_line_repeat)
-        if no_line_repeat {
-            if !Self::enough_lines(&file1_content, randlines1 as usize)
-                || !Self::enough_lines(&file2_content, randlines2 as usize)
-                || !Self::enough_lines(&file3_content, randlines3 as usize)
-            {
-                self.set_error(
-                    "One of the files doesn't have enough lines to be able to choose the requested number of lines."
-                        .to_string(),
-                    &form_values,
-                );
+        // Check that files are provided when random lines are requested
+        for i in 0..3 {
+            if file_randlines[i] > 0 && file_contents[i].is_none() {
+                self.set_error("Please upload a file for each set of random lines requested.".to_string(), &form_values);
                 return;
             }
         }
 
+        // Check if files have enough lines (when no_line_repeat)
+        if no_line_repeat {
+            for i in 0..3 {
+                if !Self::enough_lines(&file_contents[i], file_randlines[i] as usize) {
+                    self.set_error(
+                        "One of the files doesn't have enough lines to be able to choose the requested number of lines."
+                            .to_string(),
+                        &form_values,
+                    );
+                    return;
+                }
+            }
+        }
+
+        // Build validated params (destructure file_contents array)
+        let [f1, f2, f3] = file_contents;
+        let [h1, h2, h3] = file_hashes;
+        let params = DrawingParams {
+            drawing_num,
+            name: name.to_string(),
+            description: description.to_string(),
+            files: [
+                FileInput { hash: h1, content: f1, randlines: randlines1 },
+                FileInput { hash: h2, content: f2, randlines: randlines2 },
+                FileInput { hash: h3, content: f3, randlines: randlines3 },
+            ],
+            lowval,
+            highval,
+            numgen,
+            chosentwice,
+        };
+
         // Is this the confirmation step?
         if form.confirmed == "true" {
-            // Complete the drawing
-            self.complete_drawing(
-                drawing_num,
-                name,
-                description,
-                &file1hash,
-                &file2hash,
-                &file3hash,
-                &file1_content,
-                &file2_content,
-                &file3_content,
-                randlines1,
-                randlines2,
-                randlines3,
-                lowval,
-                highval,
-                numgen,
-                no_line_repeat,
-            )
-            .await;
+            self.complete_drawing(&params).await;
 
             // Clean up temp files now that the drawing is complete (or failed)
-            delete_temp_file(drawing_num, &file1hash).await;
-            delete_temp_file(drawing_num, &file2hash).await;
-            delete_temp_file(drawing_num, &file3hash).await;
+            for file in &params.files {
+                delete_temp_file(params.drawing_num, &file.hash).await;
+            }
         } else {
-            // Show confirmation page
-            self.show_confirmation(
-                drawing_num,
-                passcode,
-                name,
-                description,
-                &files,
-                &file1_content,
-                &file2_content,
-                &file3_content,
-                randlines1,
-                randlines2,
-                randlines3,
-                lowval,
-                highval,
-                numgen,
-                chosentwice,
-            )
-            .await;
+            self.show_confirmation(&params, passcode, &files).await;
         }
     }
 
@@ -526,45 +528,40 @@ impl TrentPage {
     /// Show confirmation page and save files to temp
     async fn show_confirmation(
         &mut self,
-        drawing_num: i32,
+        params: &DrawingParams,
         passcode: &str,
-        name: &str,
-        description: &str,
         files: &HashMap<String, (String, Vec<u8>)>,
-        file1_content: &Option<Vec<u8>>,
-        file2_content: &Option<Vec<u8>>,
-        file3_content: &Option<Vec<u8>>,
-        randlines1: i32,
-        randlines2: i32,
-        randlines3: i32,
-        lowval: i32,
-        highval: i32,
-        numgen: i32,
-        chosentwice: bool,
     ) {
         // Compute hashes and save files to temp
-        let (file1hash, file1_info) = self.process_file("file1", drawing_num, files, file1_content).await;
-        let (file2hash, file2_info) = self.process_file("file2", drawing_num, files, file2_content).await;
-        let (file3hash, file3_info) = self.process_file("file3", drawing_num, files, file3_content).await;
+        let field_names = ["file1", "file2", "file3"];
+        let mut file_hashes = [String::new(), String::new(), String::new()];
+        let mut file_infos = [FileInfo::default(), FileInfo::default(), FileInfo::default()];
+        for (i, file) in params.files.iter().enumerate() {
+            let (hash, info) = self.process_file(field_names[i], params.drawing_num, files, &file.content).await;
+            file_hashes[i] = hash;
+            file_infos[i] = info;
+        }
+        let [file1_info, file2_info, file3_info] = file_infos;
+        let [file1hash, file2hash, file3hash] = file_hashes;
 
         self.confirmation = Some(ConfirmationInfo {
-            drawing_num,
+            drawing_num: params.drawing_num,
             passcode: passcode.to_string(),
-            name: name.to_string(),
-            description: description.to_string(),
+            name: params.name.clone(),
+            description: params.description.clone(),
             file1_info,
             file2_info,
             file3_info,
-            randlines1,
-            randlines2,
-            randlines3,
+            randlines1: params.files[0].randlines,
+            randlines2: params.files[1].randlines,
+            randlines3: params.files[2].randlines,
             file1hash,
             file2hash,
             file3hash,
-            lowval,
-            highval,
-            numgen,
-            chosentwice,
+            lowval: params.lowval,
+            highval: params.highval,
+            numgen: params.numgen,
+            chosentwice: params.chosentwice,
         });
     }
 
@@ -611,84 +608,44 @@ impl TrentPage {
     }
 
     /// Complete the drawing and save results
-    #[allow(clippy::too_many_arguments)]
-    async fn complete_drawing(
-        &mut self,
-        drawing_num: i32,
-        name: &str,
-        description: &str,
-        file1hash: &str,
-        file2hash: &str,
-        file3hash: &str,
-        file1_content: &Option<Vec<u8>>,
-        file2_content: &Option<Vec<u8>>,
-        file3_content: &Option<Vec<u8>>,
-        randlines1: i32,
-        randlines2: i32,
-        randlines3: i32,
-        lowval: i32,
-        highval: i32,
-        numgen: i32,
-        no_line_repeat: bool,
-    ) {
+    async fn complete_drawing(&mut self, params: &DrawingParams) {
+        let no_line_repeat = !params.chosentwice;
+
         // Build user printout
-        let userprintout = format!("NAME: {}\nDESCRIPTION:\n{}", name, description);
+        let userprintout = format!("NAME: {}\nDESCRIPTION:\n{}", params.name, params.description);
 
         // Build printout
         let mut printout = String::new();
-        printout.push_str(&format!("DRAWING NUMBER: {}\n", drawing_num));
+        printout.push_str(&format!("DRAWING NUMBER: {}\n", params.drawing_num));
         printout.push_str(&format!("DRAWING DATE: {}\n", trent::format_date(trent::now())));
-        printout.push_str(&format!("AMOUNT OF NUMBERS: {}\n", numgen));
-        printout.push_str(&format!("RANGE: {} TO {}\n\n", lowval, highval));
+        printout.push_str(&format!("AMOUNT OF NUMBERS: {}\n", params.numgen));
+        printout.push_str(&format!("RANGE: {} TO {}\n\n", params.lowval, params.highval));
 
-        // File 1
-        if is_sha256_hex(file1hash) {
-            if let Some(content) = file1_content {
-                printout.push_str(&format!("FILE1 SHA256: {}\n\n", file1hash));
-                printout.push_str(&trent::get_random_lines_output(
-                    content,
-                    randlines1 as usize,
-                    no_line_repeat,
-                    1,
-                ));
-            }
-        }
-
-        // File 2
-        if is_sha256_hex(file2hash) {
-            if let Some(content) = file2_content {
-                printout.push_str(&format!("FILE2 SHA256: {}\n\n", file2hash));
-                printout.push_str(&trent::get_random_lines_output(
-                    content,
-                    randlines2 as usize,
-                    no_line_repeat,
-                    2,
-                ));
-            }
-        }
-
-        // File 3
-        if is_sha256_hex(file3hash) {
-            if let Some(content) = file3_content {
-                printout.push_str(&format!("FILE3 SHA256: {}\n\n", file3hash));
-                printout.push_str(&trent::get_random_lines_output(
-                    content,
-                    randlines3 as usize,
-                    no_line_repeat,
-                    3,
-                ));
+        // Files
+        for (i, file) in params.files.iter().enumerate() {
+            let file_num = (i + 1) as u8;
+            if is_sha256_hex(&file.hash) {
+                if let Some(content) = &file.content {
+                    printout.push_str(&format!("FILE{} SHA256: {}\n\n", file_num, file.hash));
+                    printout.push_str(&trent::get_random_lines_output(
+                        content,
+                        file.randlines as usize,
+                        no_line_repeat,
+                        file_num,
+                    ));
+                }
             }
         }
 
         // Random numbers
-        for i in 1..=numgen {
+        for i in 1..=params.numgen {
             let random_bytes = trent::generate_random_bytes();
-            let randnum = trent::select_random_number(&random_bytes, lowval as i64, highval as i64);
+            let randnum = trent::select_random_number(&random_bytes, params.lowval as i64, params.highval as i64);
             printout.push_str(&format!("RANDOM NUMBER NUMBER {}: {}\n", i, randnum));
         }
 
         // Save to database
-        if let Err(e) = trent::complete_drawing(drawing_num, &printout, &userprintout).await {
+        if let Err(e) = trent::complete_drawing(params.drawing_num, &printout, &userprintout).await {
             tracing::error!("Database error completing drawing: {}", e);
             self.error = Some("Database error. Please try again.".to_string());
             return;
@@ -696,9 +653,9 @@ impl TrentPage {
 
         let url = format!(
             "{}/trustedthirdparty.htm?drawingnum={}",
-            self.ctx.url_prefix, drawing_num
+            self.ctx.url_prefix, params.drawing_num
         );
-        self.completion = Some(CompletionInfo { drawing_num, url });
+        self.completion = Some(CompletionInfo { drawing_num: params.drawing_num, url });
     }
 }
 
