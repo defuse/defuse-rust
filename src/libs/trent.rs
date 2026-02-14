@@ -341,6 +341,8 @@ const MAX_TEXT_FIELD_SIZE: usize = 1024 * 1024;
 
 /// Validate file contents: sizes, Latin-1 safety, presence/randlines consistency,
 /// and sufficient line counts when repeats are disabled.
+// TODO: The UI states "Maximum line length is 1000 characters" but this is
+// not enforced. Very long lines would end up in the LINE PREVIEW printout.
 fn validate_files(params: &DrawingParams) -> Result<(), CreateError> {
     for file in &params.files {
         if let Some(content) = &file.content {
@@ -379,7 +381,9 @@ fn build_printout(validated: &ValidatedDrawing) -> (String, String) {
     printout.push_str(&format!("DRAWING NUMBER: {}\n", params.drawing_num));
     printout.push_str(&format!("DRAWING DATE: {}\n", format_date(now())));
     printout.push_str(&format!("AMOUNT OF NUMBERS: {}\n", params.numgen));
-    printout.push_str(&format!("RANGE: {} TO {}\n\n", params.lowval, params.highval));
+    printout.push_str(&format!("RANGE: {} TO {}\n", params.lowval, params.highval));
+    printout.push_str(&format!("ALLOW REPEAT LINES: {}\n\n",
+        if params.chosentwice { "Yes" } else { "No" }));
 
     if params.files.iter().any(|f| f.randlines > 0) {
         printout.push_str("NOTE: Line numbers start at 0. The first line is line 0.\n\n");
@@ -405,7 +409,7 @@ fn build_printout(validated: &ValidatedDrawing) -> (String, String) {
 
     for i in 1..=params.numgen {
         let randnum = select_random_number(params.lowval as i64, params.highval as i64);
-        printout.push_str(&format!("RANDOM NUMBER NUMBER {}: {}\n", i, randnum));
+        printout.push_str(&format!("RANDOM NUMBER, NUMBER {}: {}\n", i, randnum));
     }
 
     (printout, userprintout)
