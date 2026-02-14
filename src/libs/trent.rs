@@ -262,6 +262,12 @@ pub async fn validate_create_request(params: DrawingParams) -> Result<ValidatedD
     if params.lowval >= params.highval && params.numgen != 0 {
         return Err(CreateError::InvalidRange);
     }
+    const MAX_RANGE_VAL: i32 = 1_000_000_000;
+    if params.lowval < -MAX_RANGE_VAL || params.lowval > MAX_RANGE_VAL
+        || params.highval < -MAX_RANGE_VAL || params.highval > MAX_RANGE_VAL
+    {
+        return Err(CreateError::InvalidRange);
+    }
     if params.numgen < 0 || params.files.iter().any(|f| f.randlines < 0) {
         return Err(CreateError::NegativeValues);
     }
@@ -374,6 +380,10 @@ fn build_printout(validated: &ValidatedDrawing) -> (String, String) {
     printout.push_str(&format!("DRAWING DATE: {}\n", format_date(now())));
     printout.push_str(&format!("AMOUNT OF NUMBERS: {}\n", params.numgen));
     printout.push_str(&format!("RANGE: {} TO {}\n\n", params.lowval, params.highval));
+
+    if params.files.iter().any(|f| f.randlines > 0) {
+        printout.push_str("NOTE: Line numbers start at 0. The first line is line 0.\n\n");
+    }
 
     for (i, file) in params.files.iter().enumerate() {
         let file_num = i + 1;

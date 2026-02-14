@@ -250,6 +250,10 @@ impl TrentPage {
 
     /// Handle drawing reservation
     async fn handle_reserve(&mut self, form: &TrentForm) {
+        // TODO: validate review_time against the allowed dropdown values.
+        // Currently any u32 is accepted; a large value can overflow draw_date()
+        // (starttime + reviewtime wraps in release mode). Not a security issue
+        // since instant (0) review is allowed, but it's sloppy.
         let review_time: u32 = match form.prereview.parse() {
             Ok(v) => v,
             Err(_) => {
