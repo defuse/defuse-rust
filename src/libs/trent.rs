@@ -71,9 +71,16 @@ pub async fn get_drawing(drawing_num: i32) -> Result<Option<Drawing>, sqlx::Erro
     }))
 }
 
-/// Reserve a new drawing number
-/// Returns (drawing_num, password) where password is 32 hex chars
-pub async fn reserve_drawing(review_time: u32) -> Result<(i32, String), sqlx::Error> {
+/// Result of reserving a new drawing number.
+pub struct ReservationResult {
+    pub drawing_num: i32,
+    pub password: String,
+    pub drawing_date: String,
+}
+
+/// Reserve a new drawing number.
+/// The drawing date is computed from the actual start time stored in the database.
+pub async fn reserve_drawing(review_time: u32) -> Result<ReservationResult, sqlx::Error> {
     let pool = get_pool().await?;
 
     let starttime = now();
@@ -90,8 +97,11 @@ pub async fn reserve_drawing(review_time: u32) -> Result<(i32, String), sqlx::Er
     .execute(pool)
     .await?;
 
-    // Get the auto-increment ID from the insert result (same connection)
-    Ok((result.last_insert_id() as i32, password))
+    Ok(ReservationResult {
+        drawing_num: result.last_insert_id() as i32,
+        password,
+        drawing_date: format_date(starttime + review_time),
+    })
 }
 
 /// Complete a drawing by storing the printout
@@ -282,6 +292,220 @@ pub fn get_random_lines_output(
     }
 
     output
+}
+
+// =============================================================================
+// Drawing creation types and validation
+// =============================================================================
+
+/// Maximum file size: 10MB
+pub const MAX_FILE_SIZE: usize = 10 * 1024 * 1024;
+
+/// Maximum name/description size: 1MB each
+pub const MAX_TEXT_FIELD_SIZE: usize = 1024 * 1024;
+
+/// Per-file slot in a drawing request: the uploaded file's content hash,
+/// raw bytes (if available), and number of random lines to select from it.
+#[derive(Clone)]
+pub struct FileInput {
+    pub hash: String,
+    pub content: Option<Vec<u8>>,
+    pub randlines: i32,
+}
+
+/// Parsed and validated parameters for creating or completing a drawing.
+/// Built early in the page handler from form data, and used for error
+/// recovery (repopulating the form), confirmation display, and completion.
+#[derive(Clone)]
+pub struct DrawingParams {
+    pub drawing_num: i32,
+    pub passcode: String,
+    pub name: String,
+    pub description: String,
+    pub files: [FileInput; 3],
+    pub lowval: i32,
+    pub highval: i32,
+    pub numgen: i32,
+    pub chosentwice: bool,
+}
+
+/// Errors that can occur when validating a drawing creation request.
+#[derive(Debug)]
+pub enum CreateError {
+    TextTooLarge,
+    NonLatin1Characters,
+    IncorrectPassword(i32),
+    AlreadyComplete(i32),
+    ReviewPeriodNotComplete { drawing_num: i32, draw_date: String },
+    InvalidRange,
+    NegativeValues,
+    TooManyNumbers,
+    FileTooLarge,
+    MissingFile,
+    NotEnoughLines,
+}
+
+impl std::fmt::Display for CreateError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TextTooLarge => write!(f, "Name and description must each be less than 1 MB."),
+            Self::NonLatin1Characters => write!(f,
+                "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
+                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported."),
+            Self::IncorrectPassword(n) => write!(f, "Incorrect password for drawing #{}.", n),
+            Self::AlreadyComplete(n) => write!(f, "The random numbers for drawing #{} have already been chosen.", n),
+            Self::ReviewPeriodNotComplete { drawing_num, draw_date } => write!(f,
+                "The review period for drawing #{} is not complete. You will be able to do the drawing after {}",
+                drawing_num, draw_date),
+            Self::InvalidRange => write!(f, "The number range is invalid."),
+            Self::NegativeValues => write!(f, "We couldn't possibly generate a NEGATIVE amount of random numbers..."),
+            Self::TooManyNumbers => write!(f, "Sorry, we can only generate 1000 random numbers at a time."),
+            Self::FileTooLarge => write!(f, "Sorry, maximum file size is 10MB."),
+            Self::MissingFile => write!(f, "Please upload a file for each set of random lines requested."),
+            Self::NotEnoughLines => write!(f, "One of the files doesn't have enough lines to be able to choose the requested number of lines."),
+        }
+    }
+}
+
+/// Validate drawing creation parameters against the database drawing record.
+/// Call this before resolving file contents.
+pub fn validate_create_request(params: &DrawingParams, drawing: &Drawing) -> Result<(), CreateError> {
+    if params.name.len() > MAX_TEXT_FIELD_SIZE || params.description.len() > MAX_TEXT_FIELD_SIZE {
+        return Err(CreateError::TextTooLarge);
+    }
+    if !is_latin1_safe(&params.name) || !is_latin1_safe(&params.description) {
+        return Err(CreateError::NonLatin1Characters);
+    }
+    if hash_password(&params.passcode) != drawing.passwordhash {
+        return Err(CreateError::IncorrectPassword(params.drawing_num));
+    }
+    if drawing.complete {
+        return Err(CreateError::AlreadyComplete(params.drawing_num));
+    }
+    let drawing_time = drawing.starttime + drawing.reviewtime;
+    if now() < drawing_time {
+        return Err(CreateError::ReviewPeriodNotComplete {
+            drawing_num: params.drawing_num,
+            draw_date: format_date(drawing_time),
+        });
+    }
+    if params.lowval >= params.highval && params.numgen != 0 {
+        return Err(CreateError::InvalidRange);
+    }
+    if params.numgen < 0 || params.files.iter().any(|f| f.randlines < 0) {
+        return Err(CreateError::NegativeValues);
+    }
+    if params.numgen > 1000 || params.files.iter().any(|f| f.randlines > 1000) {
+        return Err(CreateError::TooManyNumbers);
+    }
+    Ok(())
+}
+
+/// Validate file contents after resolution.
+/// Checks file sizes, that files are provided when random lines are requested,
+/// and that files have enough lines when repeats are disabled.
+pub fn validate_files(params: &DrawingParams) -> Result<(), CreateError> {
+    for file in &params.files {
+        if let Some(content) = &file.content {
+            if content.len() > MAX_FILE_SIZE {
+                return Err(CreateError::FileTooLarge);
+            }
+        }
+        if file.randlines > 0 && file.content.is_none() {
+            return Err(CreateError::MissingFile);
+        }
+        if !params.chosentwice {
+            if let Some(content) = &file.content {
+                if file.randlines > 0 && count_lines(content) < file.randlines as usize {
+                    return Err(CreateError::NotEnoughLines);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Build the printout and userprintout for a completed drawing.
+/// Returns (printout, userprintout).
+pub fn build_printout(params: &DrawingParams) -> (String, String) {
+    let no_line_repeat = !params.chosentwice;
+    let userprintout = format!("NAME: {}\nDESCRIPTION:\n{}", params.name, params.description);
+
+    let mut printout = String::new();
+    printout.push_str(&format!("DRAWING NUMBER: {}\n", params.drawing_num));
+    printout.push_str(&format!("DRAWING DATE: {}\n", format_date(now())));
+    printout.push_str(&format!("AMOUNT OF NUMBERS: {}\n", params.numgen));
+    printout.push_str(&format!("RANGE: {} TO {}\n\n", params.lowval, params.highval));
+
+    for (i, file) in params.files.iter().enumerate() {
+        let file_num = (i + 1) as u8;
+        if is_sha256_hex(&file.hash) {
+            if let Some(content) = &file.content {
+                printout.push_str(&format!("FILE{} SHA256: {}\n\n", file_num, file.hash));
+                printout.push_str(&get_random_lines_output(
+                    content, file.randlines as usize, no_line_repeat, file_num,
+                ));
+            }
+        }
+    }
+
+    for i in 1..=params.numgen {
+        let random_bytes = generate_random_bytes();
+        let randnum = select_random_number(&random_bytes, params.lowval as i64, params.highval as i64);
+        printout.push_str(&format!("RANDOM NUMBER NUMBER {}: {}\n", i, randnum));
+    }
+
+    (printout, userprintout)
+}
+
+/// Compute SHA-256 hash of data, returned as lowercase hex.
+pub fn sha256_hex(data: &[u8]) -> String {
+    hex::encode(Sha256::digest(data))
+}
+
+// =============================================================================
+// Temp file management
+// =============================================================================
+
+/// Build the temp file path for a given drawing and content hash.
+fn temp_path(drawing_num: i32, hash: &str) -> String {
+    format!("/tmp/trent-{}-{}", drawing_num, hash)
+}
+
+/// Save file content to temp storage for the confirmation flow.
+pub async fn save_temp_file(drawing_num: i32, hash: &str, data: &[u8]) {
+    let path = temp_path(drawing_num, hash);
+    if let Err(e) = tokio::fs::write(&path, data).await {
+        tracing::error!("Failed to write temp file: {}", e);
+    }
+}
+
+/// Load file content from temp storage. Returns None if the hash is invalid
+/// or the file doesn't exist.
+pub async fn load_temp_file(drawing_num: i32, hash: &str) -> Option<Vec<u8>> {
+    if !is_sha256_hex(hash) {
+        return None;
+    }
+    tokio::fs::read(temp_path(drawing_num, hash)).await.ok()
+}
+
+/// Delete temp files for a completed drawing (best-effort).
+pub async fn delete_temp_files(drawing_num: i32, files: &[FileInput]) {
+    for file in files {
+        if is_sha256_hex(&file.hash) {
+            let _ = tokio::fs::remove_file(temp_path(drawing_num, &file.hash)).await;
+        }
+    }
+}
+
+/// Check if a string is a valid SHA256 hex hash (64 hex characters).
+pub fn is_sha256_hex(s: &str) -> bool {
+    s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+/// Check if a string contains only Latin-1 compatible characters (code points 0-255).
+fn is_latin1_safe(s: &str) -> bool {
+    s.chars().all(|c| (c as u32) <= 255)
 }
 
 #[cfg(test)]

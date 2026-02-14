@@ -158,7 +158,6 @@ Review time:
 				</div>
 {% endif %}
 <form action="trustedthirdparty.htm#create" method="post" enctype="multipart/form-data">
-<input type="hidden" name="MAX_FILE_SIZE" value="10485760" />
 <table>
 <tr><td>Drawing Number:</td><td><input type="text" name="drawingnumber" value="{% if let Some(fv) = form_values %}{{ fv.drawing_num }}{% endif %}" /></td></tr>
 <tr><td>Passcode:</td><td><input type="text" name="passcode" value="{% if let Some(fv) = form_values %}{{ fv.passcode }}{% endif %}" /></td></tr>
