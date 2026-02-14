@@ -434,21 +434,24 @@ fn hash_password(password: &str) -> String {
 /// Select a random number in [low, high] using 32 bytes of OS randomness.
 /// Matches PHP's SelectRandomNumber.
 fn select_random_number(low: i64, high: i64) -> i64 {
+    assert!(high >= low, "select_random_number: high ({}) < low ({})", high, low);
+    let range = (high - low)
+        .checked_add(1)
+        .expect("select_random_number: range overflows i64") as u64;
     let mut bytes = [0u8; 32];
     rand::rngs::OsRng.fill_bytes(&mut bytes);
-    // TODO: assert high >= low instead of abs, and assert no overflow as well
-    let divisor = (high - low + 1).unsigned_abs();
-    if divisor == 0 {
-        return low;
-    }
-    low + reduce_mod(&bytes, divisor) as i64
+    low + reduce_mod(&bytes, range) as i64
 }
 
 /// Streaming modular reduction: reduce 32 bytes of randomness modulo `divisor`.
 fn reduce_mod(random_bytes: &[u8; 32], divisor: u64) -> u64 {
+    assert!(divisor > 0, "reduce_mod: divisor must be > 0");
     let mut remainder: u64 = 0;
     for &byte in random_bytes {
-        let total = remainder * 256 + byte as u64;
+        let total = remainder
+            .checked_mul(256)
+            .and_then(|v| v.checked_add(byte as u64))
+            .expect("reduce_mod: overflow in modular reduction");
         remainder = total % divisor;
     }
     remainder

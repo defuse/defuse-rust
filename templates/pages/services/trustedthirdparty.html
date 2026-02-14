@@ -89,8 +89,8 @@
 	
 Review time:
 				<select name="prereview">
-					<option value="0" selected="selected" >Instant</option>
-					<option value="21600" selected="selected" >6 Hours</option>
+					<option value="0">Instant</option>
+					<option value="21600">6 Hours</option>
 					<option value="86400" selected="selected" >24 hours</option>
 					<option value="345600">4 days</option>
 					<option value="518400">6 days</option>
@@ -131,6 +131,9 @@ Review time:
 				<br /><br />
 				<h4 class="nopaddingatall">Amount of Numbers:</h4>
 				{{ conf.params.numgen }}
+				<br /><br />
+				<h4 class="nopaddingatall">Allow lines to be chosen twice:</h4>
+				{% if conf.params.chosentwice %}Yes{% else %}No{% endif %}
 				<br /><br />
 				<form action="trustedthirdparty.htm#create" method="post">
 				<p><b>These settings <u>CAN NOT BE CHANGED</u> after the random numbers have been selected.</b></p>

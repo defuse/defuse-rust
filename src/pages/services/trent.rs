@@ -366,7 +366,11 @@ impl TrentPage {
         if form.confirmed == "true" {
             self.finalize_drawing(&validated).await;
         } else {
-            save_files_to_temp(&validated.params).await;
+            if let Err(e) = save_files_to_temp(&validated.params).await {
+                tracing::error!("Failed to write temp file: {}", e);
+                self.set_error("Server error saving uploaded files. Please try again.".to_string(), form);
+                return;
+            }
             let file_infos = build_file_infos(&validated.params, &files);
             self.confirmation = Some(ConfirmationInfo { params: validated.params, file_infos });
             self.form_values = Some(form.clone());
@@ -453,15 +457,14 @@ fn parse_post_body(body: PostBody) -> Result<(TrentForm, HashMap<String, (String
 }
 
 /// Save uploaded files to temp storage. Hashes must already be set in params.
-async fn save_files_to_temp(params: &DrawingParams) {
+async fn save_files_to_temp(params: &DrawingParams) -> Result<(), std::io::Error> {
     for file in &params.files {
         if let Some(content) = &file.content {
             let path = temp_path(params.drawing_num, &file.hash);
-            if let Err(e) = tokio::fs::write(&path, content).await {
-                tracing::error!("Failed to write temp file: {}", e);
-            }
+            tokio::fs::write(&path, content).await?;
         }
     }
+    Ok(())
 }
 
 /// Build display info for uploaded files on the confirmation page.
