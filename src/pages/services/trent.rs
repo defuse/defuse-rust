@@ -26,6 +26,7 @@ struct FileInfo {
     name: String,
     size: String,
     sha256: String,
+    warning: String,
 }
 
 impl Default for FileInfo {
@@ -34,6 +35,7 @@ impl Default for FileInfo {
             name: "NO FILE".to_string(),
             size: "NO FILE".to_string(),
             sha256: "NO FILE".to_string(),
+            warning: String::new(),
         }
     }
 }
@@ -87,6 +89,8 @@ struct TrentForm {
     makedrawingnumber: Option<String>,
     #[serde(default)]
     create: Option<String>,
+    #[serde(default)]
+    cancel: Option<String>,
     #[serde(default)]
     prereview: String,
     #[serde(default)]
@@ -185,6 +189,8 @@ impl PageHandler for Handler {
             // 2. Create/confirm a drawing (with shared validation, branching at the end)
             if form.makedrawingnumber.is_some() {
                 page.handle_reserve(&form).await;
+            } else if form.cancel.is_some() {
+                page.set_error("Drawing cancelled. You may make corrections below and then re-submit the form.".to_string(), &form);
             } else if form.create.is_some() {
                 page.handle_create(&form, files).await;
             } else {
@@ -410,6 +416,7 @@ fn parse_post_body(body: PostBody) -> Result<(TrentForm, HashMap<String, (String
                 match field.name.as_str() {
                     "makedrawingnumber" => form.makedrawingnumber = Some(String::new()),
                     "create" => form.create = Some(String::new()),
+                    "cancel" => form.cancel = Some(String::new()),
                     "prereview" => form.prereview = field.data_as_string(),
                     "drawingnumber" => form.drawingnumber = field.data_as_string(),
                     "passcode" => form.passcode = field.data_as_string(),
@@ -466,10 +473,16 @@ fn build_file_infos(
     let mut file_infos = [FileInfo::default(), FileInfo::default(), FileInfo::default()];
     for i in 0..3 {
         if let Some((filename, data)) = files.get(field_names[i]) {
+            let warning = if params.files[i].randlines == 0 {
+                "This file will have no random lines selected. Only its SHA256 hash will be recorded.".to_string()
+            } else {
+                String::new()
+            };
             file_infos[i] = FileInfo {
                 name: filename.clone(),
                 size: trent::format_bytes(data.len() as u64),
                 sha256: params.files[i].hash.clone(),
+                warning,
             };
         }
     }

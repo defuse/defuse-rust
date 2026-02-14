@@ -116,12 +116,15 @@ Review time:
 				{{ conf.params.description|e }}<br /><br />
 				<h4 class="nopaddingatall">File1</h4>
 				Name: {{ conf.file_infos[0].name|e }} <br />Size: {{ conf.file_infos[0].size|e }} <br />SHA256: {{ conf.file_infos[0].sha256|e }}<br />Random Lines: {{ conf.params.files[0].randlines }}
+				{% if !conf.file_infos[0].warning.is_empty() %}<br /><b style="color: red;">Warning:</b> {{ conf.file_infos[0].warning }}{% endif %}
 				<br /><br />
 				<h4 class="nopaddingatall">File2</h4>
 				Name: {{ conf.file_infos[1].name|e }} <br />Size: {{ conf.file_infos[1].size|e }} <br />SHA256: {{ conf.file_infos[1].sha256|e }}<br />Random Lines: {{ conf.params.files[1].randlines }}
+				{% if !conf.file_infos[1].warning.is_empty() %}<br /><b style="color: red;">Warning:</b> {{ conf.file_infos[1].warning }}{% endif %}
 				<br /><br />
 				<h4 class="nopaddingatall">File3</h4>
 				Name: {{ conf.file_infos[2].name|e }} <br />Size: {{ conf.file_infos[2].size|e }} <br />SHA256: {{ conf.file_infos[2].sha256|e }}<br />Random Lines: {{ conf.params.files[2].randlines }}
+				{% if !conf.file_infos[2].warning.is_empty() %}<br /><b style="color: red;">Warning:</b> {{ conf.file_infos[2].warning }}{% endif %}
 				<br /><br />
 				<h4 class="nopaddingatall">Number Range</h4>
 				{{ conf.params.lowval }} to {{ conf.params.highval }}

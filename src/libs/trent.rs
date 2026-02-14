@@ -95,7 +95,6 @@ pub enum CreateError {
     FileTooLarge,
     FileHashMismatch,
     FileNotLatin1,
-    FileWithoutRandlines,
     MissingFile,
     NotEnoughLines,
     RangeWithoutNumgen,
@@ -121,7 +120,6 @@ impl std::fmt::Display for CreateError {
             Self::FileTooLarge => write!(f, "Sorry, maximum file size is 10MB."),
             Self::FileHashMismatch => write!(f, "File content does not match its claimed hash."),
             Self::FileNotLatin1 => write!(f, "Uploaded files can only contain Latin-1 characters."),
-            Self::FileWithoutRandlines => write!(f, "Please specify the number of random lines to select from each uploaded file."),
             Self::MissingFile => write!(f, "Please upload a file for each set of random lines requested."),
             Self::NotEnoughLines => write!(f, "One of the files doesn't have enough lines to be able to choose the requested number of lines."),
             Self::RangeWithoutNumgen => write!(f, "You set a range but didn't request any random numbers. Please set the amount of numbers to generate."),
@@ -350,12 +348,11 @@ fn validate_files(params: &DrawingParams) -> Result<(), CreateError> {
                 return Err(CreateError::FileNotLatin1);
             }
             assert!(file.randlines >= 0); // checked in validate_create_request
-            if file.randlines == 0 {
-                return Err(CreateError::FileWithoutRandlines);
-            }
-            let line_count = count_lines(content);
-            if line_count == 0 || (!params.chosentwice && line_count < file.randlines as usize) {
-                return Err(CreateError::NotEnoughLines);
+            if file.randlines > 0 {
+                let line_count = count_lines(content);
+                if line_count == 0 || (!params.chosentwice && line_count < file.randlines as usize) {
+                    return Err(CreateError::NotEnoughLines);
+                }
             }
         } else if file.randlines > 0 {
             return Err(CreateError::MissingFile);
@@ -380,17 +377,18 @@ fn build_printout(validated: &ValidatedDrawing) -> (String, String) {
 
     for (i, file) in params.files.iter().enumerate() {
         let file_num = i + 1;
-        if file.randlines > 0 {
-            // Validation guarantees these hold for any file with randlines > 0.
+        if file.content.is_some() {
             assert!(is_sha256_hex(&file.hash), "validated file {} has invalid hash", file_num);
-            let content = file.content.as_ref().expect("validated file has no content");
-
             printout.push_str(&format!("FILE{} SHA256: {}\n\n", file_num, file.hash));
-            let lines = select_random_lines(content, file.randlines as usize, params.chosentwice);
-            for (j, (line_num, line_preview)) in lines.into_iter().enumerate() {
-                printout.push_str(&format!("FILE{} RANDOM LINE {}:\n", file_num, j + 1));
-                printout.push_str(&format!("RANDOM LINE NUMBER (FILE{}): {}\n", file_num, line_num));
-                printout.push_str(&format!("LINE PREVIEW: {}\n\n", line_preview));
+
+            if file.randlines > 0 {
+                let content = file.content.as_ref().expect("validated file has no content");
+                let lines = select_random_lines(content, file.randlines as usize, params.chosentwice);
+                for (j, (line_num, line_preview)) in lines.into_iter().enumerate() {
+                    printout.push_str(&format!("FILE{} RANDOM LINE {}:\n", file_num, j + 1));
+                    printout.push_str(&format!("RANDOM LINE NUMBER (FILE{}): {}\n", file_num, line_num));
+                    printout.push_str(&format!("LINE PREVIEW: {}\n\n", line_preview));
+                }
             }
         }
     }
