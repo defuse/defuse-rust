@@ -13,6 +13,7 @@ use tokio::process::Command;
 use tokio::time::timeout;
 
 use super::OutputBase;
+use super::parser::SafeExpr;
 
 /// Timeout for the Ruby process (wall-clock time).
 const PROCESS_TIMEOUT: Duration = Duration::from_secs(8);
@@ -52,20 +53,18 @@ pub(super) struct EvalSuccess {
     pub result_type: ResultType,
 }
 
-/// Execute a pre-validated expression in Ruby. **DANGEROUS - DO NOT CALL DIRECTLY.**
+/// Execute a validated expression in Ruby.
 ///
 /// # Security
 ///
-/// This function executes the expression as Ruby code. Calling this with
-/// unvalidated input is a **remote code execution vulnerability**.
-///
-/// This function should ONLY be called from `calculate()` in the parent module,
-/// after the expression has passed both character filtering and parser validation.
+/// This function executes the expression as Ruby code. The [`SafeExpr`]
+/// parameter ensures the expression has been validated by the parser before
+/// it can be passed here.
 ///
 /// The `pub(super)` visibility ensures this function cannot be called from
 /// outside the `big_number_calculator` module.
-pub(super) async fn evaluate_unsafe_requires_prior_validation(
-    expr: &str,
+pub(super) async fn evaluate(
+    expr: &SafeExpr,
     base: OutputBase,
 ) -> Result<EvalSuccess, EvalError> {
     let ruby_base = base.ruby_base();
@@ -85,7 +84,7 @@ elsif x.is_a?(Rational)
 else
   puts x.to_s({})
 end"#,
-        expr, ruby_base, ruby_base, ruby_base
+        expr.as_str(), ruby_base, ruby_base, ruby_base
     );
 
     // Execute Ruby with ulimit for CPU time and memory protection.
@@ -97,14 +96,14 @@ end"#,
         shell_escape(&ruby_code)
     );
 
-    // Note: If the timeout fires, the sh/ruby process becomes orphaned until
-    // ulimit -t kills it (~2 seconds later). This is fine - ulimits are
-    // kernel-enforced and persist on orphaned processes.
+    // kill_on_drop ensures the child is killed immediately when the timeout
+    // fires. ulimits remain as a kernel-enforced backstop for defense in depth.
     let result = timeout(
         PROCESS_TIMEOUT,
         Command::new("sh")
             .arg("-c")
             .arg(&shell_command)
+            .kill_on_drop(true)
             .output(),
     )
     .await;
@@ -170,73 +169,204 @@ fn shell_escape(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::parser;
 
     // Note: These tests require Ruby to be installed.
-    // They're marked as ignore by default for CI environments without Ruby.
+
+    fn safe(expr: &str) -> SafeExpr {
+        parser::validate(expr).unwrap()
+    }
 
     #[tokio::test]
-    #[ignore]
+
     async fn test_basic_arithmetic() {
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("2+2", OutputBase::Decimal).await.unwrap().value,
+            evaluate(&safe("2+2"), OutputBase::Decimal).await.unwrap().value,
             "4"
         );
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("10-3", OutputBase::Decimal).await.unwrap().value,
+            evaluate(&safe("10-3"), OutputBase::Decimal).await.unwrap().value,
             "7"
         );
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("6*7", OutputBase::Decimal).await.unwrap().value,
+            evaluate(&safe("6*7"), OutputBase::Decimal).await.unwrap().value,
             "42"
         );
     }
 
     #[tokio::test]
-    #[ignore]
+
     async fn test_floor_division() {
         // Ruby uses floor division
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("10/3", OutputBase::Decimal).await.unwrap().value,
+            evaluate(&safe("10/3"), OutputBase::Decimal).await.unwrap().value,
             "3"
         );
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("-10/3", OutputBase::Decimal).await.unwrap().value,
+            evaluate(&safe("-10/3"), OutputBase::Decimal).await.unwrap().value,
             "-4"
         );
     }
 
     #[tokio::test]
-    #[ignore]
+
     async fn test_modulo() {
         // Ruby modulo: result has same sign as divisor
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("-7%3", OutputBase::Decimal).await.unwrap().value,
+            evaluate(&safe("-7%3"), OutputBase::Decimal).await.unwrap().value,
             "2"
         );
     }
 
     #[tokio::test]
-    #[ignore]
+
     async fn test_hex_output() {
         assert_eq!(
-            evaluate_unsafe_requires_prior_validation("255", OutputBase::Hexadecimal).await.unwrap().value,
+            evaluate(&safe("255"), OutputBase::Hexadecimal).await.unwrap().value,
             "ff"
         );
     }
 
     #[tokio::test]
-    #[ignore]
+
     async fn test_big_numbers() {
-        let result = evaluate_unsafe_requires_prior_validation("2**100", OutputBase::Decimal).await.unwrap();
+        let result = evaluate(&safe("2**100"), OutputBase::Decimal).await.unwrap();
         assert!(result.value.starts_with("1267650600228229401496703205376"));
     }
 
     #[tokio::test]
-    #[ignore]
+
     async fn test_division_by_zero() {
         assert!(matches!(
-            evaluate_unsafe_requires_prior_validation("1/0", OutputBase::Decimal).await,
+            evaluate(&safe("1/0"), OutputBase::Decimal).await,
             Err(EvalError::InvalidExpression)
         ));
+    }
+
+    #[tokio::test]
+
+    async fn test_all_arithmetic_ops_combined() {
+        // 2^10 + 0xff*3 - (100%7) | 0xf = 1791
+        assert_eq!(
+            evaluate(&safe("2**10 + 0xff * 3 - (100 % 7) | 0xf"), OutputBase::Decimal).await.unwrap().value,
+            "1791"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_shifts_and_bitwise_combined() {
+        // Build 0x01ABCDEF from shifts and ORs
+        assert_eq!(
+            evaluate(&safe("(1 << 24) + (0xab << 16) + (0xcd << 8) + 0xef"), OutputBase::Decimal).await.unwrap().value,
+            "28036591"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_alternating_powers_of_two() {
+        // 2^64 - 2^32 + 2^16 - 2^8 + 2^4 - 1
+        assert_eq!(
+            evaluate(&safe("2**64 - 2**32 + 2**16 - 2**8 + 2**4 - 1"), OutputBase::Decimal).await.unwrap().value,
+            "18446744069414649615"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_chained_unary_operators() {
+        // --3 + -(-5) * --2 = 3 + 5*2 = 13
+        assert_eq!(
+            evaluate(&safe("--3 + -(-5) * --2"), OutputBase::Decimal).await.unwrap().value,
+            "13"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_nested_exponentiation() {
+        // (2^3)^2 + (3^2)^3 = 64 + 729 = 793
+        assert_eq!(
+            evaluate(&safe("(2**3)**2 + (3**2)**3"), OutputBase::Decimal).await.unwrap().value,
+            "793"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_right_associative_exponentiation() {
+        // 2**2**2**2 = 2**(2**(2**2)) = 2**(2**4) = 2**16 = 65536
+        assert_eq!(
+            evaluate(&safe("2**2**2**2"), OutputBase::Decimal).await.unwrap().value,
+            "65536"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_shift_and_mask_chain() {
+        // 0xff >> 4 << 2 & 0x3f | 0x80
+        assert_eq!(
+            evaluate(&safe("0xff >> 4 << 2 & 0x3f | 0x80"), OutputBase::Decimal).await.unwrap().value,
+            "188"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_hex_output_complex() {
+        // (0xdead << 16) | 0xbeef in hex = deadbeef
+        assert_eq!(
+            evaluate(&safe("(0xdead << 16) | 0xbeef"), OutputBase::Hexadecimal).await.unwrap().value,
+            "deadbeef"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_big_modular_arithmetic() {
+        // 2^128 % (10^9 + 7) — common competitive programming pattern
+        assert_eq!(
+            evaluate(&safe("2**128 % (10**9 + 7)"), OutputBase::Decimal).await.unwrap().value,
+            "279632277"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_deeply_nested_parens() {
+        // ((1+2)*(3+4)*(5+6)) = 3*7*11 = 231
+        assert_eq!(
+            evaluate(&safe("((1+2)*(3+4)*(5+6))"), OutputBase::Decimal).await.unwrap().value,
+            "231"
+        );
+    }
+
+    #[tokio::test]
+
+    async fn test_rational_exact_fraction() {
+        // 1r/7 * 7 = 1/1 (exact — no floating point error)
+        let result = evaluate(&safe("1r/7 * 7"), OutputBase::Decimal).await.unwrap();
+        assert_eq!(result.result_type, ResultType::Rational);
+        assert_eq!(result.value, "1 / 1");
+    }
+
+    #[tokio::test]
+
+    async fn test_rational_sum() {
+        // 1r/2 + 1r/3 + 1r/6 = 1/1
+        let result = evaluate(&safe("1r/2 + 1r/3 + 1r/6"), OutputBase::Decimal).await.unwrap();
+        assert_eq!(result.result_type, ResultType::Rational);
+        assert_eq!(result.value, "1 / 1");
+    }
+
+    #[tokio::test]
+
+    async fn test_float_mixed_arithmetic() {
+        // 3.14 + 2.86 + 0.5 * 2 = 7.0
+        let result = evaluate(&safe("3.14 + 2.86 + 0.5 * 2"), OutputBase::Decimal).await.unwrap();
+        assert_eq!(result.result_type, ResultType::Float);
+        assert_eq!(result.value, "7.0");
     }
 }

@@ -88,17 +88,18 @@ pub async fn calculate(expr: &str, options: &CalculatorOptions) -> CalculatorRes
     }
 
     // Step 3: Parse and validate structure (defense layer 2)
-    if parser::validate(&transformed).is_err() {
-        return CalculatorResult {
-            output: "Sorry, what you entered wasn't recognized as a valid mathematical expression.".to_string(),
-            is_error: true,
-        };
-    }
+    let safe_expr = match parser::validate(&transformed) {
+        Ok(safe) => safe,
+        Err(_) => {
+            return CalculatorResult {
+                output: "Sorry, what you entered wasn't recognized as a valid mathematical expression.".to_string(),
+                is_error: true,
+            };
+        }
+    };
 
     // Step 4: Evaluate with Ruby
-    // SAFETY: Expression has passed both character filter and parser validation above.
-    let eval_result =
-        evaluator::evaluate_unsafe_requires_prior_validation(&transformed, options.base).await;
+    let eval_result = evaluator::evaluate(&safe_expr, options.base).await;
 
     match eval_result {
         Ok(EvalSuccess { value, result_type }) => {
