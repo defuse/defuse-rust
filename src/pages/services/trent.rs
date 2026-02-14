@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::handler::{BoxFuture, FormField, PageHandler, PostBody};
-use crate::libs::trent::{self, DrawingParams, FileInput};
+use crate::libs::trent::{self, DrawingParams, FileInput, ValidatedDrawing};
 
 // =============================================================================
 // Types
@@ -48,8 +48,7 @@ struct ReservationInfo {
 }
 
 /// Shown on the confirmation page (step 1 of create) so the user can review
-/// their parameters before finalizing. Wraps DrawingParams (with file hashes
-/// filled in by `save_files_to_temp`) plus display-only file metadata.
+/// their parameters before finalizing.
 struct ConfirmationInfo {
     params: DrawingParams,
     file_infos: [FileInfo; 3],
@@ -331,78 +330,64 @@ impl TrentPage {
             chosentwice: form.chosentwice == "true",
         };
 
-        // Look up drawing
-        let drawing = match trent::get_drawing(params.drawing_num).await {
-            Ok(Some(d)) => d,
-            Ok(None) => {
-                self.set_error(format!("Drawing #{} does not exist.", params.drawing_num), form);
-                return;
-            }
-            Err(e) => {
-                tracing::error!("Database error: {}", e);
-                self.set_error(format!("Database error encountered when looking up Drawing #{}.", params.drawing_num), form);
-                return;
-            }
-        };
-
-        // Validate parameters against the drawing record
-        if let Err(e) = trent::validate_create_request(&params, &drawing) {
-            self.set_error(e.to_string(), form);
-            return;
-        }
-
+        // Load file contents: from temp storage (confirmed) or uploads (initial)
         if form.confirmed == "true" {
-            // Confirmation step: load file contents from temp storage
             for i in 0..3 {
                 params.files[i].content = load_temp_file(
                     params.drawing_num, &params.files[i].hash,
                 ).await;
             }
-
-            if let Err(e) = trent::validate_files(&params) {
-                self.set_error(e.to_string(), form);
-                return;
-            }
-
-            self.finalize_drawing(&params).await;
-            delete_temp_files(params.drawing_num, &params.files).await;
         } else {
-            // Initial submission: load file contents from uploads
             let field_names = ["file1", "file2", "file3"];
             for i in 0..3 {
                 if let Some((_, data)) = files.get(field_names[i]) {
+                    params.files[i].hash = trent::sha256_hex(data);
                     params.files[i].content = Some(data.clone());
                 }
             }
+        }
 
-            if let Err(e) = trent::validate_files(&params) {
+        // Validate everything: fetches drawing from DB, checks params + files
+        let validated = match trent::validate_create_request(params).await {
+            Ok(v) => v,
+            Err(e) => {
                 self.set_error(e.to_string(), form);
                 return;
             }
+        };
 
-            let file_infos = save_files_to_temp(&mut params, &files).await;
-            self.confirmation = Some(ConfirmationInfo { params, file_infos });
-            // Even though it's not an error, make it easier for the user to
-            // resubmit the form in case they notice they input something wrong
+        // Act: finalize (confirmed) or show confirmation (initial)
+        if form.confirmed == "true" {
+            self.finalize_drawing(&validated).await;
+        } else {
+            save_files_to_temp(&validated.params).await;
+            let file_infos = build_file_infos(&validated.params, &files);
+            self.confirmation = Some(ConfirmationInfo { params: validated.params, file_infos });
             self.form_values = Some(form.clone());
         }
     }
 
-    /// Complete the drawing: build printout via the library and save to database
-    async fn finalize_drawing(&mut self, params: &DrawingParams) {
-        let (printout, userprintout) = trent::build_printout(params);
-
-        if let Err(e) = trent::complete_drawing(params.drawing_num, &printout, &userprintout).await {
+    /// Complete the drawing and save to database
+    async fn finalize_drawing(&mut self, validated: &ValidatedDrawing) {
+        if let Err(e) = trent::complete_drawing(validated).await {
+            // The only way this fails is a database error (connection failure,
+            // or TOCTOU race where another request completed the drawing first).
+            // We intentionally leave temp files around rather than deleting them,
+            // so the user can retry. If an attacker can cause DB errors to fill
+            // /tmp with temp files, they're already DoSing the site anyway.
             tracing::error!("Database error completing drawing: {}", e);
             self.error = Some("Database error. Please try again.".to_string());
             return;
         }
 
+        delete_temp_files(validated.params.drawing_num, &validated.params.files).await;
+
+        let drawing_num = validated.params.drawing_num;
         let url = format!(
             "{}/trustedthirdparty.htm?drawingnum={}",
-            self.ctx.url_prefix, params.drawing_num
+            self.ctx.url_prefix, drawing_num
         );
-        self.completion = Some(CompletionInfo { drawing_num: params.drawing_num, url });
+        self.completion = Some(CompletionInfo { drawing_num, url });
     }
 }
 
@@ -459,27 +444,32 @@ fn parse_post_body(body: PostBody) -> Result<(TrentForm, HashMap<String, (String
     }
 }
 
-/// Save uploaded files to temp storage and build display info for the confirmation page.
-/// Updates each file's hash in `params` and returns the corresponding FileInfo array.
-async fn save_files_to_temp(
-    params: &mut DrawingParams,
+/// Save uploaded files to temp storage. Hashes must already be set in params.
+async fn save_files_to_temp(params: &DrawingParams) {
+    for file in &params.files {
+        if let Some(content) = &file.content {
+            let path = temp_path(params.drawing_num, &file.hash);
+            if let Err(e) = tokio::fs::write(&path, content).await {
+                tracing::error!("Failed to write temp file: {}", e);
+            }
+        }
+    }
+}
+
+/// Build display info for uploaded files on the confirmation page.
+fn build_file_infos(
+    params: &DrawingParams,
     files: &HashMap<String, (String, Vec<u8>)>,
 ) -> [FileInfo; 3] {
     let field_names = ["file1", "file2", "file3"];
     let mut file_infos = [FileInfo::default(), FileInfo::default(), FileInfo::default()];
     for i in 0..3 {
         if let Some((filename, data)) = files.get(field_names[i]) {
-            let hash = trent::sha256_hex(data);
-            let path = temp_path(params.drawing_num, &hash);
-            if let Err(e) = tokio::fs::write(&path, data).await {
-                tracing::error!("Failed to write temp file: {}", e);
-            }
             file_infos[i] = FileInfo {
                 name: filename.clone(),
                 size: trent::format_bytes(data.len() as u64),
-                sha256: hash.clone(),
+                sha256: params.files[i].hash.clone(),
             };
-            params.files[i].hash = hash;
         }
     }
     file_infos

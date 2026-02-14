@@ -1,9 +1,12 @@
 //! TRENT - Trusted Random Entropy
 //!
-//! Database service for the trusted third party random number generator.
+//! Business logic for the trusted third party random number generator.
 //! Uses a lazily-initialized connection pool that's only created when first accessed.
 //!
 //! Port of defuse.ca/src/pages/services/trustedthirdparty.php
+//! 
+//! TODO: This uses 32-bit integers for timestamps, needs to be updated before
+//! 32-bit timestamps overflow!
 
 use rand::RngCore;
 use sha2::{Digest, Sha256};
@@ -11,8 +14,9 @@ use sqlx::MySqlPool;
 use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Global connection pool - lazily initialized on first use
-static POOL: OnceLock<MySqlPool> = OnceLock::new();
+// =============================================================================
+// Public types
+// =============================================================================
 
 /// A drawing record from the database
 #[derive(Debug)]
@@ -26,24 +30,101 @@ pub struct Drawing {
     pub userprintout: String,
 }
 
+/// Result of reserving a new drawing number.
+pub struct ReservationResult {
+    pub drawing_num: i32,
+    pub password: String,
+    pub drawing_date: String,
+}
+
+/// Per-file slot in a drawing request: the uploaded file's content hash,
+/// raw bytes (if available), and number of random lines to select from it.
+#[derive(Clone)]
+pub struct FileInput {
+    pub hash: String,
+    pub content: Option<Vec<u8>>,
+    pub randlines: i32,
+}
+
+/// Parsed and validated parameters for creating or completing a drawing.
+/// Built early in the page handler from form data, and used for
+/// confirmation display and completion.
+#[derive(Clone)]
+pub struct DrawingParams {
+    pub drawing_num: i32,
+    pub passcode: String,
+    pub name: String,
+    pub description: String,
+    pub files: [FileInput; 3],
+    pub lowval: i32,
+    pub highval: i32,
+    pub numgen: i32,
+    pub chosentwice: bool,
+}
+
+/// A drawing request that has been fully validated (params checked against
+/// the database record and file contents verified). Can only be constructed
+/// via `validate_create_request`.
+pub struct ValidatedDrawing {
+    pub params: DrawingParams,
+}
+
+/// Errors that can occur when validating a drawing creation request.
+#[derive(Debug)]
+pub enum CreateError {
+    DrawingNotFound(i32),
+    DatabaseError(String),
+    TextTooLarge,
+    NonLatin1Characters,
+    IncorrectPassword(i32),
+    AlreadyComplete(i32),
+    ReviewPeriodNotComplete { drawing_num: i32, draw_date: String },
+    InvalidRange,
+    NegativeValues,
+    TooManyNumbers,
+    FileTooLarge,
+    FileHashMismatch,
+    FileNotLatin1,
+    FileWithoutRandlines,
+    MissingFile,
+    NotEnoughLines,
+}
+
+impl std::fmt::Display for CreateError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::DrawingNotFound(n) => write!(f, "Drawing #{} does not exist.", n),
+            Self::DatabaseError(msg) => write!(f, "{}", msg),
+            Self::TextTooLarge => write!(f, "Name and description must each be less than 1 MB."),
+            Self::NonLatin1Characters => write!(f,
+                "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
+                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported."),
+            Self::IncorrectPassword(n) => write!(f, "Incorrect password for drawing #{}.", n),
+            Self::AlreadyComplete(n) => write!(f, "The random numbers for drawing #{} have already been chosen.", n),
+            Self::ReviewPeriodNotComplete { drawing_num, draw_date } => write!(f,
+                "The review period for drawing #{} is not complete. You will be able to do the drawing after {}",
+                drawing_num, draw_date),
+            Self::InvalidRange => write!(f, "The number range is invalid."),
+            Self::NegativeValues => write!(f, "We couldn't possibly generate a NEGATIVE amount of random numbers..."),
+            Self::TooManyNumbers => write!(f, "Sorry, we can only generate 1000 random numbers at a time."),
+            Self::FileTooLarge => write!(f, "Sorry, maximum file size is 10MB."),
+            Self::FileHashMismatch => write!(f, "File content does not match its claimed hash."),
+            Self::FileNotLatin1 => write!(f, "Uploaded files can only contain Latin-1 characters."),
+            Self::FileWithoutRandlines => write!(f, "Please specify the number of random lines to select from each uploaded file."),
+            Self::MissingFile => write!(f, "Please upload a file for each set of random lines requested."),
+            Self::NotEnoughLines => write!(f, "One of the files doesn't have enough lines to be able to choose the requested number of lines."),
+        }
+    }
+}
+
+// =============================================================================
+// Public API
+// =============================================================================
+
 /// Connect to the database eagerly at startup to fail fast if misconfigured.
 pub async fn ensure_db_connection_works() -> Result<(), sqlx::Error> {
     get_pool().await?;
     Ok(())
-}
-
-/// Get or create the database connection pool
-async fn get_pool() -> Result<&'static MySqlPool, sqlx::Error> {
-    if let Some(pool) = POOL.get() {
-        return Ok(pool);
-    }
-
-    let url = std::env::var("TRENT_DATABASE_URL")
-        .expect("TRENT_DATABASE_URL must be set for TRENT page");
-    let pool = MySqlPool::connect(&url).await?;
-
-    // Race-safe: if another task initialized first, use theirs and drop ours
-    Ok(POOL.get_or_init(|| pool))
 }
 
 /// Get a drawing by its number
@@ -69,13 +150,6 @@ pub async fn get_drawing(drawing_num: i32) -> Result<Option<Drawing>, sqlx::Erro
             userprintout: String::from_utf8_lossy(&userprintout).into_owned(),
         }
     }))
-}
-
-/// Result of reserving a new drawing number.
-pub struct ReservationResult {
-    pub drawing_num: i32,
-    pub password: String,
-    pub drawing_date: String,
 }
 
 /// Reserve a new drawing number.
@@ -104,63 +178,85 @@ pub async fn reserve_drawing(review_time: u32) -> Result<ReservationResult, sqlx
     })
 }
 
-/// Complete a drawing by storing the printout
-pub async fn complete_drawing(
-    drawing_num: i32,
-    printout: &str,
-    userprintout: &str,
-) -> Result<(), sqlx::Error> {
+/// Complete a drawing: build the printout and mark it as complete in the database.
+/// Returns (printout, userprintout) on success for display to the user.
+pub async fn complete_drawing(validated: &ValidatedDrawing) -> Result<(String, String), sqlx::Error> {
+    let (printout, userprintout) = build_printout(&validated.params);
+
     let pool = get_pool().await?;
 
-    sqlx::query(
-        "UPDATE drawings SET complete = 1, printout = ?, userprintout = ? WHERE drawingnum = ?"
+    // SECURITY: "AND complete = 0" prevents a TOCTOU race where two concurrent
+    // requests both pass validation and try to complete the same drawing.
+    let result = sqlx::query(
+        "UPDATE drawings SET complete = 1, printout = ?, userprintout = ? WHERE drawingnum = ? AND complete = 0"
     )
-    .bind(printout)
-    .bind(userprintout)
-    .bind(drawing_num)
+    .bind(&printout)
+    .bind(&userprintout)
+    .bind(validated.params.drawing_num)
     .execute(pool)
     .await?;
 
-    Ok(())
-}
-
-/// Generate a random password (32 hex chars from 16 random bytes)
-/// Matches PHP: bin2hex(mcrypt_create_iv(16, MCRYPT_DEV_URANDOM))
-fn generate_password() -> String {
-    let mut bytes = [0u8; 16];
-    rand::rngs::OsRng.fill_bytes(&mut bytes);
-    hex::encode(bytes)
-}
-
-/// Hash a password with SHA256 (lowercase hex)
-/// Matches PHP: hash("SHA256", $password)
-pub fn hash_password(password: &str) -> String {
-    let hash = Sha256::digest(password.as_bytes());
-    hex::encode(hash)
-}
-
-/// Select a random number in [low, high] using 32 bytes of randomness
-/// This is a streaming modular reduction that matches PHP's SelectRandomNumber exactly
-pub fn select_random_number(random_bytes: &[u8; 32], low: i64, high: i64) -> i64 {
-    let divisor = (high - low + 1).unsigned_abs();
-    if divisor == 0 {
-        return low;
+    if result.rows_affected() == 0 {
+        return Err(sqlx::Error::RowNotFound);
     }
 
-    let mut remainder: u64 = 0;
-    for &byte in random_bytes {
-        let total = remainder * 256 + byte as u64;
-        remainder = total % divisor;
-    }
-
-    low + remainder as i64
+    Ok((printout, userprintout))
 }
 
-/// Generate 32 random bytes for number selection
-pub fn generate_random_bytes() -> [u8; 32] {
-    let mut bytes = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut bytes);
-    bytes
+/// Validate drawing creation parameters: fetch the drawing from the database,
+/// check all fields against the record, and verify file contents.
+/// Returns a `ValidatedDrawing` on success, which is required by `complete_drawing`.
+pub async fn validate_create_request(params: DrawingParams) -> Result<ValidatedDrawing, CreateError> {
+    let drawing = match get_drawing(params.drawing_num).await {
+        Ok(Some(d)) => d,
+        Ok(None) => return Err(CreateError::DrawingNotFound(params.drawing_num)),
+        Err(e) => {
+            tracing::error!("Database error: {}", e);
+            return Err(CreateError::DatabaseError(
+                format!("Database error encountered when looking up Drawing #{}.", params.drawing_num),
+            ));
+        }
+    };
+
+    // SECURITY: Don't allow re-rolls of the dice.
+    if drawing.complete {
+        return Err(CreateError::AlreadyComplete(params.drawing_num));
+    }
+
+    // SECURITY: Don't allow bypassing the review period
+    let drawing_time = drawing.starttime + drawing.reviewtime;
+    if now() < drawing_time {
+        return Err(CreateError::ReviewPeriodNotComplete {
+            drawing_num: params.drawing_num,
+            draw_date: format_date(drawing_time),
+        });
+    }
+
+    if params.name.len() > MAX_TEXT_FIELD_SIZE || params.description.len() > MAX_TEXT_FIELD_SIZE {
+        return Err(CreateError::TextTooLarge);
+    }
+
+    if !is_latin1_safe(&params.name) || !is_latin1_safe(&params.description) {
+        return Err(CreateError::NonLatin1Characters);
+    }
+
+    if hash_password(&params.passcode) != drawing.passwordhash {
+        return Err(CreateError::IncorrectPassword(params.drawing_num));
+    }
+
+    if params.lowval >= params.highval && params.numgen != 0 {
+        return Err(CreateError::InvalidRange);
+    }
+    if params.numgen < 0 || params.files.iter().any(|f| f.randlines < 0) {
+        return Err(CreateError::NegativeValues);
+    }
+    if params.numgen > 1000 || params.files.iter().any(|f| f.randlines > 1000) {
+        return Err(CreateError::TooManyNumbers);
+    }
+
+    validate_files(&params)?;
+
+    Ok(ValidatedDrawing { params })
 }
 
 /// Get current unix timestamp
@@ -198,8 +294,145 @@ pub fn format_bytes(size: u64) -> String {
     format!("{}{}", trimmed, UNITS[i])
 }
 
+/// Compute SHA-256 hash of data, returned as lowercase hex.
+pub fn sha256_hex(data: &[u8]) -> String {
+    hex::encode(Sha256::digest(data))
+}
+
+/// Check if a string is a valid SHA256 hex hash (64 hex characters).
+pub fn is_sha256_hex(s: &str) -> bool {
+    s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+// =============================================================================
+// Private helpers
+// =============================================================================
+
+/// Global connection pool - lazily initialized on first use
+static POOL: OnceLock<MySqlPool> = OnceLock::new();
+
+/// Maximum file size: 10MB
+const MAX_FILE_SIZE: usize = 10 * 1024 * 1024;
+
+/// Maximum name/description size: 1MB each
+const MAX_TEXT_FIELD_SIZE: usize = 1024 * 1024;
+
+/// Validate file contents: sizes, Latin-1 safety, presence/randlines consistency,
+/// and sufficient line counts when repeats are disabled.
+fn validate_files(params: &DrawingParams) -> Result<(), CreateError> {
+    for file in &params.files {
+        if let Some(content) = &file.content {
+            if content.len() > MAX_FILE_SIZE {
+                return Err(CreateError::FileTooLarge);
+            }
+            if sha256_hex(content) != file.hash {
+                return Err(CreateError::FileHashMismatch);
+            }
+            if !is_file_latin1_safe(content) {
+                return Err(CreateError::FileNotLatin1);
+            }
+            assert!(file.randlines >= 0); // checked in validate_create_request
+            if file.randlines == 0 {
+                return Err(CreateError::FileWithoutRandlines);
+            }
+            if !params.chosentwice && count_lines(content) < file.randlines as usize {
+                return Err(CreateError::NotEnoughLines);
+            }
+        } else if file.randlines > 0 {
+            return Err(CreateError::MissingFile);
+        }
+    }
+    Ok(())
+}
+
+/// Build the printout and userprintout for a completed drawing.
+/// Returns (printout, userprintout).
+fn build_printout(params: &DrawingParams) -> (String, String) {
+    let userprintout = format!("NAME: {}\nDESCRIPTION:\n{}", params.name, params.description);
+
+    let mut printout = String::new();
+    printout.push_str(&format!("DRAWING NUMBER: {}\n", params.drawing_num));
+    printout.push_str(&format!("DRAWING DATE: {}\n", format_date(now())));
+    printout.push_str(&format!("AMOUNT OF NUMBERS: {}\n", params.numgen));
+    printout.push_str(&format!("RANGE: {} TO {}\n\n", params.lowval, params.highval));
+
+    for (i, file) in params.files.iter().enumerate() {
+        let file_num = i + 1;
+        if is_sha256_hex(&file.hash) {
+            if let Some(content) = &file.content {
+                printout.push_str(&format!("FILE{} SHA256: {}\n\n", file_num, file.hash));
+                let lines = select_random_lines(content, file.randlines as usize, params.chosentwice);
+                for (j, (line_num, line_preview)) in lines.into_iter().enumerate() {
+                    printout.push_str(&format!("FILE{} RANDOM LINE {}:\n", file_num, j + 1));
+                    printout.push_str(&format!("RANDOM LINE NUMBER (FILE{}): {}\n", file_num, line_num));
+                    printout.push_str(&format!("LINE PREVIEW: {}\n\n", line_preview));
+                }
+            }
+        }
+    }
+
+    for i in 1..=params.numgen {
+        let randnum = select_random_number(params.lowval as i64, params.highval as i64);
+        printout.push_str(&format!("RANDOM NUMBER NUMBER {}: {}\n", i, randnum));
+    }
+
+    (printout, userprintout)
+}
+
+/// Get or create the database connection pool
+async fn get_pool() -> Result<&'static MySqlPool, sqlx::Error> {
+    if let Some(pool) = POOL.get() {
+        return Ok(pool);
+    }
+
+    let url = std::env::var("TRENT_DATABASE_URL")
+        .expect("TRENT_DATABASE_URL must be set for TRENT page");
+    let pool = MySqlPool::connect(&url).await?;
+
+    // Race-safe: if another task initialized first, use theirs and drop ours
+    Ok(POOL.get_or_init(|| pool))
+}
+
+/// Generate a random password (32 hex chars from 16 random bytes)
+/// Matches PHP: bin2hex(mcrypt_create_iv(16, MCRYPT_DEV_URANDOM))
+fn generate_password() -> String {
+    let mut bytes = [0u8; 16];
+    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    hex::encode(bytes)
+}
+
+/// Hash a password with SHA256 (lowercase hex)
+/// Matches PHP: hash("SHA256", $password)
+fn hash_password(password: &str) -> String {
+    // We don't need salt or a slow hashing function because passwords are 256-bit keys
+    let hash = Sha256::digest(password.as_bytes());
+    hex::encode(hash)
+}
+
+/// Select a random number in [low, high] using 32 bytes of OS randomness.
+/// Matches PHP's SelectRandomNumber.
+fn select_random_number(low: i64, high: i64) -> i64 {
+    let mut bytes = [0u8; 32];
+    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    let divisor = (high - low + 1).unsigned_abs();
+    if divisor == 0 {
+        return low;
+    }
+    low + reduce_mod(&bytes, divisor) as i64
+}
+
+/// Streaming modular reduction: reduce 32 bytes of randomness modulo `divisor`.
+fn reduce_mod(random_bytes: &[u8; 32], divisor: u64) -> u64 {
+    let mut remainder: u64 = 0;
+    for &byte in random_bytes {
+        let total = remainder * 256 + byte as u64;
+        remainder = total % divisor;
+    }
+    remainder
+}
+
 /// Count lines in file content (matches PHP's fgets line counting)
-pub fn count_lines(content: &[u8]) -> usize {
+fn count_lines(content: &[u8]) -> usize {
     if content.is_empty() {
         return 0;
     }
@@ -211,7 +444,7 @@ pub fn count_lines(content: &[u8]) -> usize {
 
 /// Get a specific line from file content (0-indexed)
 /// Returns the line including trailing newline if present
-pub fn get_line(content: &[u8], line_idx: usize) -> Option<String> {
+fn get_line(content: &[u8], line_idx: usize) -> Option<String> {
     let mut current_line = 0;
     let mut start = 0;
 
@@ -234,9 +467,10 @@ pub fn get_line(content: &[u8], line_idx: usize) -> Option<String> {
     None
 }
 
-/// Select random lines from file content
-/// Returns Vec of (line_number, line_preview)
-pub fn select_random_lines(
+/// Select random lines from file content.
+/// If `allow_repeat` is true, the same line can be selected more than once.
+/// Returns Vec of (line_number, line_text).
+fn select_random_lines(
     content: &[u8],
     num_lines: usize,
     allow_repeat: bool,
@@ -255,10 +489,8 @@ pub fn select_random_lines(
     let mut excluded: Vec<usize> = Vec::new();
 
     for _ in 0..num_lines {
-        // Keep selecting until we get a non-excluded line (or allow repeats)
         loop {
-            let random_bytes = generate_random_bytes();
-            let line_idx = select_random_number(&random_bytes, 0, total_lines as i64 - 1) as usize;
+            let line_idx = select_random_number(0, total_lines as i64 - 1) as usize;
 
             if allow_repeat || !excluded.contains(&line_idx) {
                 if !allow_repeat {
@@ -274,215 +506,33 @@ pub fn select_random_lines(
     results
 }
 
-/// Generate the random lines output for the printout
-/// file_num should be 1, 2, or 3
-pub fn get_random_lines_output(
-    content: &[u8],
-    num_lines: usize,
-    no_line_repeat: bool,
-    file_num: u8,
-) -> String {
-    let lines = select_random_lines(content, num_lines, !no_line_repeat);
-    let mut output = String::new();
-
-    for (i, (line_num, line_preview)) in lines.into_iter().enumerate() {
-        output.push_str(&format!("FILE{} RANDOM LINE {}:\n", file_num, i + 1));
-        output.push_str(&format!("RANDOM LINE NUMBER (FILE{}): {}\n", file_num, line_num));
-        output.push_str(&format!("LINE PREVIEW: {}\n\n", line_preview));
-    }
-
-    output
-}
-
-// =============================================================================
-// Drawing creation types and validation
-// =============================================================================
-
-/// Maximum file size: 10MB
-pub const MAX_FILE_SIZE: usize = 10 * 1024 * 1024;
-
-/// Maximum name/description size: 1MB each
-pub const MAX_TEXT_FIELD_SIZE: usize = 1024 * 1024;
-
-/// Per-file slot in a drawing request: the uploaded file's content hash,
-/// raw bytes (if available), and number of random lines to select from it.
-#[derive(Clone)]
-pub struct FileInput {
-    pub hash: String,
-    pub content: Option<Vec<u8>>,
-    pub randlines: i32,
-}
-
-/// Parsed and validated parameters for creating or completing a drawing.
-/// Built early in the page handler from form data, and used for error
-/// recovery (repopulating the form), confirmation display, and completion.
-#[derive(Clone)]
-pub struct DrawingParams {
-    pub drawing_num: i32,
-    pub passcode: String,
-    pub name: String,
-    pub description: String,
-    pub files: [FileInput; 3],
-    pub lowval: i32,
-    pub highval: i32,
-    pub numgen: i32,
-    pub chosentwice: bool,
-}
-
-/// Errors that can occur when validating a drawing creation request.
-#[derive(Debug)]
-pub enum CreateError {
-    TextTooLarge,
-    NonLatin1Characters,
-    IncorrectPassword(i32),
-    AlreadyComplete(i32),
-    ReviewPeriodNotComplete { drawing_num: i32, draw_date: String },
-    InvalidRange,
-    NegativeValues,
-    TooManyNumbers,
-    FileTooLarge,
-    MissingFile,
-    NotEnoughLines,
-}
-
-impl std::fmt::Display for CreateError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::TextTooLarge => write!(f, "Name and description must each be less than 1 MB."),
-            Self::NonLatin1Characters => write!(f,
-                "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
-                 Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported."),
-            Self::IncorrectPassword(n) => write!(f, "Incorrect password for drawing #{}.", n),
-            Self::AlreadyComplete(n) => write!(f, "The random numbers for drawing #{} have already been chosen.", n),
-            Self::ReviewPeriodNotComplete { drawing_num, draw_date } => write!(f,
-                "The review period for drawing #{} is not complete. You will be able to do the drawing after {}",
-                drawing_num, draw_date),
-            Self::InvalidRange => write!(f, "The number range is invalid."),
-            Self::NegativeValues => write!(f, "We couldn't possibly generate a NEGATIVE amount of random numbers..."),
-            Self::TooManyNumbers => write!(f, "Sorry, we can only generate 1000 random numbers at a time."),
-            Self::FileTooLarge => write!(f, "Sorry, maximum file size is 10MB."),
-            Self::MissingFile => write!(f, "Please upload a file for each set of random lines requested."),
-            Self::NotEnoughLines => write!(f, "One of the files doesn't have enough lines to be able to choose the requested number of lines."),
-        }
-    }
-}
-
-/// Validate drawing creation parameters against the database drawing record.
-/// Call this before resolving file contents.
-pub fn validate_create_request(params: &DrawingParams, drawing: &Drawing) -> Result<(), CreateError> {
-    if params.name.len() > MAX_TEXT_FIELD_SIZE || params.description.len() > MAX_TEXT_FIELD_SIZE {
-        return Err(CreateError::TextTooLarge);
-    }
-    if !is_latin1_safe(&params.name) || !is_latin1_safe(&params.description) {
-        return Err(CreateError::NonLatin1Characters);
-    }
-    if hash_password(&params.passcode) != drawing.passwordhash {
-        return Err(CreateError::IncorrectPassword(params.drawing_num));
-    }
-    if drawing.complete {
-        return Err(CreateError::AlreadyComplete(params.drawing_num));
-    }
-    let drawing_time = drawing.starttime + drawing.reviewtime;
-    if now() < drawing_time {
-        return Err(CreateError::ReviewPeriodNotComplete {
-            drawing_num: params.drawing_num,
-            draw_date: format_date(drawing_time),
-        });
-    }
-    if params.lowval >= params.highval && params.numgen != 0 {
-        return Err(CreateError::InvalidRange);
-    }
-    if params.numgen < 0 || params.files.iter().any(|f| f.randlines < 0) {
-        return Err(CreateError::NegativeValues);
-    }
-    if params.numgen > 1000 || params.files.iter().any(|f| f.randlines > 1000) {
-        return Err(CreateError::TooManyNumbers);
-    }
-    Ok(())
-}
-
-/// Validate file contents after resolution.
-/// Checks file sizes, that files are provided when random lines are requested,
-/// and that files have enough lines when repeats are disabled.
-pub fn validate_files(params: &DrawingParams) -> Result<(), CreateError> {
-    for file in &params.files {
-        if let Some(content) = &file.content {
-            if content.len() > MAX_FILE_SIZE {
-                return Err(CreateError::FileTooLarge);
-            }
-        }
-        if file.randlines > 0 && file.content.is_none() {
-            return Err(CreateError::MissingFile);
-        }
-        if !params.chosentwice {
-            if let Some(content) = &file.content {
-                if file.randlines > 0 && count_lines(content) < file.randlines as usize {
-                    return Err(CreateError::NotEnoughLines);
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-/// Build the printout and userprintout for a completed drawing.
-/// Returns (printout, userprintout).
-pub fn build_printout(params: &DrawingParams) -> (String, String) {
-    let no_line_repeat = !params.chosentwice;
-    let userprintout = format!("NAME: {}\nDESCRIPTION:\n{}", params.name, params.description);
-
-    let mut printout = String::new();
-    printout.push_str(&format!("DRAWING NUMBER: {}\n", params.drawing_num));
-    printout.push_str(&format!("DRAWING DATE: {}\n", format_date(now())));
-    printout.push_str(&format!("AMOUNT OF NUMBERS: {}\n", params.numgen));
-    printout.push_str(&format!("RANGE: {} TO {}\n\n", params.lowval, params.highval));
-
-    for (i, file) in params.files.iter().enumerate() {
-        let file_num = (i + 1) as u8;
-        if is_sha256_hex(&file.hash) {
-            if let Some(content) = &file.content {
-                printout.push_str(&format!("FILE{} SHA256: {}\n\n", file_num, file.hash));
-                printout.push_str(&get_random_lines_output(
-                    content, file.randlines as usize, no_line_repeat, file_num,
-                ));
-            }
-        }
-    }
-
-    for i in 1..=params.numgen {
-        let random_bytes = generate_random_bytes();
-        let randnum = select_random_number(&random_bytes, params.lowval as i64, params.highval as i64);
-        printout.push_str(&format!("RANDOM NUMBER NUMBER {}: {}\n", i, randnum));
-    }
-
-    (printout, userprintout)
-}
-
-/// Compute SHA-256 hash of data, returned as lowercase hex.
-pub fn sha256_hex(data: &[u8]) -> String {
-    hex::encode(Sha256::digest(data))
-}
-
-/// Check if a string is a valid SHA256 hex hash (64 hex characters).
-pub fn is_sha256_hex(s: &str) -> bool {
-    s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())
-}
-
 /// Check if a string contains only Latin-1 compatible characters (code points 0-255).
 fn is_latin1_safe(s: &str) -> bool {
     s.chars().all(|c| (c as u32) <= 255)
 }
+
+/// Check if file content is Latin-1 safe: must be valid UTF-8 with all
+/// characters in the Latin-1 range (U+0000 to U+00FF).
+fn is_file_latin1_safe(content: &[u8]) -> bool {
+    match std::str::from_utf8(content) {
+        Ok(s) => is_latin1_safe(s),
+        Err(_) => false,
+    }
+}
+
+// =============================================================================
+// Tests
+// =============================================================================
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_select_random_number_basic() {
-        // Test with known bytes - all zeros should give low value
+    fn test_reduce_mod() {
         let zeros = [0u8; 32];
-        assert_eq!(select_random_number(&zeros, 0, 10), 0);
-        assert_eq!(select_random_number(&zeros, 5, 15), 5);
+        assert_eq!(reduce_mod(&zeros, 11), 0);
+        assert_eq!(reduce_mod(&zeros, 1), 0);
     }
 
     #[test]
