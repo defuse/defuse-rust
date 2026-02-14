@@ -7,6 +7,9 @@
 //! 
 //! TODO: This uses 32-bit integers for timestamps, needs to be updated before
 //! 32-bit timestamps overflow!
+//! 
+//! TODO: I feel like this shouldn't just be a bunch of naked functions sitting
+//! in this file but should be encapsulated into a trait.
 
 use rand::RngCore;
 use sha2::{Digest, Sha256};
@@ -28,6 +31,13 @@ pub struct Drawing {
     pub reviewtime: u32,
     pub printout: String,
     pub userprintout: String,
+}
+
+impl Drawing {
+    /// The timestamp after which the drawing can be completed.
+    pub fn draw_date(&self) -> u32 {
+        self.starttime + self.reviewtime
+    }
 }
 
 /// Result of reserving a new drawing number.
@@ -181,7 +191,7 @@ pub async fn reserve_drawing(review_time: u32) -> Result<ReservationResult, sqlx
 /// Complete a drawing: build the printout and mark it as complete in the database.
 /// Returns (printout, userprintout) on success for display to the user.
 pub async fn complete_drawing(validated: &ValidatedDrawing) -> Result<(String, String), sqlx::Error> {
-    let (printout, userprintout) = build_printout(&validated.params);
+    let (printout, userprintout) = build_printout(validated);
 
     let pool = get_pool().await?;
 
@@ -218,17 +228,21 @@ pub async fn validate_create_request(params: DrawingParams) -> Result<ValidatedD
         }
     };
 
+    // SECURITY: Only authorized drawing creator can roll the dice
+    if hash_password(&params.passcode) != drawing.passwordhash {
+        return Err(CreateError::IncorrectPassword(params.drawing_num));
+    }
+
     // SECURITY: Don't allow re-rolls of the dice.
     if drawing.complete {
         return Err(CreateError::AlreadyComplete(params.drawing_num));
     }
 
     // SECURITY: Don't allow bypassing the review period
-    let drawing_time = drawing.starttime + drawing.reviewtime;
-    if now() < drawing_time {
+    if now() < drawing.draw_date() {
         return Err(CreateError::ReviewPeriodNotComplete {
             drawing_num: params.drawing_num,
-            draw_date: format_date(drawing_time),
+            draw_date: format_date(drawing.draw_date()),
         });
     }
 
@@ -238,10 +252,6 @@ pub async fn validate_create_request(params: DrawingParams) -> Result<ValidatedD
 
     if !is_latin1_safe(&params.name) || !is_latin1_safe(&params.description) {
         return Err(CreateError::NonLatin1Characters);
-    }
-
-    if hash_password(&params.passcode) != drawing.passwordhash {
-        return Err(CreateError::IncorrectPassword(params.drawing_num));
     }
 
     if params.lowval >= params.highval && params.numgen != 0 {
@@ -279,6 +289,7 @@ pub fn format_date(timestamp: u32) -> String {
 
 /// Format bytes in human-readable form
 /// Matches PHP's format_bytes function
+/// TODO: this can be moved into the page handler
 pub fn format_bytes(size: u64) -> String {
     const UNITS: &[&str] = &[" B", " KB", " MB", " GB", " TB"];
     let mut size = size as f64;
@@ -335,7 +346,8 @@ fn validate_files(params: &DrawingParams) -> Result<(), CreateError> {
             if file.randlines == 0 {
                 return Err(CreateError::FileWithoutRandlines);
             }
-            if !params.chosentwice && count_lines(content) < file.randlines as usize {
+            let line_count = count_lines(content);
+            if line_count == 0 || (!params.chosentwice && line_count < file.randlines as usize) {
                 return Err(CreateError::NotEnoughLines);
             }
         } else if file.randlines > 0 {
@@ -345,9 +357,12 @@ fn validate_files(params: &DrawingParams) -> Result<(), CreateError> {
     Ok(())
 }
 
-/// Build the printout and userprintout for a completed drawing.
+/// Draws the random numbers and builds the userprintout and printout strings.
+/// printout contains the drawing numbers
+/// userprintout is the drawing description
 /// Returns (printout, userprintout).
-fn build_printout(params: &DrawingParams) -> (String, String) {
+fn build_printout(validated: &ValidatedDrawing) -> (String, String) {
+    let params = &validated.params;
     let userprintout = format!("NAME: {}\nDESCRIPTION:\n{}", params.name, params.description);
 
     let mut printout = String::new();
@@ -358,15 +373,17 @@ fn build_printout(params: &DrawingParams) -> (String, String) {
 
     for (i, file) in params.files.iter().enumerate() {
         let file_num = i + 1;
-        if is_sha256_hex(&file.hash) {
-            if let Some(content) = &file.content {
-                printout.push_str(&format!("FILE{} SHA256: {}\n\n", file_num, file.hash));
-                let lines = select_random_lines(content, file.randlines as usize, params.chosentwice);
-                for (j, (line_num, line_preview)) in lines.into_iter().enumerate() {
-                    printout.push_str(&format!("FILE{} RANDOM LINE {}:\n", file_num, j + 1));
-                    printout.push_str(&format!("RANDOM LINE NUMBER (FILE{}): {}\n", file_num, line_num));
-                    printout.push_str(&format!("LINE PREVIEW: {}\n\n", line_preview));
-                }
+        if file.randlines > 0 {
+            // Validation guarantees these hold for any file with randlines > 0.
+            assert!(is_sha256_hex(&file.hash), "validated file {} has invalid hash", file_num);
+            let content = file.content.as_ref().expect("validated file has no content");
+
+            printout.push_str(&format!("FILE{} SHA256: {}\n\n", file_num, file.hash));
+            let lines = select_random_lines(content, file.randlines as usize, params.chosentwice);
+            for (j, (line_num, line_preview)) in lines.into_iter().enumerate() {
+                printout.push_str(&format!("FILE{} RANDOM LINE {}:\n", file_num, j + 1));
+                printout.push_str(&format!("RANDOM LINE NUMBER (FILE{}): {}\n", file_num, line_num));
+                printout.push_str(&format!("LINE PREVIEW: {}\n\n", line_preview));
             }
         }
     }
@@ -414,6 +431,7 @@ fn hash_password(password: &str) -> String {
 fn select_random_number(low: i64, high: i64) -> i64 {
     let mut bytes = [0u8; 32];
     rand::rngs::OsRng.fill_bytes(&mut bytes);
+    // TODO: assert high >= low instead of abs, and assert no overflow as well
     let divisor = (high - low + 1).unsigned_abs();
     if divisor == 0 {
         return low;
@@ -496,7 +514,8 @@ fn select_random_lines(
                 if !allow_repeat {
                     excluded.push(line_idx);
                 }
-                let line_text = get_line(content, line_idx).unwrap_or_default();
+                let line_text = get_line(content, line_idx)
+                    .expect("line index out of bounds despite count_lines check");
                 results.push((line_idx, line_text));
                 break;
             }

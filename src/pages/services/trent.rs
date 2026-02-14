@@ -225,7 +225,7 @@ impl TrentPage {
                         printout: drawing.printout,
                     });
                 } else {
-                    let draw_date = trent::format_date(drawing.starttime + drawing.reviewtime);
+                    let draw_date = trent::format_date(drawing.draw_date());
                     self.drawing_view = Some(DrawingView::Pending {
                         drawing_num,
                         draw_date,
@@ -428,7 +428,8 @@ fn parse_post_body(body: PostBody) -> Result<(TrentForm, HashMap<String, (String
                     "file3hash" => form.file3hash = field.data_as_string(),
                     "file1" | "file2" | "file3" => {
                         if let Some(filename) = &field.filename {
-                            if !filename.is_empty() && !field.data.is_empty() {
+                            if !filename.is_empty() {
+                                // Allow empty files to go through to validation so the user gets a useful error.
                                 files.insert(field.name.clone(), (filename.clone(), field.data.to_vec()));
                             }
                         }
@@ -503,6 +504,7 @@ impl FormFieldExt for FormField {
 
 /// Build the temp file path for a given drawing and content hash.
 fn temp_path(drawing_num: i32, hash: &str) -> String {
+    // Defense-in-depth against path traversal attacks.
     assert!(trent::is_sha256_hex(hash));
     format!("/tmp/trent-{}-{}", drawing_num, hash)
 }
