@@ -98,6 +98,7 @@ pub enum CreateError {
     FileWithoutRandlines,
     MissingFile,
     NotEnoughLines,
+    RangeWithoutNumgen,
 }
 
 impl std::fmt::Display for CreateError {
@@ -123,6 +124,7 @@ impl std::fmt::Display for CreateError {
             Self::FileWithoutRandlines => write!(f, "Please specify the number of random lines to select from each uploaded file."),
             Self::MissingFile => write!(f, "Please upload a file for each set of random lines requested."),
             Self::NotEnoughLines => write!(f, "One of the files doesn't have enough lines to be able to choose the requested number of lines."),
+            Self::RangeWithoutNumgen => write!(f, "You set a range but didn't request any random numbers. Please set the amount of numbers to generate."),
         }
     }
 }
@@ -254,6 +256,11 @@ pub async fn validate_create_request(params: DrawingParams) -> Result<ValidatedD
         return Err(CreateError::NonLatin1Characters);
     }
 
+    if params.numgen == 0 && (params.lowval != 0 || params.highval != 0) {
+        return Err(CreateError::RangeWithoutNumgen);
+    }
+
+    // The params.numgen != 0 conjunct is needed so that numgen=0, lowval=0, highval=0 case is allowed through.
     if params.lowval >= params.highval && params.numgen != 0 {
         return Err(CreateError::InvalidRange);
     }
