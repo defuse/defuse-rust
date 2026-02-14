@@ -108,45 +108,45 @@ Review time:
 {% endif %}
 {%- if let Some(conf) = confirmation %}
 				<div style="background-color: #C9FFD1; border: solid 2px black; margin:20px; padding:10px;">
-				<h3 class="nopaddingatall">Confirm Drawing #{{ conf.drawing_num }}</h3>
+				<h3 class="nopaddingatall">Confirm Drawing #{{ conf.params.drawing_num }}</h3>
 				<p>Please confirm the parameters you provided. </p>
 				<h4 class="nopaddingatall">Name</h4>
-				{{ conf.name|e }}<br /><br />
+				{{ conf.params.name|e }}<br /><br />
 				<h4 class="nopaddingatall">Description</h4>
-				{{ conf.description|e }}<br /><br />
+				{{ conf.params.description|e }}<br /><br />
 				<h4 class="nopaddingatall">File1</h4>
-				Name: {{ conf.file1_info.name|e }} <br />Size: {{ conf.file1_info.size|e }} <br />SHA256: {{ conf.file1_info.sha256|e }}<br />Random Lines: {{ conf.randlines1 }}
+				Name: {{ conf.file_infos[0].name|e }} <br />Size: {{ conf.file_infos[0].size|e }} <br />SHA256: {{ conf.file_infos[0].sha256|e }}<br />Random Lines: {{ conf.params.files[0].randlines }}
 				<br /><br />
 				<h4 class="nopaddingatall">File2</h4>
-				Name: {{ conf.file2_info.name|e }} <br />Size: {{ conf.file2_info.size|e }} <br />SHA256: {{ conf.file2_info.sha256|e }}<br />Random Lines: {{ conf.randlines2 }}
+				Name: {{ conf.file_infos[1].name|e }} <br />Size: {{ conf.file_infos[1].size|e }} <br />SHA256: {{ conf.file_infos[1].sha256|e }}<br />Random Lines: {{ conf.params.files[1].randlines }}
 				<br /><br />
 				<h4 class="nopaddingatall">File3</h4>
-				Name: {{ conf.file3_info.name|e }} <br />Size: {{ conf.file3_info.size|e }} <br />SHA256: {{ conf.file3_info.sha256|e }}<br />Random Lines: {{ conf.randlines3 }}
+				Name: {{ conf.file_infos[2].name|e }} <br />Size: {{ conf.file_infos[2].size|e }} <br />SHA256: {{ conf.file_infos[2].sha256|e }}<br />Random Lines: {{ conf.params.files[2].randlines }}
 				<br /><br />
 				<h4 class="nopaddingatall">Number Range</h4>
-				{{ conf.lowval }} to {{ conf.highval }}
+				{{ conf.params.lowval }} to {{ conf.params.highval }}
 				<br /><br />
 				<h4 class="nopaddingatall">Amount of Numbers:</h4>
-				{{ conf.numgen }}
+				{{ conf.params.numgen }}
 				<br /><br />
 				<form action="trustedthirdparty.htm#create" method="post">
 				<p><b>These settings <u>CAN NOT BE CHANGED</u> after the random numbers have been selected.</b></p>
 				<input type="submit" name="create" value="These values are correct, draw my random numbers!" />&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" name="cancel" value="Cancel" />
 				<input type="hidden" name="confirmed" value="true" />
-				<input type="hidden" name="drawingnumber" value="{{ conf.drawing_num }}" />
-				<input type="hidden" name="passcode" value="{{ conf.passcode|e }}" />
-				<input type="hidden" name="name" value="{{ conf.name|e }}" />
-				<input type="hidden" name="description" value="{{ conf.description|e }}" />
-				<input type="hidden" name="file1hash" value="{{ conf.file1hash|e }}" />
-				<input type="hidden" name="file2hash" value="{{ conf.file2hash|e }}" />
-				<input type="hidden" name="file3hash" value="{{ conf.file3hash|e }}" />
-				<input type="hidden" name="randlines1" value="{{ conf.randlines1 }}" />
-				<input type="hidden" name="randlines2" value="{{ conf.randlines2 }}" />
-				<input type="hidden" name="randlines3" value="{{ conf.randlines3 }}" />
-				<input type="hidden" name="chosentwice" value="{% if conf.chosentwice %}true{% endif %}" />
-				<input type="hidden" name="lowval" value="{{ conf.lowval }}" />
-				<input type="hidden" name="highval" value="{{ conf.highval }}" />
-				<input type="hidden" name="numgen" value="{{ conf.numgen }}" />
+				<input type="hidden" name="drawingnumber" value="{{ conf.params.drawing_num }}" />
+				<input type="hidden" name="passcode" value="{{ conf.params.passcode|e }}" />
+				<input type="hidden" name="name" value="{{ conf.params.name|e }}" />
+				<input type="hidden" name="description" value="{{ conf.params.description|e }}" />
+				<input type="hidden" name="file1hash" value="{{ conf.params.files[0].hash|e }}" />
+				<input type="hidden" name="file2hash" value="{{ conf.params.files[1].hash|e }}" />
+				<input type="hidden" name="file3hash" value="{{ conf.params.files[2].hash|e }}" />
+				<input type="hidden" name="randlines1" value="{{ conf.params.files[0].randlines }}" />
+				<input type="hidden" name="randlines2" value="{{ conf.params.files[1].randlines }}" />
+				<input type="hidden" name="randlines3" value="{{ conf.params.files[2].randlines }}" />
+				<input type="hidden" name="chosentwice" value="{% if conf.params.chosentwice %}true{% endif %}" />
+				<input type="hidden" name="lowval" value="{{ conf.params.lowval }}" />
+				<input type="hidden" name="highval" value="{{ conf.params.highval }}" />
+				<input type="hidden" name="numgen" value="{{ conf.params.numgen }}" />
 				</form>
 				</div>
 {% endif %}
@@ -165,9 +165,9 @@ Review time:
 <tr><td><b>Drawing Info</b></td></tr>
 <tr><td>Name:</td><td><input type="text" name="name" value="{% if let Some(fv) = form_values %}{{ fv.name|e }}{% endif %}" /></td></tr>
 <tr><td>Description:</td><td><textarea cols="50" rows="10" name="description">{% if let Some(fv) = form_values %}{{ fv.description|e }}{% endif %}</textarea></td></tr>
-<tr><td>File 1 (10MB Max):</td><td><input type="file" name="file1"  /> Choose <input type="text" size="2" name="randlines1" value="{% if let Some(fv) = form_values %}{{ fv.randlines1 }}{% endif %}" /> random line(s)*</td></tr>
-<tr><td>File 2 (10MB Max):</td><td><input type="file" name="file2" /> Choose <input type="text" size="2" name="randlines2" value="{% if let Some(fv) = form_values %}{{ fv.randlines2 }}{% endif %}" /> random line(s)*</td></tr>
-<tr><td>File 3 (10MB Max):</td><td><input type="file" name="file3" /> Choose <input type="text" size="2" name="randlines3" value="{% if let Some(fv) = form_values %}{{ fv.randlines3 }}{% endif %}" /> random line(s)*</td></tr>
+<tr><td>File 1 (10MB Max):</td><td><input type="file" name="file1"  /> Choose <input type="text" size="2" name="randlines1" value="{% if let Some(fv) = form_values %}{{ fv.files[0].randlines }}{% endif %}" /> random line(s)*</td></tr>
+<tr><td>File 2 (10MB Max):</td><td><input type="file" name="file2" /> Choose <input type="text" size="2" name="randlines2" value="{% if let Some(fv) = form_values %}{{ fv.files[1].randlines }}{% endif %}" /> random line(s)*</td></tr>
+<tr><td>File 3 (10MB Max):</td><td><input type="file" name="file3" /> Choose <input type="text" size="2" name="randlines3" value="{% if let Some(fv) = form_values %}{{ fv.files[2].randlines }}{% endif %}" /> random line(s)*</td></tr>
 <tr><td>&nbsp;</td><td><input type="checkbox" name="chosentwice" value="true" {% if let Some(fv) = form_values %}{% if fv.chosentwice %}checked="checked"{% endif %}{% endif %} /> Allow lines to be chosen twice</td></tr>
 <tr><td><b>Random Numbers</b></td></tr>
 <tr><td>Number Range:</td><td>From <input type="text" size="9" name="lowval" value="{% if let Some(fv) = form_values %}{{ fv.lowval }}{% endif %}" /> to <input type="text" size="9" name="highval" value="{% if let Some(fv) = form_values %}{{ fv.highval }}{% endif %}" /> (Inclusive. Range: -1000000000 to +1000000000)</td></tr>

@@ -71,23 +71,8 @@ struct ReservationInfo {
 
 /// Confirmation page info (step 1 of create)
 struct ConfirmationInfo {
-    drawing_num: i32,
-    passcode: String,
-    name: String,
-    description: String,
-    file1_info: FileInfo,
-    file2_info: FileInfo,
-    file3_info: FileInfo,
-    randlines1: i32,
-    randlines2: i32,
-    randlines3: i32,
-    file1hash: String,
-    file2hash: String,
-    file3hash: String,
-    lowval: i32,
-    highval: i32,
-    numgen: i32,
-    chosentwice: bool,
+    params: DrawingParams,
+    file_infos: [FileInfo; 3],
 }
 
 /// File info for confirmation display
@@ -114,6 +99,7 @@ struct CompletionInfo {
 }
 
 /// Per-file input for a drawing (hash, content, and number of random lines)
+#[derive(Clone)]
 struct FileInput {
     hash: String,
     content: Option<Vec<u8>>,
@@ -121,30 +107,16 @@ struct FileInput {
 }
 
 /// Validated parameters for creating/completing a drawing
+#[derive(Clone)]
 struct DrawingParams {
     drawing_num: i32,
+    passcode: String,
     name: String,
     description: String,
     files: [FileInput; 3],
     lowval: i32,
     highval: i32,
     numgen: i32,
-    chosentwice: bool,
-}
-
-/// Form values for re-populating the form on validation errors
-#[derive(Clone, Default)]
-struct FormValues {
-    drawing_num: String,
-    passcode: String,
-    name: String,
-    description: String,
-    lowval: String,
-    highval: String,
-    numgen: String,
-    randlines1: String,
-    randlines2: String,
-    randlines3: String,
     chosentwice: bool,
 }
 
@@ -175,7 +147,7 @@ struct TrentPage {
     confirmation: Option<ConfirmationInfo>,
     completion: Option<CompletionInfo>,
     error: Option<String>,
-    form_values: Option<FormValues>,
+    form_values: Option<DrawingParams>,
 }
 
 impl TrentPage {
@@ -301,9 +273,9 @@ impl TrentPage {
     }
 
     /// Set an error message and repopulate form values
-    fn set_error(&mut self, msg: String, form_values: &FormValues) {
+    fn set_error(&mut self, msg: String, params: &DrawingParams) {
         self.error = Some(msg);
-        self.form_values = Some(form_values.clone());
+        self.form_values = Some(params.clone());
     }
 
     /// Handle drawing creation (both confirmation step and completion)
@@ -312,75 +284,58 @@ impl TrentPage {
         form: &TrentForm,
         files: HashMap<String, (String, Vec<u8>)>,
     ) {
-        let drawing_num: i32 = form.drawingnumber.parse().unwrap_or(0);
-        let passcode = form.passcode.trim();
-        let name = form.name.trim();
-        let description = form.description.trim();
-
-        let randlines1: i32 = form.randlines1.parse().unwrap_or(0);
-        let randlines2: i32 = form.randlines2.parse().unwrap_or(0);
-        let randlines3: i32 = form.randlines3.parse().unwrap_or(0);
-        let lowval: i32 = form.lowval.parse().unwrap_or(0);
-        let highval: i32 = form.highval.parse().unwrap_or(0);
-        let numgen: i32 = form.numgen.parse().unwrap_or(0);
-        let chosentwice = form.chosentwice == "true";
-        let no_line_repeat = !chosentwice;
-
-        // Get file paths/hashes
-        let file1hash = form.file1hash.clone();
-        let file2hash = form.file2hash.clone();
-        let file3hash = form.file3hash.clone();
-
-        // Form values for repopulating on error (passcode intentionally blank)
-        let form_values = FormValues {
-            drawing_num: drawing_num.to_string(),
-            passcode: String::new(),
-            name: name.to_string(),
-            description: description.to_string(),
-            lowval: lowval.to_string(),
-            highval: highval.to_string(),
-            numgen: numgen.to_string(),
-            randlines1: randlines1.to_string(),
-            randlines2: randlines2.to_string(),
-            randlines3: randlines3.to_string(),
-            chosentwice,
+        // Build DrawingParams early so it's available for error recovery
+        let mut params = DrawingParams {
+            drawing_num: form.drawingnumber.parse().unwrap_or(0),
+            passcode: form.passcode.trim().to_string(),
+            name: form.name.trim().to_string(),
+            description: form.description.trim().to_string(),
+            files: [
+                FileInput { hash: form.file1hash.clone(), content: None, randlines: form.randlines1.parse().unwrap_or(0) },
+                FileInput { hash: form.file2hash.clone(), content: None, randlines: form.randlines2.parse().unwrap_or(0) },
+                FileInput { hash: form.file3hash.clone(), content: None, randlines: form.randlines3.parse().unwrap_or(0) },
+            ],
+            lowval: form.lowval.parse().unwrap_or(0),
+            highval: form.highval.parse().unwrap_or(0),
+            numgen: form.numgen.parse().unwrap_or(0),
+            chosentwice: form.chosentwice == "true",
         };
 
         // Validate name and description size
-        if name.len() > MAX_TEXT_FIELD_SIZE || description.len() > MAX_TEXT_FIELD_SIZE {
-            self.set_error("Name and description must each be less than 1 MB.".to_string(), &form_values);
+        if params.name.len() > MAX_TEXT_FIELD_SIZE || params.description.len() > MAX_TEXT_FIELD_SIZE {
+            self.set_error("Name and description must each be less than 1 MB.".to_string(), &params);
             return;
         }
 
         // Validate that name and description contain only Latin-1 characters.
         // The database uses latin1 charset, so characters outside 0-255 will fail.
-        if !is_latin1_safe(name) || !is_latin1_safe(description) {
+        if !is_latin1_safe(&params.name) || !is_latin1_safe(&params.description) {
             self.set_error(
                 "Name and description can only contain Latin-1 characters (standard Western European letters, numbers, and symbols). \
                  Emojis, Chinese/Japanese/Korean characters, and other special Unicode characters are not supported.".to_string(),
-                &form_values,
+                &params,
             );
             return;
         }
 
         // Look up drawing
-        let drawing = match trent::get_drawing(drawing_num).await {
+        let drawing = match trent::get_drawing(params.drawing_num).await {
             Ok(Some(d)) => d,
             Ok(None) => {
-                self.set_error(format!("Drawing #{} does not exist.", drawing_num), &form_values);
+                self.set_error(format!("Drawing #{} does not exist.", params.drawing_num), &params);
                 return;
             }
             Err(e) => {
                 tracing::error!("Database error: {}", e);
-                self.set_error(format!("Drawing #{} does not exist.", drawing_num), &form_values);
+                self.set_error(format!("Drawing #{} does not exist.", params.drawing_num), &params);
                 return;
             }
         };
 
         // Validate password
-        let password_hash = trent::hash_password(passcode);
+        let password_hash = trent::hash_password(&params.passcode);
         if password_hash != drawing.passwordhash {
-            self.set_error(format!("Incorrect password for drawing #{}.", drawing_num), &form_values);
+            self.set_error(format!("Incorrect password for drawing #{}.", params.drawing_num), &params);
             return;
         }
 
@@ -388,8 +343,8 @@ impl TrentPage {
         if drawing.complete {
             self.set_error(format!(
                 "The random numbers for drawing #{} have already been chosen.",
-                drawing_num
-            ), &form_values);
+                params.drawing_num
+            ), &params);
             return;
         }
 
@@ -399,85 +354,67 @@ impl TrentPage {
             let date = trent::format_date(drawing_time);
             self.set_error(format!(
                 "The review period for drawing #{} is not complete. You will be able to do the drawing after {}",
-                drawing_num, date
-            ), &form_values);
+                params.drawing_num, date
+            ), &params);
             return;
         }
 
         // Validate range
-        if lowval >= highval && numgen != 0 {
-            self.set_error("The number range is invalid.".to_string(), &form_values);
+        if params.lowval >= params.highval && params.numgen != 0 {
+            self.set_error("The number range is invalid.".to_string(), &params);
             return;
         }
 
         // Check for negative values
-        if numgen < 0 || randlines1 < 0 || randlines2 < 0 || randlines3 < 0 {
-            self.set_error("We couldn't possibly generate a NEGATIVE amount of random numbers...".to_string(), &form_values);
+        if params.numgen < 0 || params.files.iter().any(|f| f.randlines < 0) {
+            self.set_error("We couldn't possibly generate a NEGATIVE amount of random numbers...".to_string(), &params);
             return;
         }
 
         // Check max values
-        if numgen > 1000 || randlines1 > 1000 || randlines2 > 1000 || randlines3 > 1000 {
-            self.set_error("Sorry, we can only generate 1000 random numbers at a time.".to_string(), &form_values);
+        if params.numgen > 1000 || params.files.iter().any(|f| f.randlines > 1000) {
+            self.set_error("Sorry, we can only generate 1000 random numbers at a time.".to_string(), &params);
             return;
         }
 
         // Check file sizes (for uploaded files)
         for (_, (_, data)) in &files {
             if data.len() > MAX_FILE_SIZE {
-                self.set_error("Sorry, maximum file size is 10MB.".to_string(), &form_values);
+                self.set_error("Sorry, maximum file size is 10MB.".to_string(), &params);
                 return;
             }
         }
 
-        // Get file contents (either from upload or from temp storage)
-        let file_hashes = [file1hash, file2hash, file3hash];
-        let file_randlines = [randlines1, randlines2, randlines3];
+        // Resolve file contents (either from upload or from temp storage)
         let field_names = ["file1", "file2", "file3"];
-        let mut file_contents: [Option<Vec<u8>>; 3] = [None, None, None];
         for i in 0..3 {
-            file_contents[i] = self.get_file_content(field_names[i], &file_hashes[i], drawing_num, &files).await;
+            let content = self.get_file_content(
+                field_names[i], &params.files[i].hash, params.drawing_num, &files,
+            ).await;
+            params.files[i].content = content;
         }
 
         // Check that files are provided when random lines are requested
-        for i in 0..3 {
-            if file_randlines[i] > 0 && file_contents[i].is_none() {
-                self.set_error("Please upload a file for each set of random lines requested.".to_string(), &form_values);
+        for file in &params.files {
+            if file.randlines > 0 && file.content.is_none() {
+                self.set_error("Please upload a file for each set of random lines requested.".to_string(), &params);
                 return;
             }
         }
 
         // Check if files have enough lines (when no_line_repeat)
-        if no_line_repeat {
-            for i in 0..3 {
-                if !Self::enough_lines(&file_contents[i], file_randlines[i] as usize) {
+        if !params.chosentwice {
+            for file in &params.files {
+                if !Self::enough_lines(&file.content, file.randlines as usize) {
                     self.set_error(
                         "One of the files doesn't have enough lines to be able to choose the requested number of lines."
                             .to_string(),
-                        &form_values,
+                        &params,
                     );
                     return;
                 }
             }
         }
-
-        // Build validated params (destructure file_contents array)
-        let [f1, f2, f3] = file_contents;
-        let [h1, h2, h3] = file_hashes;
-        let params = DrawingParams {
-            drawing_num,
-            name: name.to_string(),
-            description: description.to_string(),
-            files: [
-                FileInput { hash: h1, content: f1, randlines: randlines1 },
-                FileInput { hash: h2, content: f2, randlines: randlines2 },
-                FileInput { hash: h3, content: f3, randlines: randlines3 },
-            ],
-            lowval,
-            highval,
-            numgen,
-            chosentwice,
-        };
 
         // Is this the confirmation step?
         if form.confirmed == "true" {
@@ -488,7 +425,7 @@ impl TrentPage {
                 delete_temp_file(params.drawing_num, &file.hash).await;
             }
         } else {
-            self.show_confirmation(&params, passcode, &files).await;
+            self.show_confirmation(params, &files).await;
         }
     }
 
@@ -528,41 +465,19 @@ impl TrentPage {
     /// Show confirmation page and save files to temp
     async fn show_confirmation(
         &mut self,
-        params: &DrawingParams,
-        passcode: &str,
+        mut params: DrawingParams,
         files: &HashMap<String, (String, Vec<u8>)>,
     ) {
-        // Compute hashes and save files to temp
+        // Compute hashes, save files to temp, and update params with computed hashes
         let field_names = ["file1", "file2", "file3"];
-        let mut file_hashes = [String::new(), String::new(), String::new()];
         let mut file_infos = [FileInfo::default(), FileInfo::default(), FileInfo::default()];
-        for (i, file) in params.files.iter().enumerate() {
-            let (hash, info) = self.process_file(field_names[i], params.drawing_num, files, &file.content).await;
-            file_hashes[i] = hash;
+        for i in 0..3 {
+            let (hash, info) = self.process_file(field_names[i], params.drawing_num, files, &params.files[i].content).await;
+            params.files[i].hash = hash;
             file_infos[i] = info;
         }
-        let [file1_info, file2_info, file3_info] = file_infos;
-        let [file1hash, file2hash, file3hash] = file_hashes;
 
-        self.confirmation = Some(ConfirmationInfo {
-            drawing_num: params.drawing_num,
-            passcode: passcode.to_string(),
-            name: params.name.clone(),
-            description: params.description.clone(),
-            file1_info,
-            file2_info,
-            file3_info,
-            randlines1: params.files[0].randlines,
-            randlines2: params.files[1].randlines,
-            randlines3: params.files[2].randlines,
-            file1hash,
-            file2hash,
-            file3hash,
-            lowval: params.lowval,
-            highval: params.highval,
-            numgen: params.numgen,
-            chosentwice: params.chosentwice,
-        });
+        self.confirmation = Some(ConfirmationInfo { params, file_infos });
     }
 
     /// Process a file: compute hash, save to temp, return (hash, info)
