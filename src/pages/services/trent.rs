@@ -2,7 +2,7 @@
 //!
 //! Trusted third party random number generator for drawings, contests, and lotteries.
 //! This is a thin HTTP adapter: form parsing, orchestration, and template rendering.
-//! All business logic (validation, printout generation, temp files) lives in libs/trent.
+//! All business logic (validation, printout generation) lives in libs/trent.
 //!
 //! Port of defuse.ca/src/pages/services/trustedthirdparty.php
 
@@ -49,7 +49,7 @@ struct ReservationInfo {
 
 /// Shown on the confirmation page (step 1 of create) so the user can review
 /// their parameters before finalizing. Wraps DrawingParams (with file hashes
-/// filled in by `process_file`) plus display-only file metadata.
+/// filled in by `save_files_to_temp`) plus display-only file metadata.
 struct ConfirmationInfo {
     params: DrawingParams,
     file_infos: [FileInfo; 3],
@@ -82,7 +82,7 @@ enum DrawingView {
 /// Raw form data from the TRENT HTML form, deserialized from either
 /// URL-encoded or multipart POST bodies. All fields are strings because
 /// they come from user input and are parsed/validated in `handle_create`.
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Clone)]
 struct TrentForm {
     #[serde(default)]
     makedrawingnumber: Option<String>,
@@ -135,9 +135,9 @@ struct TrentPage {
     confirmation: Option<ConfirmationInfo>,
     completion: Option<CompletionInfo>,
     error: Option<String>,
-    /// When set, the form fields are repopulated with these values after a
-    /// validation error so the user doesn't have to re-enter everything.
-    form_values: Option<DrawingParams>,
+    /// When set, the form fields are repopulated with the user's raw input
+    /// after a validation error so they don't have to re-enter everything.
+    form_values: Option<TrentForm>,
 }
 
 // =============================================================================
@@ -172,18 +172,24 @@ impl PageHandler for Handler {
         Some(Box::pin(async move {
             let mut page = TrentPage::new(ctx);
 
-            // There are THREE valid POST requests:
-            // 1. When the user is reserving their drawing number.
-            // 2. When the user is submitting their drawing info. <-- may have files
-            // 3. When the user is confirming their drawing info.
+            // Parse the POST body into a form + uploaded files, regardless of encoding
+            let (form, files) = match parse_post_body(body) {
+                Ok(parsed) => parsed,
+                Err(msg) => {
+                    page.error = Some(msg);
+                    return page.into_response();
+                }
+            };
 
-            match body {
-                PostBody::UrlEncoded(bytes) => {
-                    page.handle_urlencoded_post(&bytes).await;
-                }
-                PostBody::Multipart { fields } => {
-                    page.handle_multipart_post(fields).await;
-                }
+            // Dispatch to the appropriate handler:
+            // 1. Reserve a drawing number
+            // 2. Create/confirm a drawing (with shared validation, branching at the end)
+            if form.makedrawingnumber.is_some() {
+                page.handle_reserve(&form).await;
+            } else if form.create.is_some() {
+                page.handle_create(&form, files).await;
+            } else {
+                page.error = Some("Invalid form submission.".to_string());
             }
 
             page.into_response()
@@ -209,7 +215,7 @@ impl TrentPage {
         }
     }
 
-    /// Handle viewing a drawing by number
+    /// Handle viewing a drawing by number (GET ?drawingnum=N)
     async fn handle_view_drawing(&mut self, drawing_num: i32) {
         match trent::get_drawing(drawing_num).await {
             Ok(Some(drawing)) => {
@@ -237,67 +243,15 @@ impl TrentPage {
         }
     }
 
-    /// Handle URL-encoded POST (reservation or confirmation, creation is multipart)
-    async fn handle_urlencoded_post(&mut self, bytes: &[u8]) {
-        let form: TrentForm = serde_urlencoded::from_bytes(bytes).unwrap_or_default();
-
-        if form.makedrawingnumber.is_some() {
-            self.handle_reserve(&form).await;
-        } else if form.create.is_some() {
-            self.handle_create(&form, HashMap::new()).await;
-        } else {
-            self.error = Some("Invalid form submission.".to_string());
-        }
-    }
-
-    /// Handle multipart POST (file uploads in drawing creation)
-    async fn handle_multipart_post(&mut self, fields: Vec<FormField>) {
-        let mut form = TrentForm::default();
-        let mut files: HashMap<String, (String, Vec<u8>)> = HashMap::new();
-
-        for field in fields {
-            match field.name.as_str() {
-                "create" => form.create = Some(String::new()),
-                "prereview" => form.prereview = field.data_as_string(),
-                "drawingnumber" => form.drawingnumber = field.data_as_string(),
-                "passcode" => form.passcode = field.data_as_string(),
-                "name" => form.name = field.data_as_string(),
-                "description" => form.description = field.data_as_string(),
-                "randlines1" => form.randlines1 = field.data_as_string(),
-                "randlines2" => form.randlines2 = field.data_as_string(),
-                "randlines3" => form.randlines3 = field.data_as_string(),
-                "chosentwice" => form.chosentwice = field.data_as_string(),
-                "lowval" => form.lowval = field.data_as_string(),
-                "highval" => form.highval = field.data_as_string(),
-                "numgen" => form.numgen = field.data_as_string(),
-                "confirmed" => form.confirmed = field.data_as_string(),
-                "file1hash" => form.file1hash = field.data_as_string(),
-                "file2hash" => form.file2hash = field.data_as_string(),
-                "file3hash" => form.file3hash = field.data_as_string(),
-                "file1" | "file2" | "file3" => {
-                    if let Some(filename) = &field.filename {
-                        if !filename.is_empty() && !field.data.is_empty() {
-                            files.insert(field.name.clone(), (filename.clone(), field.data.to_vec()));
-                        }
-                    }
-                }
-                _ => {
-                    self.error = Some(format!("Unrecognized form field: {}", field.name));
-                    return;
-                }
-            }
-        }
-
-        if form.create.is_some() {
-            self.handle_create(&form, files).await;
-        } else {
-            self.error = Some("Invalid form submission.".to_string());
-        }
-    }
-
     /// Handle drawing reservation
     async fn handle_reserve(&mut self, form: &TrentForm) {
-        let review_time: u32 = form.prereview.parse().unwrap_or(0);
+        let review_time: u32 = match form.prereview.parse() {
+            Ok(v) => v,
+            Err(_) => {
+                self.set_error("Invalid review time.".to_string(), form);
+                return;
+            }
+        };
 
         match trent::reserve_drawing(review_time).await {
             Ok(result) => {
@@ -319,10 +273,10 @@ impl TrentPage {
         }
     }
 
-    /// Set an error message and repopulate form values
-    fn set_error(&mut self, msg: String, params: &DrawingParams) {
+    /// Set an error message and repopulate form values from the user's raw input
+    fn set_error(&mut self, msg: String, form: &TrentForm) {
         self.error = Some(msg);
-        self.form_values = Some(params.clone());
+        self.form_values = Some(form.clone());
     }
 
     /// Handle drawing creation (both confirmation step and completion)
@@ -332,36 +286,35 @@ impl TrentPage {
         files: HashMap<String, (String, Vec<u8>)>,
     ) {
         // Parse numeric fields — empty is 0, non-numeric is an error
-        let drawing_num = match parse_int(&form.drawingnumber) {
+        let drawing_num = match parse_int_or_empty(&form.drawingnumber) {
             Ok(v) => v,
-            Err(e) => { self.error = Some(e); return; }
+            Err(e) => { self.set_error(e, form); return; }
         };
-        let randlines1 = match parse_int(&form.randlines1) {
+        let randlines1 = match parse_int_or_empty(&form.randlines1) {
             Ok(v) => v,
-            Err(e) => { self.error = Some(e); return; }
+            Err(e) => { self.set_error(e, form); return; }
         };
-        let randlines2 = match parse_int(&form.randlines2) {
+        let randlines2 = match parse_int_or_empty(&form.randlines2) {
             Ok(v) => v,
-            Err(e) => { self.error = Some(e); return; }
+            Err(e) => { self.set_error(e, form); return; }
         };
-        let randlines3 = match parse_int(&form.randlines3) {
+        let randlines3 = match parse_int_or_empty(&form.randlines3) {
             Ok(v) => v,
-            Err(e) => { self.error = Some(e); return; }
+            Err(e) => { self.set_error(e, form); return; }
         };
-        let lowval = match parse_int(&form.lowval) {
+        let lowval = match parse_int_or_empty(&form.lowval) {
             Ok(v) => v,
-            Err(e) => { self.error = Some(e); return; }
+            Err(e) => { self.set_error(e, form); return; }
         };
-        let highval = match parse_int(&form.highval) {
+        let highval = match parse_int_or_empty(&form.highval) {
             Ok(v) => v,
-            Err(e) => { self.error = Some(e); return; }
+            Err(e) => { self.set_error(e, form); return; }
         };
-        let numgen = match parse_int(&form.numgen) {
+        let numgen = match parse_int_or_empty(&form.numgen) {
             Ok(v) => v,
-            Err(e) => { self.error = Some(e); return; }
+            Err(e) => { self.set_error(e, form); return; }
         };
 
-        // Build DrawingParams early so it's available for error recovery
         let mut params = DrawingParams {
             drawing_num,
             passcode: form.passcode.trim().to_string(),
@@ -382,61 +335,57 @@ impl TrentPage {
         let drawing = match trent::get_drawing(params.drawing_num).await {
             Ok(Some(d)) => d,
             Ok(None) => {
-                self.set_error(format!("Drawing #{} does not exist.", params.drawing_num), &params);
+                self.set_error(format!("Drawing #{} does not exist.", params.drawing_num), form);
                 return;
             }
             Err(e) => {
                 tracing::error!("Database error: {}", e);
-                self.set_error(format!("Drawing #{} does not exist.", params.drawing_num), &params);
+                self.set_error(format!("Database error encountered when looking up Drawing #{}.", params.drawing_num), form);
                 return;
             }
         };
 
         // Validate parameters against the drawing record
         if let Err(e) = trent::validate_create_request(&params, &drawing) {
-            self.set_error(e.to_string(), &params);
-            return;
-        }
-
-        // Resolve file contents from uploads or temp storage
-        let field_names = ["file1", "file2", "file3"];
-        for i in 0..3 {
-            params.files[i].content = resolve_file_content(
-                field_names[i], &params.files[i].hash, params.drawing_num, &files,
-            ).await;
-        }
-
-        // Validate file contents
-        if let Err(e) = trent::validate_files(&params) {
-            self.set_error(e.to_string(), &params);
+            self.set_error(e.to_string(), form);
             return;
         }
 
         if form.confirmed == "true" {
+            // Confirmation step: load file contents from temp storage
+            for i in 0..3 {
+                params.files[i].content = load_temp_file(
+                    params.drawing_num, &params.files[i].hash,
+                ).await;
+            }
+
+            if let Err(e) = trent::validate_files(&params) {
+                self.set_error(e.to_string(), form);
+                return;
+            }
+
             self.finalize_drawing(&params).await;
-            trent::delete_temp_files(params.drawing_num, &params.files).await;
+            delete_temp_files(params.drawing_num, &params.files).await;
         } else {
-            self.show_confirmation(params, &files).await;
-        }
-    }
+            // Initial submission: load file contents from uploads
+            let field_names = ["file1", "file2", "file3"];
+            for i in 0..3 {
+                if let Some((_, data)) = files.get(field_names[i]) {
+                    params.files[i].content = Some(data.clone());
+                }
+            }
 
-    /// Show confirmation page and save files to temp
-    async fn show_confirmation(
-        &mut self,
-        mut params: DrawingParams,
-        files: &HashMap<String, (String, Vec<u8>)>,
-    ) {
-        let field_names = ["file1", "file2", "file3"];
-        let mut file_infos = [FileInfo::default(), FileInfo::default(), FileInfo::default()];
-        for i in 0..3 {
-            let (hash, info) = process_file(
-                field_names[i], params.drawing_num, files, &params.files[i].content,
-            ).await;
-            params.files[i].hash = hash;
-            file_infos[i] = info;
-        }
+            if let Err(e) = trent::validate_files(&params) {
+                self.set_error(e.to_string(), form);
+                return;
+            }
 
-        self.confirmation = Some(ConfirmationInfo { params, file_infos });
+            let file_infos = save_files_to_temp(&mut params, &files).await;
+            self.confirmation = Some(ConfirmationInfo { params, file_infos });
+            // Even though it's not an error, make it easier for the user to
+            // resubmit the form in case they notice they input something wrong
+            self.form_values = Some(form.clone());
+        }
     }
 
     /// Complete the drawing: build printout via the library and save to database
@@ -461,55 +410,84 @@ impl TrentPage {
 // Helper functions
 // =============================================================================
 
-/// Resolve file content from an upload or from temp storage.
-async fn resolve_file_content(
-    field_name: &str,
-    hash: &str,
-    drawing_num: i32,
-    files: &HashMap<String, (String, Vec<u8>)>,
-) -> Option<Vec<u8>> {
-    if let Some((_, data)) = files.get(field_name) {
-        return Some(data.clone());
+/// Parse a POST body (URL-encoded or multipart) into a TrentForm and uploaded files.
+fn parse_post_body(body: PostBody) -> Result<(TrentForm, HashMap<String, (String, Vec<u8>)>), String> {
+    match body {
+        PostBody::UrlEncoded(bytes) => {
+            let form: TrentForm = serde_urlencoded::from_bytes(&bytes).unwrap_or_default();
+            Ok((form, HashMap::new()))
+        }
+        PostBody::Multipart { fields } => {
+            let mut form = TrentForm::default();
+            let mut files: HashMap<String, (String, Vec<u8>)> = HashMap::new();
+
+            for field in fields {
+                match field.name.as_str() {
+                    "makedrawingnumber" => form.makedrawingnumber = Some(String::new()),
+                    "create" => form.create = Some(String::new()),
+                    "prereview" => form.prereview = field.data_as_string(),
+                    "drawingnumber" => form.drawingnumber = field.data_as_string(),
+                    "passcode" => form.passcode = field.data_as_string(),
+                    "name" => form.name = field.data_as_string(),
+                    "description" => form.description = field.data_as_string(),
+                    "randlines1" => form.randlines1 = field.data_as_string(),
+                    "randlines2" => form.randlines2 = field.data_as_string(),
+                    "randlines3" => form.randlines3 = field.data_as_string(),
+                    "chosentwice" => form.chosentwice = field.data_as_string(),
+                    "lowval" => form.lowval = field.data_as_string(),
+                    "highval" => form.highval = field.data_as_string(),
+                    "numgen" => form.numgen = field.data_as_string(),
+                    "confirmed" => form.confirmed = field.data_as_string(),
+                    "file1hash" => form.file1hash = field.data_as_string(),
+                    "file2hash" => form.file2hash = field.data_as_string(),
+                    "file3hash" => form.file3hash = field.data_as_string(),
+                    "file1" | "file2" | "file3" => {
+                        if let Some(filename) = &field.filename {
+                            if !filename.is_empty() && !field.data.is_empty() {
+                                files.insert(field.name.clone(), (filename.clone(), field.data.to_vec()));
+                            }
+                        }
+                    }
+                    _ => {
+                        return Err(format!("Unrecognized form field: {}", field.name));
+                    }
+                }
+            }
+
+            Ok((form, files))
+        }
     }
-    trent::load_temp_file(drawing_num, hash).await
 }
 
-/// Process an uploaded file: compute its hash, save to temp, and build display info.
-async fn process_file(
-    field_name: &str,
-    drawing_num: i32,
+/// Save uploaded files to temp storage and build display info for the confirmation page.
+/// Updates each file's hash in `params` and returns the corresponding FileInfo array.
+async fn save_files_to_temp(
+    params: &mut DrawingParams,
     files: &HashMap<String, (String, Vec<u8>)>,
-    content: &Option<Vec<u8>>,
-) -> (String, FileInfo) {
-    if let Some((filename, data)) = files.get(field_name) {
-        let hash = trent::sha256_hex(data);
-        trent::save_temp_file(drawing_num, &hash, data).await;
-        (
-            hash.clone(),
-            FileInfo {
+) -> [FileInfo; 3] {
+    let field_names = ["file1", "file2", "file3"];
+    let mut file_infos = [FileInfo::default(), FileInfo::default(), FileInfo::default()];
+    for i in 0..3 {
+        if let Some((filename, data)) = files.get(field_names[i]) {
+            let hash = trent::sha256_hex(data);
+            let path = temp_path(params.drawing_num, &hash);
+            if let Err(e) = tokio::fs::write(&path, data).await {
+                tracing::error!("Failed to write temp file: {}", e);
+            }
+            file_infos[i] = FileInfo {
                 name: filename.clone(),
                 size: trent::format_bytes(data.len() as u64),
-                sha256: hash,
-            },
-        )
-    } else if let Some(data) = content {
-        let hash = trent::sha256_hex(data);
-        (
-            hash.clone(),
-            FileInfo {
-                name: "NO FILE".to_string(),
-                size: trent::format_bytes(data.len() as u64),
-                sha256: hash,
-            },
-        )
-    } else {
-        (String::new(), FileInfo::default())
+                sha256: hash.clone(),
+            };
+            params.files[i].hash = hash;
+        }
     }
+    file_infos
 }
 
 /// Parse a form field as i32, treating empty string as 0.
 /// Returns Err for non-empty non-numeric input.
-fn parse_int(s: &str) -> Result<i32, String> {
+fn parse_int_or_empty(s: &str) -> Result<i32, String> {
     if s.is_empty() {
         Ok(0)
     } else {
@@ -526,5 +504,33 @@ impl FormFieldExt for FormField {
     fn data_as_string(&self) -> String {
         // TODO: could this be losing info?
         String::from_utf8_lossy(&self.data).into_owned()
+    }
+}
+
+// =============================================================================
+// Temp file management
+// =============================================================================
+
+/// Build the temp file path for a given drawing and content hash.
+fn temp_path(drawing_num: i32, hash: &str) -> String {
+    assert!(trent::is_sha256_hex(hash));
+    format!("/tmp/trent-{}-{}", drawing_num, hash)
+}
+
+/// Load file content from temp storage. Returns None if the hash is invalid
+/// or the file doesn't exist.
+async fn load_temp_file(drawing_num: i32, hash: &str) -> Option<Vec<u8>> {
+    if !trent::is_sha256_hex(hash) {
+        return None;
+    }
+    tokio::fs::read(temp_path(drawing_num, hash)).await.ok()
+}
+
+/// Delete temp files for a completed drawing (best-effort).
+async fn delete_temp_files(drawing_num: i32, files: &[FileInput]) {
+    for file in files {
+        if trent::is_sha256_hex(&file.hash) {
+            let _ = tokio::fs::remove_file(temp_path(drawing_num, &file.hash)).await;
+        }
     }
 }

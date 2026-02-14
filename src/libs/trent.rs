@@ -463,41 +463,6 @@ pub fn sha256_hex(data: &[u8]) -> String {
     hex::encode(Sha256::digest(data))
 }
 
-// =============================================================================
-// Temp file management
-// =============================================================================
-
-/// Build the temp file path for a given drawing and content hash.
-fn temp_path(drawing_num: i32, hash: &str) -> String {
-    format!("/tmp/trent-{}-{}", drawing_num, hash)
-}
-
-/// Save file content to temp storage for the confirmation flow.
-pub async fn save_temp_file(drawing_num: i32, hash: &str, data: &[u8]) {
-    let path = temp_path(drawing_num, hash);
-    if let Err(e) = tokio::fs::write(&path, data).await {
-        tracing::error!("Failed to write temp file: {}", e);
-    }
-}
-
-/// Load file content from temp storage. Returns None if the hash is invalid
-/// or the file doesn't exist.
-pub async fn load_temp_file(drawing_num: i32, hash: &str) -> Option<Vec<u8>> {
-    if !is_sha256_hex(hash) {
-        return None;
-    }
-    tokio::fs::read(temp_path(drawing_num, hash)).await.ok()
-}
-
-/// Delete temp files for a completed drawing (best-effort).
-pub async fn delete_temp_files(drawing_num: i32, files: &[FileInput]) {
-    for file in files {
-        if is_sha256_hex(&file.hash) {
-            let _ = tokio::fs::remove_file(temp_path(drawing_num, &file.hash)).await;
-        }
-    }
-}
-
 /// Check if a string is a valid SHA256 hex hash (64 hex characters).
 pub fn is_sha256_hex(s: &str) -> bool {
     s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())

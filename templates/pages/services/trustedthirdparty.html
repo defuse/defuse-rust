@@ -159,15 +159,15 @@ Review time:
 {% endif %}
 <form action="trustedthirdparty.htm#create" method="post" enctype="multipart/form-data">
 <table>
-<tr><td>Drawing Number:</td><td><input type="text" name="drawingnumber" value="{% if let Some(fv) = form_values %}{{ fv.drawing_num }}{% endif %}" /></td></tr>
+<tr><td>Drawing Number:</td><td><input type="text" name="drawingnumber" value="{% if let Some(fv) = form_values %}{{ fv.drawingnumber }}{% endif %}" /></td></tr>
 <tr><td>Passcode:</td><td><input type="text" name="passcode" value="{% if let Some(fv) = form_values %}{{ fv.passcode }}{% endif %}" /></td></tr>
 <tr><td><b>Drawing Info</b></td></tr>
 <tr><td>Name:</td><td><input type="text" name="name" value="{% if let Some(fv) = form_values %}{{ fv.name|e }}{% endif %}" /></td></tr>
 <tr><td>Description:</td><td><textarea cols="50" rows="10" name="description">{% if let Some(fv) = form_values %}{{ fv.description|e }}{% endif %}</textarea></td></tr>
-<tr><td>File 1 (10MB Max):</td><td><input type="file" name="file1"  /> Choose <input type="text" size="2" name="randlines1" value="{% if let Some(fv) = form_values %}{{ fv.files[0].randlines }}{% endif %}" /> random line(s)*</td></tr>
-<tr><td>File 2 (10MB Max):</td><td><input type="file" name="file2" /> Choose <input type="text" size="2" name="randlines2" value="{% if let Some(fv) = form_values %}{{ fv.files[1].randlines }}{% endif %}" /> random line(s)*</td></tr>
-<tr><td>File 3 (10MB Max):</td><td><input type="file" name="file3" /> Choose <input type="text" size="2" name="randlines3" value="{% if let Some(fv) = form_values %}{{ fv.files[2].randlines }}{% endif %}" /> random line(s)*</td></tr>
-<tr><td>&nbsp;</td><td><input type="checkbox" name="chosentwice" value="true" {% if let Some(fv) = form_values %}{% if fv.chosentwice %}checked="checked"{% endif %}{% endif %} /> Allow lines to be chosen twice</td></tr>
+<tr><td>File 1 (10MB Max):</td><td><input type="file" name="file1"  /> Choose <input type="text" size="2" name="randlines1" value="{% if let Some(fv) = form_values %}{{ fv.randlines1 }}{% endif %}" /> random line(s)*</td></tr>
+<tr><td>File 2 (10MB Max):</td><td><input type="file" name="file2" /> Choose <input type="text" size="2" name="randlines2" value="{% if let Some(fv) = form_values %}{{ fv.randlines2 }}{% endif %}" /> random line(s)*</td></tr>
+<tr><td>File 3 (10MB Max):</td><td><input type="file" name="file3" /> Choose <input type="text" size="2" name="randlines3" value="{% if let Some(fv) = form_values %}{{ fv.randlines3 }}{% endif %}" /> random line(s)*</td></tr>
+<tr><td>&nbsp;</td><td><input type="checkbox" name="chosentwice" value="true" {% if let Some(fv) = form_values %}{% if fv.chosentwice == "true" %}checked="checked"{% endif %}{% endif %} /> Allow lines to be chosen twice</td></tr>
 <tr><td><b>Random Numbers</b></td></tr>
 <tr><td>Number Range:</td><td>From <input type="text" size="9" name="lowval" value="{% if let Some(fv) = form_values %}{{ fv.lowval }}{% endif %}" /> to <input type="text" size="9" name="highval" value="{% if let Some(fv) = form_values %}{{ fv.highval }}{% endif %}" /> (Inclusive. Range: -1000000000 to +1000000000)</td></tr>
 <tr><td>Amount of Numbers:</td><td><input type="text" name="numgen" size="9" value="{% if let Some(fv) = form_values %}{{ fv.numgen }}{% endif %}" /> (Max: 1000)</td></tr>
