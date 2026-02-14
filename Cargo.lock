@@ -415,6 +415,7 @@ dependencies = [
  "sha2",
  "sha3",
  "sqlx",
+ "subtle",
  "tempfile",
  "tokio",
  "tower 0.4.13",

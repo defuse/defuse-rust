@@ -9,6 +9,7 @@
 
 use rand::rngs::OsRng;
 use rand::RngCore;
+use subtle::{ConditionallySelectable, ConstantTimeEq};
 
 /// Printable ASCII characters (codes 33-126)
 const ASCII_CHARS: &[u8] = b"!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
@@ -50,6 +51,7 @@ fn generate_password(charset: &[u8], length: usize) -> String {
     }
 
     let charset_len = charset.len();
+    assert!(charset_len <= 255);
     let mask = get_minimal_bit_mask(charset_len - 1);
 
     let mut password = Vec::with_capacity(length);
@@ -61,8 +63,8 @@ fn generate_password(charset: &[u8], length: usize) -> String {
     rng.fill_bytes(&mut random_bytes);
 
     // Iteration limit to prevent infinite loops from malicious/broken RNG
-    // It's astronomically unlikely to need more than length * 64 attempts
-    let iter_limit = length.saturating_mul(64).max(length);
+    // It's astronomically unlikely to need more than length * 128 attempts
+    let iter_limit = length.saturating_mul(128).max(length);
     let mut iterations = 0;
     let mut byte_idx = 0;
 
@@ -88,8 +90,7 @@ fn generate_password(charset: &[u8], length: usize) -> String {
         iterations += 1;
         if iterations >= iter_limit {
             // This should never happen with a proper RNG
-            // If it does, return what we have (better than panicking)
-            break;
+            panic!("There's something seriously wrong with the random number generator!");
         }
     }
 
@@ -117,28 +118,16 @@ fn get_minimal_bit_mask(max_value: usize) -> usize {
 
 /// Index into an array in constant time to prevent timing side-channels.
 ///
-/// This ensures that the time taken to access the element doesn't leak
-/// information about which index was accessed.
+/// Uses the `subtle` crate's `ConditionallySelectable` and `ConstantTimeEq`
+/// to stay entirely within `subtle`'s type system, ensuring the compiler
+/// cannot optimize the selection into a branch.
 fn constant_time_index(array: &[u8], index: usize) -> u8 {
-    // This implementation iterates through all elements, selecting only
-    // the one at the target index using bitwise operations.
-    //
-    // The mask is all-ones (0xFF) when i == index, and all-zeros otherwise.
-    // We accumulate the result by ORing with (array[i] & mask).
-
     let mut result: u8 = 0;
+    let index_byte = index as u8;
 
     for (i, &byte) in array.iter().enumerate() {
-        // Create a mask that is 0xFF when i == index, 0x00 otherwise
-        // XOR gives 0 when equal, non-zero otherwise
-        let diff = i ^ index;
-        // Convert non-zero to 0, zero to 1
-        // This works by: if diff == 0, then (diff | -diff) has no sign bit set
-        // Actually, simpler approach: compare and create mask
-        let equals = (diff == 0) as u8;
-        let mask = equals.wrapping_neg(); // 0xFF when equal, 0x00 otherwise
-
-        result |= byte & mask;
+        let choice = (i as u8).ct_eq(&index_byte);
+        result.conditional_assign(&byte, choice);
     }
 
     result
