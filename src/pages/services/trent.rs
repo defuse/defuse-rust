@@ -309,9 +309,7 @@ impl TrentPage {
             }
         }
 
-        if form.makedrawingnumber.is_some() {
-            self.handle_reserve(&form).await;
-        } else if form.create.is_some() {
+        if form.create.is_some() {
             self.handle_create(&form, files).await;
         }
     }
