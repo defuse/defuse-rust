@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 
-{% block content %}{% 
-    let bib = Bibliography::new([("1", "FLUSH+RELOAD: a High Resolution, Low Noise, L3 Cache Side-Channel Attack", "Yuval Yarom, Katrina Falkner", "July 18, 2013", "http://eprint.iacr.org/2013/448.pdf"), ("2", "Keyboard Acoustic Emanations", "Dmitry Asonov, Rakesh Agrawal", "2004", "http://rakesh.agrawal-family.com/papers/ssp04kba.pdf"), ("3", "Keyboard Acoustic Emanations Revisited", "Li Zhuang, Feng Zhou, J. D. Tygar", "November 2005", "http://www.cs.berkeley.edu/~tygar/papers/Keyboard_Acoustic_Emanations_Revisited/TISSEC.pdf"), ("4", "Communication Theory of Secrecy Systems", "C. E. Shannon", "October 1949", "http://www3.alcatel-lucent.com/bstj/vol28-1949/articles/bstj28-4-656.pdf")]) 
-%}<div class="pagedate">
+{% block content %}<div class="pagedate">
 September 15, 2013
 </div>
 <h1>FLUSH+RELOAD: Multi-User Systems are Doomed</h1>
 
 <p>
-I read a paper{{ bib.cite("1")|safe }} in which Yarom and Falkner describe an L3
+I read a paper{{ bib.cite(1)|safe }} in which Yarom and Falkner describe an L3
 cache side-channel attack. The attack allows a 'spy' process to monitor
 a 'victim' process's activity, even if the victim process is owned by
 a different user and is running on a different CPU core.
@@ -79,7 +77,7 @@ on another user in many different ways. Here are some that I can think of:
         Anything in userspace that exectutes in response to any key press. It
         may be possible to learn what's being typed from the timing of key
         presses alone. It is already well-known that the text can be recovered
-        from an audio recording of the typing{{ bib.cite("2")|safe }}{{ bib.cite("3")|safe }}.
+        from an audio recording of the typing{{ bib.cite(2)|safe }}{{ bib.cite(3)|safe }}.
     </li>
     <li>
         Code that runs when the mouse is moved, clicked, or hovered: Learn which
@@ -118,7 +116,7 @@ of these seem reasonable.
 <p>
 I will propose a definition of what it means for a system's user isolation to be
 secure. The property is called "Perfect Isolation" and is similar to the
-definition of perfect secrecy{{ bib.cite("4")|safe }} from cryptography:
+definition of perfect secrecy{{ bib.cite(4)|safe }} from cryptography:
 </p>
 
 <blockquote>

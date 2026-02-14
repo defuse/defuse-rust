@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}{% let bib = Bibliography::new([("1", "Problems with Proposed IP Cryptography", "Phil Rogaway", "April 3, 1995", "http://www.vpnc.org/ietf-ipsec/92.ipsec/msg01847.html"), ("2", "Twitter discussion between @DefuseSec and @tqbf", "", "", "https://twitter.com/tqbf/status/376873119199137792")]) %}<div class="pagedate">
+{% block content %}<div class="pagedate">
 September 8, 2013
 </div>
 <h1>Encryption - CBC Mode IV: Secret or Not?</h1>
@@ -47,7 +47,7 @@ those capabilities.
 
 <p>
 The IV must be random. To see why, consider what would happen if a counter,
-starting from zero, was used as an IV{{ bib.cite("1")|safe }}. Suppose the first message sent is
+starting from zero, was used as an IV{{ bib.cite(1)|safe }}. Suppose the first message sent is
 0x0000000000000000. The IV would be 0x0000000000000000, so the input to the
 block cipher is 0x0000000000000000. Now, suppose a second message
 0x0000000000000001 is encrypted. This time, the IV is 0x0000000000000001,
@@ -69,7 +69,7 @@ likely for the IV to coincide with the first plaintext block by accident.
 <h3>Chosen-Plaintext Attacks</h3>
 
 <p>
-Randomness is not enough, though. IVs have to be unpredictable, too{{ bib.cite("2")|safe }}.
+Randomness is not enough, though. IVs have to be unpredictable, too{{ bib.cite(2)|safe }}.
 </p>
 
 <p>

@@ -1,48 +1,51 @@
 use super::util::html_escape;
-use std::collections::BTreeMap;
+
+/// A single reference entry in a bibliography.
+pub enum Reference<'a> {
+    /// A simple link reference (no author/date).
+    Simple { title: &'a str, url: &'a str },
+    /// A full academic citation.
+    Full { authors: &'a str, date: &'a str, title: &'a str, url: &'a str },
+}
 
 /// Bibliography for academic-style citations.
 #[derive(Debug, Clone)]
 pub struct Bibliography {
-    /// Map of key -> rendered HTML for each reference
-    references: BTreeMap<String, String>,
+    /// Rendered HTML for each reference, in order.
+    references: Vec<String>,
 }
 
 impl Bibliography {
     /// Create a new bibliography from a list of references.
     ///
-    /// Each tuple is (key, title, authors, date, url).
-    /// For general references (no author/date), pass empty strings for authors and date.
-    pub fn new(refs: &[(&str, &str, &str, &str, &str)]) -> Self {
-        // AUDIT: instead of passing a big array, add more-usable methods for adding citations
-        let mut references = BTreeMap::new();
-        for (key, title, authors, date, url) in refs {
-            let safe_title = html_escape(title);
-            let safe_url = html_escape(url);
-
-            let html = if authors.is_empty() && date.is_empty() {
-                // General reference: just <a href="url">text</a>
-                format!("<a href=\"{safe_url}\">{safe_title}</a>")
-            } else {
-                // Full reference: authors. date. <a href="url">title.</a>
-                let safe_authors = html_escape(authors);
-                let safe_date = html_escape(date);
-                format!("{safe_authors}. {safe_date}. <a href=\"{safe_url}\">{safe_title}.</a>")
-            };
-
-            references.insert(key.to_string(), html);
-        }
+    /// Citations are numbered 1, 2, 3, ... based on position.
+    pub fn new(refs: &[Reference]) -> Self {
+        let references = refs.iter().map(|reference| {
+            match reference {
+                Reference::Simple { title, url } => {
+                    let safe_title = html_escape(title);
+                    let safe_url = html_escape(url);
+                    format!("<a href=\"{safe_url}\">{safe_title}</a>")
+                }
+                Reference::Full { authors, date, title, url } => {
+                    let safe_authors = html_escape(authors);
+                    let safe_date = html_escape(date);
+                    let safe_title = html_escape(title);
+                    let safe_url = html_escape(url);
+                    format!("{safe_authors}. {safe_date}. <a href=\"{safe_url}\">{safe_title}.</a>")
+                }
+            }
+        }).collect();
         Bibliography { references }
     }
 
     /// Generate a citation link for inline use.
-    /// Outputs: <sup><a href="#cite_KEY">[KEY]</a></sup>
-    pub fn cite(&self, key: &str) -> String {
-        let safe_key = html_escape(key);
-        if self.references.contains_key(key) {
+    /// Outputs: <sup><a href="#cite_N">[N]</a></sup>
+    pub fn cite(&self, index: usize) -> String {
+        if index >= 1 && index <= self.references.len() {
+            let safe_key = html_escape(&index.to_string());
             format!(
-                "<sup><a href=\"#cite_{}\">[{}]</a></sup>",
-                safe_key, safe_key
+                "<sup><a href=\"#cite_{safe_key}\">[{safe_key}]</a></sup>",
             )
         } else {
             "<sup>ERROR: INVALID KEY</sup>".to_string()
@@ -55,9 +58,8 @@ impl Bibliography {
         html.push_str("<div id=\"references\">");
         html.push_str("<h2>References and Notes</h2>");
 
-        // BTreeMap is already sorted by key
-        for (key, ref_html) in &self.references {
-            let safe_key = html_escape(key);
+        for (i, ref_html) in self.references.iter().enumerate() {
+            let safe_key = html_escape(&(i + 1).to_string());
             html.push_str("<div class=\"ref_item\">");
             html.push_str(&format!(
                 "<a name=\"cite_{}\"></a>{}. <span id=\"cite_{}\">{}</span>",
