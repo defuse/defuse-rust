@@ -21,6 +21,160 @@ const MAX_FILE_SIZE: usize = 10 * 1024 * 1024;
 /// Maximum name/description size: 1MB each
 const MAX_TEXT_FIELD_SIZE: usize = 1024 * 1024;
 
+// =============================================================================
+// Types
+// =============================================================================
+
+/// Per-file slot in a drawing request: the uploaded file's content hash,
+/// raw bytes (if available), and number of random lines to select from it.
+#[derive(Clone)]
+struct FileInput {
+    hash: String,
+    content: Option<Vec<u8>>,
+    randlines: i32,
+}
+
+/// Parsed and validated parameters for creating or completing a drawing.
+/// Built early in `handle_create` from the form submission, and used both
+/// for error recovery (repopulating the form) and for the actual drawing
+/// completion or confirmation display.
+#[derive(Clone)]
+struct DrawingParams {
+    drawing_num: i32,
+    passcode: String,
+    name: String,
+    description: String,
+    files: [FileInput; 3],
+    lowval: i32,
+    highval: i32,
+    numgen: i32,
+    chosentwice: bool,
+}
+
+/// Display info for an uploaded file on the confirmation page: the original
+/// filename, human-readable size, and SHA-256 hash.
+struct FileInfo {
+    name: String,
+    size: String,
+    sha256: String,
+}
+
+impl Default for FileInfo {
+    fn default() -> Self {
+        Self {
+            name: "NO FILE".to_string(),
+            size: "NO FILE".to_string(),
+            sha256: "NO FILE".to_string(),
+        }
+    }
+}
+
+/// Shown after a drawing number is successfully reserved. Contains the
+/// drawing number, generated password, scheduled drawing date, and permalink.
+struct ReservationInfo {
+    drawing_num: i32,
+    password: String,
+    drawing_date: String,
+    url: String,
+}
+
+/// Shown on the confirmation page (step 1 of create) so the user can review
+/// their parameters before finalizing. Wraps DrawingParams (with file hashes
+/// filled in by `process_file`) plus display-only file metadata.
+struct ConfirmationInfo {
+    params: DrawingParams,
+    file_infos: [FileInfo; 3],
+}
+
+/// Shown after a drawing is successfully completed. Contains the drawing
+/// number and a permalink to view the results.
+struct CompletionInfo {
+    drawing_num: i32,
+    url: String,
+}
+
+/// Result of looking up a drawing by number for the GET view.
+enum DrawingView {
+    /// Drawing doesn't exist
+    NotFound(i32),
+    /// Drawing exists but the review period hasn't elapsed yet
+    Pending {
+        drawing_num: i32,
+        draw_date: String,
+    },
+    /// Drawing is complete; printout contains the random results
+    Complete {
+        drawing_num: i32,
+        userprintout: String,
+        printout: String,
+    },
+}
+
+/// Raw form data from the TRENT HTML form, deserialized from either
+/// URL-encoded or multipart POST bodies. All fields are strings because
+/// they come from user input and are parsed/validated in `handle_create`.
+#[derive(Deserialize, Default)]
+struct TrentForm {
+    #[serde(default)]
+    makedrawingnumber: Option<String>,
+    #[serde(default)]
+    create: Option<String>,
+    #[serde(default)]
+    prereview: String,
+    #[serde(default)]
+    drawingnumber: String,
+    #[serde(default)]
+    passcode: String,
+    #[serde(default)]
+    name: String,
+    #[serde(default)]
+    description: String,
+    #[serde(default)]
+    randlines1: String,
+    #[serde(default)]
+    randlines2: String,
+    #[serde(default)]
+    randlines3: String,
+    #[serde(default)]
+    chosentwice: String,
+    #[serde(default)]
+    lowval: String,
+    #[serde(default)]
+    highval: String,
+    #[serde(default)]
+    numgen: String,
+    #[serde(default)]
+    confirmed: String,
+    #[serde(default)]
+    file1hash: String,
+    #[serde(default)]
+    file2hash: String,
+    #[serde(default)]
+    file3hash: String,
+}
+
+/// The main page template. Populated by the handler methods and rendered
+/// via Askama. At most one of `drawing_view`, `reservation`, `confirmation`,
+/// `completion`, or `error` will be set per request.
+#[derive(Template)]
+#[template(path = "pages/services/trustedthirdparty.html")]
+struct TrentPage {
+    ctx: PageContext,
+    current_time: String,
+    drawing_view: Option<DrawingView>,
+    reservation: Option<ReservationInfo>,
+    confirmation: Option<ConfirmationInfo>,
+    completion: Option<CompletionInfo>,
+    error: Option<String>,
+    /// When set, the form fields are repopulated with these values after a
+    /// validation error so the user doesn't have to re-enter everything.
+    form_values: Option<DrawingParams>,
+}
+
+// =============================================================================
+// Page handler
+// =============================================================================
+
 pub struct Handler;
 
 impl PageHandler for Handler {
@@ -61,94 +215,9 @@ impl PageHandler for Handler {
     }
 }
 
-/// Reservation success info
-struct ReservationInfo {
-    drawing_num: i32,
-    password: String,
-    drawing_date: String,
-    url: String,
-}
-
-/// Confirmation page info (step 1 of create)
-struct ConfirmationInfo {
-    params: DrawingParams,
-    file_infos: [FileInfo; 3],
-}
-
-/// File info for confirmation display
-struct FileInfo {
-    name: String,
-    size: String,
-    sha256: String,
-}
-
-impl Default for FileInfo {
-    fn default() -> Self {
-        Self {
-            name: "NO FILE".to_string(),
-            size: "NO FILE".to_string(),
-            sha256: "NO FILE".to_string(),
-        }
-    }
-}
-
-/// Completion success info
-struct CompletionInfo {
-    drawing_num: i32,
-    url: String,
-}
-
-/// Per-file input for a drawing (hash, content, and number of random lines)
-#[derive(Clone)]
-struct FileInput {
-    hash: String,
-    content: Option<Vec<u8>>,
-    randlines: i32,
-}
-
-/// Validated parameters for creating/completing a drawing
-#[derive(Clone)]
-struct DrawingParams {
-    drawing_num: i32,
-    passcode: String,
-    name: String,
-    description: String,
-    files: [FileInput; 3],
-    lowval: i32,
-    highval: i32,
-    numgen: i32,
-    chosentwice: bool,
-}
-
-/// Drawing view info
-enum DrawingView {
-    /// Drawing doesn't exist
-    NotFound(i32),
-    /// Drawing exists but not complete
-    Pending {
-        drawing_num: i32,
-        draw_date: String,
-    },
-    /// Drawing is complete
-    Complete {
-        drawing_num: i32,
-        userprintout: String,
-        printout: String,
-    },
-}
-
-#[derive(Template)]
-#[template(path = "pages/services/trustedthirdparty.html")]
-struct TrentPage {
-    ctx: PageContext,
-    current_time: String,
-    drawing_view: Option<DrawingView>,
-    reservation: Option<ReservationInfo>,
-    confirmation: Option<ConfirmationInfo>,
-    completion: Option<CompletionInfo>,
-    error: Option<String>,
-    form_values: Option<DrawingParams>,
-}
+// =============================================================================
+// TrentPage implementation
+// =============================================================================
 
 impl TrentPage {
     fn new(ctx: PageContext) -> Self {
@@ -574,6 +643,10 @@ impl TrentPage {
     }
 }
 
+// =============================================================================
+// Helper functions
+// =============================================================================
+
 /// Check if a string is a valid SHA256 hex hash (64 hex characters)
 fn is_sha256_hex(s: &str) -> bool {
     s.len() == 64 && s.chars().all(|c| c.is_ascii_hexdigit())
@@ -598,48 +671,7 @@ fn is_latin1_safe(s: &str) -> bool {
     s.chars().all(|c| (c as u32) <= 255)
 }
 
-/// Form data for TRENT
-#[derive(Deserialize, Default)]
-struct TrentForm {
-    #[serde(default)]
-    makedrawingnumber: Option<String>,
-    #[serde(default)]
-    create: Option<String>,
-    #[serde(default)]
-    prereview: String,
-    #[serde(default)]
-    drawingnumber: String,
-    #[serde(default)]
-    passcode: String,
-    #[serde(default)]
-    name: String,
-    #[serde(default)]
-    description: String,
-    #[serde(default)]
-    randlines1: String,
-    #[serde(default)]
-    randlines2: String,
-    #[serde(default)]
-    randlines3: String,
-    #[serde(default)]
-    chosentwice: String,
-    #[serde(default)]
-    lowval: String,
-    #[serde(default)]
-    highval: String,
-    #[serde(default)]
-    numgen: String,
-    #[serde(default)]
-    confirmed: String,
-    #[serde(default)]
-    file1hash: String,
-    #[serde(default)]
-    file2hash: String,
-    #[serde(default)]
-    file3hash: String,
-}
-
-/// Extension trait for FormField
+/// Extension trait for FormField to extract string data
 trait FormFieldExt {
     fn data_as_string(&self) -> String;
 }
