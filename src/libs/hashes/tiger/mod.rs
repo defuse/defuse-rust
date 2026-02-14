@@ -1,4 +1,5 @@
 //! Tiger hash algorithm implementation.
+//! THIS IMPLEMENTATION HAS NOT BEEN AUDITED! DO NOT RELY ON IT FOR SECURITY!
 //!
 //! Tiger is a cryptographic hash function designed by Ross Anderson and Eli Biham
 //! in 1995. It produces a 192-bit hash value and was designed for 64-bit platforms.
@@ -199,6 +200,178 @@ mod tests {
         let data = vec![b'a'; 1000];
         let result = tiger192_4(&data);
         let expected = hex::decode("63533e5d476a781949e58b25e67bb182d556a52241f6c3e4").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Signedness tests (0xFF bytes stress u64 arithmetic) ===
+
+    #[test]
+    fn test_tiger192_3_32_0xff() {
+        let result = tiger192_3(&vec![0xFFu8; 32]);
+        let expected = hex::decode("486ddd22a8ae20b9fa10ba43cc0e0f185fd8ba287142c919").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_4_32_0xff() {
+        let result = tiger192_4(&vec![0xFFu8; 32]);
+        let expected = hex::decode("ab624b399387c292d2fbd416d67091ed299783f2f16525f2").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_3_64_0xff() {
+        let result = tiger192_3(&vec![0xFFu8; 64]);
+        let expected = hex::decode("19622a5aebe86f646b8e06d33a120a368bb7381a60371c8d").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_4_64_0xff() {
+        let result = tiger192_4(&vec![0xFFu8; 64]);
+        let expected = hex::decode("abed1a9c3e17b5b1b03488ab0c4d8ae82953828b8c504991").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_3_128_0xff() {
+        let result = tiger192_3(&vec![0xFFu8; 128]);
+        let expected = hex::decode("53cf15e44ae146c1c4be3155664be98057159304c3354b81").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_4_128_0xff() {
+        let result = tiger192_4(&vec![0xFFu8; 128]);
+        let expected = hex::decode("cbca6a5a7873edc33b953b65158e2f73900f6435c34b051f").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Single byte edge cases ===
+
+    #[test]
+    fn test_tiger192_3_single_0x00() {
+        let result = tiger192_3(&[0x00]);
+        let expected = hex::decode("5d9ed00a030e638bdb753a6a24fb900e5a63b8e73e6c25b6").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_4_single_0x00() {
+        let result = tiger192_4(&[0x00]);
+        let expected = hex::decode("24d29ffa7cfaa3fc2ee3136c79d936b5ea4360d7597a2313").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_3_single_0x80() {
+        let result = tiger192_3(&[0x80]);
+        let expected = hex::decode("d82dbb57383c5914b83d782ab8ec094ce6bfa417350d985e").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_4_single_0x80() {
+        let result = tiger192_4(&[0x80]);
+        let expected = hex::decode("054ee66b2733509f623786acaebb0a64549c36dd3f3226d2").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_3_single_0xff() {
+        let result = tiger192_3(&[0xFF]);
+        let expected = hex::decode("ebace53f62b69672952d5dc7858dc79f83466a4b06acd4c8").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_4_single_0xff() {
+        let result = tiger192_4(&[0xFF]);
+        let expected = hex::decode("4c40c1d6f0cc43ee75516fb800be0363a07e3b3c383a86d8").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Alternating bit patterns ===
+
+    #[test]
+    fn test_tiger192_3_alternating_0x55() {
+        let result = tiger192_3(&vec![0x55u8; 64]);
+        let expected = hex::decode("e129338017ed2b0b33bec64295cb5f6a8b0c6bd695b252f9").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_3_alternating_0xaa() {
+        let result = tiger192_3(&vec![0xAAu8; 64]);
+        let expected = hex::decode("e6b401a93be789143d8e74ce96f7d4db3ed655e17a7cc442").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Truncated variant tests with binary data ===
+
+    #[test]
+    fn test_tiger128_3_64_0xff() {
+        let result = tiger128_3(&vec![0xFFu8; 64]);
+        let expected = hex::decode("19622a5aebe86f646b8e06d33a120a36").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger160_3_64_0xff() {
+        let result = tiger160_3(&vec![0xFFu8; 64]);
+        let expected = hex::decode("19622a5aebe86f646b8e06d33a120a368bb7381a").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger128_4_64_0xff() {
+        let result = tiger128_4(&vec![0xFFu8; 64]);
+        let expected = hex::decode("abed1a9c3e17b5b1b03488ab0c4d8ae8").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger160_4_64_0xff() {
+        let result = tiger160_4(&vec![0xFFu8; 64]);
+        let expected = hex::decode("abed1a9c3e17b5b1b03488ab0c4d8ae82953828b").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Large input: 100003 bytes from SHA256(counter) ===
+    // Input is SHA256(0_u64_le) || SHA256(1_u64_le) || ... truncated to 100003 bytes.
+    // 100003 is prime, ensuring non-aligned multi-block processing.
+
+    #[test]
+    fn test_tiger192_3_sha256_counter_100003() {
+        use sha2::{Sha256, Digest};
+        let mut data = Vec::with_capacity(100003);
+        let mut counter: u64 = 0;
+        while data.len() < 100003 {
+            let mut hasher = Sha256::new();
+            hasher.update(counter.to_le_bytes());
+            data.extend_from_slice(&hasher.finalize());
+            counter += 1;
+        }
+        data.truncate(100003);
+        let result = tiger192_3(&data);
+        let expected = hex::decode("a7ae25d0df3bac3e96369133a5b1de2d75878eef5b3fb420").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_tiger192_4_sha256_counter_100003() {
+        use sha2::{Sha256, Digest};
+        let mut data = Vec::with_capacity(100003);
+        let mut counter: u64 = 0;
+        while data.len() < 100003 {
+            let mut hasher = Sha256::new();
+            hasher.update(counter.to_le_bytes());
+            data.extend_from_slice(&hasher.finalize());
+            counter += 1;
+        }
+        data.truncate(100003);
+        let result = tiger192_4(&data);
+        let expected = hex::decode("4727eb171bfac1dbeb8bf9f4274b15ce2a22888f81eedf7f").unwrap();
         assert_eq!(&result[..], &expected[..]);
     }
 }

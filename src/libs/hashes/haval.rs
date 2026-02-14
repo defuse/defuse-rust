@@ -1,4 +1,5 @@
 //! HAVAL hash algorithm implementation.
+//! THIS IMPLEMENTATION HAS NOT BEEN AUDITED! DO NOT RELY ON IT FOR SECURITY!
 //!
 //! HAVAL is a cryptographic hash function designed by Yuliang Zheng, Josef Pieprzyk,
 //! and Jennifer Seberry in 1992. It supports:
@@ -788,6 +789,295 @@ mod tests {
         let result = haval256_5(&data);
         // Verified with PHP: hash("haval256,5", str_repeat("a", 1000))
         let expected = hex::decode("895160426130860e829459269691913009542a6ac51752f154847a9359618f44").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Block boundary tests (block = 128 bytes) ===
+    // Tests all 3 pass counts at the exact block boundary.
+
+    #[test]
+    fn test_haval256_3_127_bytes() {
+        let result = haval256_3(&vec![b'a'; 127]);
+        let expected = hex::decode("14b6e3418a669865cd25c413c8fbdf680e3420b563a468845271674405f52abd").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_128_bytes() {
+        let result = haval256_3(&vec![b'a'; 128]);
+        let expected = hex::decode("13faa4d94db48282d58e05b69be23ec24d1bf5c724dfdd7f2a1c17763f3d355f").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_129_bytes() {
+        let result = haval256_3(&vec![b'a'; 129]);
+        let expected = hex::decode("18229631aea1373425523a5e9a11aa8545c98376ebd07525f5f33aaed88bce50").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_4_127_bytes() {
+        let result = haval256_4(&vec![b'a'; 127]);
+        let expected = hex::decode("6380e8e8e2f3907f314fcddb51f48e3a55b0130a6bba01eec3c2b90e195e554e").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_4_128_bytes() {
+        let result = haval256_4(&vec![b'a'; 128]);
+        let expected = hex::decode("f30bc5d2ae4d446523b50f780111b79eb5caeceb0a4e6981638e539709776b99").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_4_129_bytes() {
+        let result = haval256_4(&vec![b'a'; 129]);
+        let expected = hex::decode("2acd67570c738a5a5f19eaaf2e9dd0202dfcd0e8e0129b742f1deda7a929eb0e").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_127_bytes() {
+        let result = haval256_5(&vec![b'a'; 127]);
+        let expected = hex::decode("f7eabeec467c8b56af40f90e799ea878d8ea7eff260d49982209364ad0e0c39d").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_128_bytes() {
+        let result = haval256_5(&vec![b'a'; 128]);
+        let expected = hex::decode("93390552a2d23df530a5918c95d095e3914cf476cd1d95bede099c7674b31efe").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_129_bytes() {
+        let result = haval256_5(&vec![b'a'; 129]);
+        let expected = hex::decode("a084bcc569ed32e30bb0c79e7b4f82be98c3934d2333ea7f6757c726382d6688").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Padding boundary tests (HAVAL padding needs 10 bytes: version+passes+length) ===
+    // At 118 mod 128, padding fits exactly. At 119+, padding spills to a new block.
+
+    #[test]
+    fn test_haval256_3_117_bytes() {
+        let result = haval256_3(&vec![b'a'; 117]);
+        let expected = hex::decode("3973ff8c2014d772f2999001c0a264543d1e1e8a968a5e32f81e37650583f639").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_118_bytes() {
+        let result = haval256_3(&vec![b'a'; 118]);
+        let expected = hex::decode("712f49ede266ce71c1421c5c90b898d20d96ee712b2c139fc7ff1830919f44f9").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_119_bytes() {
+        let result = haval256_3(&vec![b'a'; 119]);
+        let expected = hex::decode("0455661f2f02a015d9cf3c411af0509080124a7e628b84ec33e68432e88d7cd2").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_117_bytes() {
+        let result = haval256_5(&vec![b'a'; 117]);
+        let expected = hex::decode("5ccc1fcc4aca9ab3a014732dbafee7ed7c0cf1028b4bbaffe92a9d78e634ee02").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_118_bytes() {
+        let result = haval256_5(&vec![b'a'; 118]);
+        let expected = hex::decode("34e1b82fdea5bf0d5eec513d8bc463d2eeab36a2af5f5183cc98b564e51431b0").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_119_bytes() {
+        let result = haval256_5(&vec![b'a'; 119]);
+        let expected = hex::decode("e317fa1b993386e8e4c38f6a9a3bb4ae1f903d00df13d16a86f13fbb68a11a28").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Signedness tests (0xFF bytes stress u32 arithmetic) ===
+    // Tests one variant per pass count across different output sizes.
+
+    #[test]
+    fn test_haval128_3_32_0xff() {
+        let result = haval128_3(&vec![0xFFu8; 32]);
+        let expected = hex::decode("7a7d7b4fe180aaff15a796812058dc84").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval192_4_64_0xff() {
+        let result = haval192_4(&vec![0xFFu8; 64]);
+        let expected = hex::decode("6b9899802943e2ec9d48f2cf43edb48819e89592873f8815").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_128_0xff() {
+        let result = haval256_5(&vec![0xFFu8; 128]);
+        let expected = hex::decode("02eacd6a9862004632406b6724655b1d6dc98b4ce07b2c8bff129dcba98e170a").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval160_3_64_0xff() {
+        let result = haval160_3(&vec![0xFFu8; 64]);
+        let expected = hex::decode("feb47e0f6a2dae09bb68b3e6215af212bcce4ce5").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval224_5_64_0xff() {
+        let result = haval224_5(&vec![0xFFu8; 64]);
+        let expected = hex::decode("b641c9d8b48a577eda510b52031b3507085a2837b39fd4c32dc8c43d").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Single byte edge cases ===
+
+    #[test]
+    fn test_haval256_3_single_0x00() {
+        let result = haval256_3(&[0x00]);
+        let expected = hex::decode("3a9ac785b9f8a38adf82cb7342a00ae29e259e5f4c40f567f9083c5af1000100").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_single_0x80() {
+        let result = haval256_3(&[0x80]);
+        let expected = hex::decode("5fc7d7c3067b4fab91e1b9c79875bdafe961d68d784224ad26d5fd1e9bf18ba4").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_single_0xff() {
+        let result = haval256_3(&[0xFF]);
+        let expected = hex::decode("f535a93dda842a6f96b6350d3fe8f31c6b9efbc2ffe20bd7ea92f34bd3e7da7d").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_single_0x80() {
+        let result = haval256_5(&[0x80]);
+        let expected = hex::decode("09a52378aee3d34064d6350d8e607a7f63fd48e86ab5f5b4a874d96cbac060c1").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Alternating bit patterns ===
+
+    #[test]
+    fn test_haval256_3_alternating_0x55() {
+        let result = haval256_3(&vec![0x55u8; 64]);
+        let expected = hex::decode("169251ffd88646e661f5ce063a2c4d3e6602c62133b78ccdc0074a6a263c3c20").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_alternating_0xaa() {
+        let result = haval256_3(&vec![0xAAu8; 64]);
+        let expected = hex::decode("d7363eff6e7c5e7196fcfa3e75fd06f523703be949d77aa4cdc46949b517b341").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Cross-variant consistency with binary input ===
+    // Tests all output sizes with 3-pass using 0xFF input
+
+    #[test]
+    fn test_haval128_3_128_0xff() {
+        let result = haval128_3(&vec![0xFFu8; 128]);
+        let expected = hex::decode("5433edce884d9f1c27de62e4a33033ed").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval160_3_128_0xff() {
+        let result = haval160_3(&vec![0xFFu8; 128]);
+        let expected = hex::decode("b0c2a1fd450ccc7bd5cd12908c4c2ed2cdd1d9f5").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval192_3_128_0xff() {
+        let result = haval192_3(&vec![0xFFu8; 128]);
+        let expected = hex::decode("39e003261c4de2a9f40f4f79a557406f5b831e41825df99c").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval224_3_128_0xff() {
+        let result = haval224_3(&vec![0xFFu8; 128]);
+        let expected = hex::decode("886ceeadcebf60b70876186e7ebd29fc5e08572179f039e6119c8bfd").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_3_128_0xff() {
+        let result = haval256_3(&vec![0xFFu8; 128]);
+        let expected = hex::decode("412b93ac63c5cbcabb73c87b436d4e0cbf5554c513230411a75c063a5bf7e94e").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    // === Large input: 100003 bytes from SHA256(counter) ===
+    // Input is SHA256(0_u64_le) || SHA256(1_u64_le) || ... truncated to 100003 bytes.
+    // 100003 is prime, ensuring non-aligned multi-block processing.
+    // Tests one variant per pass count.
+
+    #[test]
+    fn test_haval256_3_sha256_counter_100003() {
+        use sha2::{Sha256, Digest};
+        let mut data = Vec::with_capacity(100003);
+        let mut counter: u64 = 0;
+        while data.len() < 100003 {
+            let mut hasher = Sha256::new();
+            hasher.update(counter.to_le_bytes());
+            data.extend_from_slice(&hasher.finalize());
+            counter += 1;
+        }
+        data.truncate(100003);
+        let result = haval256_3(&data);
+        let expected = hex::decode("9c7b45688f2a00549dd06139d8dbaa7ae61c8b64dc7f04f33a29c10956a27e01").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_4_sha256_counter_100003() {
+        use sha2::{Sha256, Digest};
+        let mut data = Vec::with_capacity(100003);
+        let mut counter: u64 = 0;
+        while data.len() < 100003 {
+            let mut hasher = Sha256::new();
+            hasher.update(counter.to_le_bytes());
+            data.extend_from_slice(&hasher.finalize());
+            counter += 1;
+        }
+        data.truncate(100003);
+        let result = haval256_4(&data);
+        let expected = hex::decode("8abc17b3d52ec83762392d3766715be1583fb6e32022f1b9a6d20c08d3c7371b").unwrap();
+        assert_eq!(&result[..], &expected[..]);
+    }
+
+    #[test]
+    fn test_haval256_5_sha256_counter_100003() {
+        use sha2::{Sha256, Digest};
+        let mut data = Vec::with_capacity(100003);
+        let mut counter: u64 = 0;
+        while data.len() < 100003 {
+            let mut hasher = Sha256::new();
+            hasher.update(counter.to_le_bytes());
+            data.extend_from_slice(&hasher.finalize());
+            counter += 1;
+        }
+        data.truncate(100003);
+        let result = haval256_5(&data);
+        let expected = hex::decode("bc091e4b3ec6700bb6ec1cb9f80869bd9344a9ba4c946f9a4eb2716c722b60a0").unwrap();
         assert_eq!(&result[..], &expected[..]);
     }
 }

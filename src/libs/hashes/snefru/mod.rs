@@ -1,4 +1,5 @@
 //! Snefru hash algorithm implementation.
+//! THIS IMPLEMENTATION HAS NOT BEEN AUDITED! DO NOT RELY ON IT FOR SECURITY!
 //!
 //! Snefru is a cryptographic hash function designed by Ralph Merkle in 1990.
 //! This implementation produces a 256-bit (32-byte) digest using 8 rounds,
@@ -244,6 +245,127 @@ mod tests {
         assert_eq!(
             hex::encode(hash),
             "c5795bac1192bdea5a9dbe735211f890aef23b92687b6002d1938a7876e049c3"
+        );
+    }
+
+    // === Block boundary tests (block = 32 bytes) ===
+
+    #[test]
+    fn test_snefru_31_bytes() {
+        let hash = snefru256(&vec![b'a'; 31]);
+        assert_eq!(
+            hex::encode(hash),
+            "96bb2b81b3aff11a4d672b23f600f6965c138276ead7d089369deaa9258988e7"
+        );
+    }
+
+    #[test]
+    fn test_snefru_32_bytes() {
+        let hash = snefru256(&vec![b'a'; 32]);
+        assert_eq!(
+            hex::encode(hash),
+            "dbc6238cc321aecba8f057213c3a605d74f21ec352e2183bc3b3853064ffa732"
+        );
+    }
+
+    #[test]
+    fn test_snefru_33_bytes() {
+        let hash = snefru256(&vec![b'a'; 33]);
+        assert_eq!(
+            hex::encode(hash),
+            "7a1133846080dd68d6842df39c86f961925605679bad4ffae07118482b6031fa"
+        );
+    }
+
+    // === Signedness tests (0xFF bytes stress u32 arithmetic) ===
+
+    #[test]
+    fn test_snefru_32_0xff() {
+        let hash = snefru256(&vec![0xFFu8; 32]);
+        assert_eq!(
+            hex::encode(hash),
+            "d18a2d2d8aa0f831d3f339442e1b8ec8965039405459bc9fb6277fd7b636d9f7"
+        );
+    }
+
+    #[test]
+    fn test_snefru_64_0xff() {
+        let hash = snefru256(&vec![0xFFu8; 64]);
+        assert_eq!(
+            hex::encode(hash),
+            "a85110ae4dffe3765c7fadc0579d640c5675004fa3819a48e92d3bd1746d8785"
+        );
+    }
+
+    // === Single byte edge cases ===
+
+    #[test]
+    fn test_snefru_single_0x00() {
+        let hash = snefru256(&[0x00]);
+        assert_eq!(
+            hex::encode(hash),
+            "d40c2a1ac28b11a875157ccb3bb2e75fbac5138ca354005381080f67bca0093b"
+        );
+    }
+
+    #[test]
+    fn test_snefru_single_0x80() {
+        let hash = snefru256(&[0x80]);
+        assert_eq!(
+            hex::encode(hash),
+            "176b92f680ccacf8d270d9e5cba4d9b762eecdd59aa3726177af65928fe71272"
+        );
+    }
+
+    #[test]
+    fn test_snefru_single_0xff() {
+        let hash = snefru256(&[0xFF]);
+        assert_eq!(
+            hex::encode(hash),
+            "8513c4f80aeefde2a48d0790071002420eff7a3611ef6dcdc9fcf4ec2db4eb5b"
+        );
+    }
+
+    // === Alternating bit patterns ===
+
+    #[test]
+    fn test_snefru_alternating_0x55() {
+        let hash = snefru256(&vec![0x55u8; 64]);
+        assert_eq!(
+            hex::encode(hash),
+            "5f27a2cc9db4c9f8ef5072f5fe39fc1e8a33b3f2672f231a7f8604a2f729fa32"
+        );
+    }
+
+    #[test]
+    fn test_snefru_alternating_0xaa() {
+        let hash = snefru256(&vec![0xAAu8; 64]);
+        assert_eq!(
+            hex::encode(hash),
+            "1d159cf273660ec461a98fb745f60eede2d7125dd82a4b675fbfb801ac79c5b3"
+        );
+    }
+
+    // === Large input: 100003 bytes from SHA256(counter) ===
+    // Input is SHA256(0_u64_le) || SHA256(1_u64_le) || ... truncated to 100003 bytes.
+    // 100003 is prime, ensuring non-aligned multi-block processing.
+
+    #[test]
+    fn test_snefru_sha256_counter_100003() {
+        use sha2::{Sha256, Digest};
+        let mut data = Vec::with_capacity(100003);
+        let mut counter: u64 = 0;
+        while data.len() < 100003 {
+            let mut hasher = Sha256::new();
+            hasher.update(counter.to_le_bytes());
+            data.extend_from_slice(&hasher.finalize());
+            counter += 1;
+        }
+        data.truncate(100003);
+        let hash = snefru256(&data);
+        assert_eq!(
+            hex::encode(hash),
+            "b77a6b885d44622487e6dee09c48dfb984ffcca71dff64672df4fe2e179c3934"
         );
     }
 }
