@@ -1,4 +1,14 @@
 //! Cryptographic operations for the pastebin service.
+//! 
+//! This is code intended to be backwards-compatible with old PHP code.
+//! Do not copy/paste this code in a new pastebin implementation, as there are
+//! several things a new version should fix:
+//!     - There is no authentication (which is fine for this use case, since the
+//!       database and this code are running on the same server, without
+//!       isolation.
+//!     - It uses null-byte padding (which is fine for this use case since we 
+//!       only officially support text inputs, not files.)
+//! A modern pastebin implementation should use a library like libsodium.
 //!
 //! This module provides encryption/decryption compatible with the PHP pastebin implementation:
 //! - AES-256-CBC encryption
@@ -68,6 +78,7 @@ fn get_encryption_key(url_key: &str) -> [u8; 32] {
 }
 
 /// Encrypt plaintext using AES-256-CBC with zero-byte padding.
+/// Provides NO authentication.
 ///
 /// Returns base64-encoded string of: IV (16 bytes) || ciphertext
 pub fn encrypt(url_key: &str, plaintext: &str) -> String {
@@ -114,9 +125,10 @@ pub fn encrypt(url_key: &str, plaintext: &str) -> String {
 }
 
 /// Decrypt base64-encoded ciphertext using AES-256-CBC.
+/// Provides NO authentication.
 ///
 /// The input format is: base64(IV || ciphertext)
-/// After decryption, all null bytes are stripped (matching PHP's str_replace("\0", ""))
+/// After decryption, trailing null bytes are stripped (mcrypt zero-byte padding).
 pub fn decrypt(url_key: &str, encoded: &str) -> Result<String, CryptoError> {
     use aes::cipher::{BlockDecrypt, KeyInit};
 
@@ -156,10 +168,11 @@ pub fn decrypt(url_key: &str, encoded: &str) -> Result<String, CryptoError> {
         prev_block = chunk;
     }
 
-    // Strip ALL null bytes (matching PHP's str_replace("\0", ""))
-    let stripped: Vec<u8> = decrypted.into_iter().filter(|&b| b != 0).collect();
+    // Strip trailing null bytes (mcrypt zero-byte padding)
+    let end = decrypted.iter().rposition(|&b| b != 0).map_or(0, |i| i + 1);
+    decrypted.truncate(end);
 
-    String::from_utf8(stripped).map_err(|_| CryptoError::InvalidUtf8)
+    String::from_utf8(decrypted).map_err(|_| CryptoError::InvalidUtf8)
 }
 
 #[cfg(test)]
