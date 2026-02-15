@@ -11,7 +11,23 @@ mod pages;
 
 pub use pages::PAGE_REGISTRY;
 
+use std::collections::HashSet;
+use std::sync::LazyLock;
+
 use crate::handler::PageHandler;
+
+/// Set of valid upvote permanent IDs, built from PAGE_REGISTRY on first access.
+static VALID_UPVOTE_IDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
+    PAGE_REGISTRY
+        .values()
+        .filter_map(|page| page.upvote.as_ref().map(|u| u.id))
+        .collect()
+});
+
+/// Check if an upvote permanent_id is registered in the page registry.
+pub fn is_valid_upvote_id(id: &str) -> bool {
+    VALID_UPVOTE_IDS.contains(id)
+}
 
 /// Configuration for page upvoting. If a page has this, it will show vote arrows.
 /// Database records for upvotes are added automatically if missing, so just

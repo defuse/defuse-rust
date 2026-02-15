@@ -17,7 +17,7 @@ use std::net::SocketAddr;
 use tracing::debug;
 
 use crate::app_state::AppState;
-use crate::libs::util::client_ip;
+use crate::libs::{csrf, util::client_ip};
 use crate::registry::{resolve_path, PathLookupResult};
 
 /// Middleware function that handles upvote POST fallback for non-JS users
@@ -106,7 +106,12 @@ pub async fn upvote_post_middleware(
 
     match (upvotes_id, upvotes_direction) {
         (Some(id), Some(direction)) => {
-            // This is an upvote POST - process it and redirect
+            // This is an upvote POST - check CSRF before processing
+            if let Err(reason) = csrf::check_origin(&parts.headers) {
+                tracing::warn!("CSRF rejected on upvote POST: {}", reason);
+                return (axum::http::StatusCode::FORBIDDEN, "Forbidden").into_response();
+            }
+
             debug!("Processing upvote fallback: id={}, direction={}", id, direction);
 
             // Process the vote - panic on failure so user doesn't think vote succeeded

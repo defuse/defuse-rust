@@ -15,7 +15,7 @@ impl PageHandler for Handler {
         Box::pin(async move {
             // TODO: this stuff should just be moved into render_list
             let top_pages = upvotes
-                .get_top_pages(8, None)
+                .get_top_pages(Some(8), None)
                 .await
                 .expect("BUG: Failed to get top pages from database");
 

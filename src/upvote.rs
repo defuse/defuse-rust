@@ -13,7 +13,7 @@ use serde::Deserialize;
 use std::net::SocketAddr;
 
 use crate::app_state::AppState;
-use crate::libs::{upvotes::VoteAction, util::{client_ip, html_escape}};
+use crate::libs::{csrf, upvotes::VoteAction, util::{client_ip, html_escape}};
 
 #[derive(Deserialize)]
 pub struct VoteForm {
@@ -28,8 +28,11 @@ pub async fn post(
     headers: HeaderMap,
     Form(form): Form<VoteForm>,
 ) -> Response {
-
-    // AUDIT: encapsulate more of this into the upvote library
+    // CSRF protection: reject cross-origin requests
+    if let Err(reason) = csrf::check_origin(&headers) {
+        tracing::warn!("CSRF rejected on /upvote: {}", reason);
+        return xml_response("fail", "N", "N", 0);
+    }
 
     let client_ip = client_ip(addr.ip(), &headers);
 

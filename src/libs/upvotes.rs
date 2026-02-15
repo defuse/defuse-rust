@@ -3,8 +3,9 @@
 //! Allows users to upvote/downvote pages. Votes are tracked per IP
 //! using SHA256(page_id + IP) to preserve privacy.
 //!
-//! Rate limiting: Users can only change their vote once per 24 hours.
-//! After 24 hours, their vote history is cleared and they can vote again.
+//! Vote memory: Each vote is remembered for 24 hours, during which the
+//! user can toggle it off or switch direction. After 24 hours, the vote
+//! history is cleared and they can vote on the same page again.
 //!
 //! Port of defuse.ca/src/libs/Upvote.php
 
@@ -21,6 +22,7 @@ const VOTE_OLD_AFTER_SECONDS: i64 = 86400;
 #[derive(Debug)]
 pub enum VoteError {
     InvalidDirection,
+    InvalidPermanentId,
     Database(sqlx::Error),
 }
 
@@ -34,6 +36,7 @@ impl std::fmt::Display for VoteError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             VoteError::InvalidDirection => write!(f, "Invalid vote direction"),
+            VoteError::InvalidPermanentId => write!(f, "Invalid permanent ID"),
             VoteError::Database(e) => write!(f, "Database error: {}", e),
         }
     }
@@ -61,7 +64,10 @@ impl VoteAction {
             "upvote" => Some(VoteAction::Upvote),
             "downvote" => Some(VoteAction::Downvote),
             "" => None,
-            other => panic!("BUG: Invalid vote action in database: {:?}", other),
+            other => {
+                tracing::error!("Invalid vote action in database: {:?}", other);
+                None
+            }
         }
     }
 }
@@ -141,6 +147,10 @@ impl UpvoteService {
         client_ip: &str,
         direction: &str,
     ) -> Result<VoteState, VoteError> {
+        if !crate::registry::is_valid_upvote_id(permanent_id) {
+            return Err(VoteError::InvalidPermanentId);
+        }
+
         let direction = match direction {
             "up" => VoteAction::Upvote,
             "down" => VoteAction::Downvote,
@@ -223,32 +233,25 @@ impl UpvoteService {
     /// Get top voted pages for display
     pub async fn get_top_pages(
         &self,
-        limit: u32,
+        limit: Option<u32>,
         category: Option<&str>,
     ) -> Result<Vec<PageVoteInfo>, sqlx::Error> {
-        let pages = if let Some(cat) = category {
-            sqlx::query_as::<_, (String, String, String, String, String, i32, i32)>(
-                "SELECT permanent_id, category, title, description, canonical_url, upvotes, downvotes
-                 FROM counts
-                 WHERE category = ?
-                 ORDER BY (upvotes - downvotes) DESC
-                 LIMIT ?"
-            )
-            .bind(cat)
-            .bind(limit)
-            .fetch_all(&self.pool)
-            .await?
-        } else {
-            sqlx::query_as::<_, (String, String, String, String, String, i32, i32)>(
-                "SELECT permanent_id, category, title, description, canonical_url, upvotes, downvotes
-                 FROM counts
-                 ORDER BY (upvotes - downvotes) DESC
-                 LIMIT ?"
-            )
-            .bind(limit)
-            .fetch_all(&self.pool)
-            .await?
+        let base = "SELECT permanent_id, category, title, description, canonical_url, upvotes, downvotes FROM counts";
+        let query = match (category, limit) {
+            (Some(_), Some(_)) => format!("{base} WHERE category = ? ORDER BY (upvotes - downvotes) DESC LIMIT ?"),
+            (Some(_), None)    => format!("{base} WHERE category = ? ORDER BY (upvotes - downvotes) DESC"),
+            (None, Some(_))    => format!("{base} ORDER BY (upvotes - downvotes) DESC LIMIT ?"),
+            (None, None)       => format!("{base} ORDER BY (upvotes - downvotes) DESC"),
         };
+
+        let mut q = sqlx::query_as::<_, (String, String, String, String, String, i32, i32)>(&query);
+        if let Some(cat) = category {
+            q = q.bind(cat);
+        }
+        if let Some(lim) = limit {
+            q = q.bind(lim);
+        }
+        let pages = q.fetch_all(&self.pool).await?;
 
         Ok(pages
             .into_iter()
@@ -266,45 +269,12 @@ impl UpvoteService {
             .collect())
     }
 
-    /// Get all pages for display (for the all-pages listing)
+    /// Get all pages, optionally filtered by category
     pub async fn get_all_pages(
         &self,
         category: Option<&str>,
     ) -> Result<Vec<PageVoteInfo>, sqlx::Error> {
-        let pages = if let Some(cat) = category {
-            sqlx::query_as::<_, (String, String, String, String, String, i32, i32)>(
-                "SELECT permanent_id, category, title, description, canonical_url, upvotes, downvotes
-                 FROM counts
-                 WHERE category = ?
-                 ORDER BY (upvotes - downvotes) DESC"
-            )
-            .bind(cat)
-            .fetch_all(&self.pool)
-            .await?
-        } else {
-            sqlx::query_as::<_, (String, String, String, String, String, i32, i32)>(
-                "SELECT permanent_id, category, title, description, canonical_url, upvotes, downvotes
-                 FROM counts
-                 ORDER BY (upvotes - downvotes) DESC"
-            )
-            .fetch_all(&self.pool)
-            .await?
-        };
-
-        Ok(pages
-            .into_iter()
-            .map(|(permanent_id, category, title, description, canonical_url, upvotes, downvotes)| {
-                PageVoteInfo {
-                    permanent_id,
-                    category,
-                    title,
-                    description,
-                    canonical_url,
-                    upvotes,
-                    downvotes,
-                }
-            })
-            .collect())
+        self.get_top_pages(None, category).await
     }
 
     /// Ensure a page exists in the counts table, creating or updating as needed
@@ -343,6 +313,7 @@ impl UpvoteService {
             }
             None => {
                 // Insert new page
+                // TODO: A race condition could lead to duplicate rows being inserted for new pages
                 sqlx::query(
                     "INSERT INTO counts (permanent_id, category, title, description, canonical_url, upvotes, downvotes)
                      VALUES (?, ?, ?, ?, ?, 0, 0)"
