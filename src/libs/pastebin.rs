@@ -1,6 +1,16 @@
 //! Pastebin database service.
 //!
 //! Provides encrypted paste storage compatible with the PHP pastebin implementation.
+//! 
+//! This is code intended to be backwards-compatible with old PHP code.
+//! Do not copy/paste this code in a new pastebin implementation, as there are
+//! several things a new version should fix:
+//!     - There is no authentication (which is fine for this use case, since the
+//!       database and this code are running on the same server, without
+//!       isolation.
+//!     - It uses null-byte padding (which is fine for this use case since we 
+//!       only officially support text inputs, not files.)
+//! A modern pastebin implementation should use a library like libsodium.
 //!
 //! Database schema:
 //! ```sql

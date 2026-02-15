@@ -5,7 +5,7 @@
 
 use sha2::{Digest, Sha256};
 
-/// Known SHA256 hash of the bypass key for automated testing
+/// Known SHA256 hash of the bypass key for automated testing (preimage is random 256 bits so unsalted hashing is fine)
 const BYPASS_HASH: &str = "082ce4a67e9ba423a366558c86a506a3cdc59664cf02a00cb3306957c2ae8534";
 
 /// Verify a reCAPTCHA response

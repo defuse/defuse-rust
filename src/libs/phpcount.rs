@@ -99,7 +99,8 @@ impl PhpCountService {
     /// reading any one gives the correct count.
     ///
     /// Site-wide totals use SUM across all rows, matching PHP's GetTotalHits()
-    /// which fetches all rows and sums in a loop.
+    /// which fetches all rows and sums in a loop. If there are duplicate rows
+    /// then the site-wide totals will over-count.
     pub async fn get_hit_counts(&self, page_id: &str) -> Result<HitCounts, sqlx::Error> {
         // Ensure page exists first
         self.create_counts_if_not_present(page_id).await?;

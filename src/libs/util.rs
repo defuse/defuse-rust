@@ -50,6 +50,7 @@ pub fn html_escape(s: &str) -> String {
     let mut result = String::new();
     for c in s.chars() {
         match c {
+            // These ones matter for security
             '&' => result.push_str("&amp;"),
             '<' => result.push_str("&lt;"),
             '>' => result.push_str("&gt;"),
@@ -69,7 +70,8 @@ pub fn html_escape(s: &str) -> String {
     result
 }
 
-/// Returns the named HTML entity for common characters (matching PHP htmlentities).
+/// Returns the named HTML entity for common characters to match PHP output
+/// NOT to be used for escaping for security purposes
 fn named_html_entity(c: char) -> Option<&'static str> {
     // Latin-1 Supplement named entities (most common ones from PHP)
     match c {

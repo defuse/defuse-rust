@@ -156,6 +156,8 @@ pub async fn get_drawing(drawing_num: i32) -> Result<Option<Drawing>, sqlx::Erro
             passwordhash,
             starttime,
             reviewtime,
+            // TODO: Even given the latin1 check (which just checks <=255) this is NOT safe
+            // since you could encode invalid utf8 codepoints by controlling arbitrary bytes.
             printout: String::from_utf8_lossy(&printout).into_owned(),
             userprintout: String::from_utf8_lossy(&userprintout).into_owned(),
         }
@@ -440,7 +442,7 @@ fn generate_password() -> String {
 /// Hash a password with SHA256 (lowercase hex)
 /// Matches PHP: hash("SHA256", $password)
 fn hash_password(password: &str) -> String {
-    // We don't need salt or a slow hashing function because passwords are 256-bit keys
+    // We don't need salt or a slow hashing function because passwords are 128-bit keys
     let hash = Sha256::digest(password.as_bytes());
     hex::encode(hash)
 }
@@ -528,6 +530,10 @@ fn select_random_lines(
     let mut results = Vec::with_capacity(num_lines);
     let mut excluded: Vec<usize> = Vec::new();
 
+    // TODO: This is vulnerable to a CPU DoS attack where you upload a file with
+    // lots of lines N and ask for N lines without replacement. It will take
+    // something like N^2 loops. Replace this with an algorithm that actually
+    // removes the drawn line when allow_repeat = false.
     for _ in 0..num_lines {
         loop {
             let line_idx = select_random_number(0, total_lines as i64 - 1) as usize;
