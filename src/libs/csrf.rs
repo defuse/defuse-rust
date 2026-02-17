@@ -1,4 +1,8 @@
 //! CSRF protection via Origin/Referer header validation.
+//! 
+//! WARNING: This has not been audited, do not rely on it as a complete CSRF
+//! defense without careful review. This is only being used for this site's
+//! upvote system which is very low stakes (no user accounts, etc.)!
 //!
 //! Rejects cross-origin POST requests by checking that the Origin header
 //! (or Referer as fallback) matches the request's Host header. This prevents

@@ -6,6 +6,7 @@
 //! The highlighting is done by running vim in batch mode to convert
 //! source code to HTML with syntax highlighting.
 
+use fs2::FileExt;
 use md5::{Md5, Digest};
 use std::fs;
 use std::io::Write;
@@ -79,6 +80,14 @@ impl VimHighlight {
     }
 
     /// Set the vim command ("vim", "vi", or "gvim")
+    ///
+    /// NOTE: The PHP version supports gvim by launching Xvfb (X Virtual
+    /// Framebuffer) — a fake X11 display server — since gvim requires an X
+    /// display even in batch mode. This was useful because gvim had better
+    /// color support than terminal vim. We don't implement this because the
+    /// site uses `colorscheme default` with `use_css=true`, so vim only
+    /// generates class names and the CSS provides the colors — gvim's extra
+    /// color support is unnecessary.
     pub fn set_vim_command(&mut self, cmd: &str) {
         let cmd_lower = cmd.to_lowercase();
         if cmd_lower == "vi" || cmd_lower == "vim" || cmd_lower == "gvim" {
@@ -165,7 +174,7 @@ impl VimHighlight {
         body_only: bool,
         ignore_mtime: bool,
     ) -> Result<String, VimHighlightError> {
-        // Check cache first
+        // Check cache first (quick check without lock)
         if self.caching {
             if let Some(cache_path) = cache_path {
                 if let Some(cached) = self.check_cache(cache_path, input_path, ignore_mtime)? {
@@ -178,6 +187,42 @@ impl VimHighlight {
                 }
             }
         }
+
+        // Acquire exclusive lock to serialize concurrent vim runs for the same
+        // cache key. This matches the PHP implementation's flock(LOCK_EX).
+        // The lock is released when _lock_file is dropped at the end of this function.
+        let _lock_file = match (self.caching, cache_path) {
+            (true, Some(cp)) => {
+                let lock_path = cp.with_extension("lock");
+                if let Some(parent) = lock_path.parent() {
+                    fs::create_dir_all(parent).ok();
+                }
+                let lock_file = fs::OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(&lock_path)
+                    .map_err(|e| VimHighlightError::IoError(
+                        format!("Failed to open lock file: {}", e),
+                    ))?;
+                lock_file.lock_exclusive().map_err(|e| {
+                    VimHighlightError::IoError(format!("Failed to acquire lock: {}", e))
+                })?;
+
+                // Re-check cache after acquiring lock — another thread may have
+                // populated it while we were waiting
+                if let Some(cached) = self.check_cache(cp, input_path, ignore_mtime)? {
+                    debug!("Cache hit after lock: {:?}", cp);
+                    return Ok(if body_only {
+                        self.extract_body(&cached)?
+                    } else {
+                        self.strip_info(&cached)
+                    });
+                }
+
+                Some(lock_file)
+            }
+            _ => None,
+        };
 
         // Create output temp file
         let output_file = NamedTempFile::new()
@@ -320,6 +365,11 @@ impl VimHighlight {
     }
 
     /// Write to cache with settings info appended
+    ///
+    /// NOTE: Unlike PHP's touch()+chmod(0600), fs::write inherits the process
+    /// umask (typically creating 0644). This is fine here since the cached
+    /// content is publicly-displayed source code, but if this code is reused
+    /// for sensitive content, set permissions explicitly.
     fn write_cache(&self, cache_path: &Path, html: &str) -> Result<(), VimHighlightError> {
         // Ensure cache directory exists
         if let Some(parent) = cache_path.parent() {
@@ -368,7 +418,12 @@ impl VimHighlight {
                 .ok_or_else(|| VimHighlightError::ParseError("No </pre> tag found".to_string()))?;
             Ok(html[start..end + 6].to_string())
         } else {
-            // When not using CSS, extract body content and wrap in div
+            // When not using CSS, extract body content and wrap in div.
+            // NOTE: The PHP version also supports a $div_css property that
+            // injects extra inline CSS into this wrapper div. It was never
+            // set to anything non-empty and is only relevant in this
+            // use_css=false path (which is also unused in production), so
+            // we omit it.
             let body_start = html.find("<body")
                 .ok_or_else(|| VimHighlightError::ParseError("No <body> tag found".to_string()))?;
             let body_end = html.rfind("</body>")
