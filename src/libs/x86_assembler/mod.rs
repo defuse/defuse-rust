@@ -77,6 +77,11 @@ pub async fn assemble(code: &str, arch: Arch) -> Result<AssemblyResult, Assemble
 /// # Errors
 /// - `AssemblyFailure` if objdump fails or input is invalid
 /// - `Timeout` if objdump takes too long
+/// Maximum binary input size for disassembly (1MB).
+/// Without this, a user could submit a huge hex string that produces a large
+/// binary blob for objdump to process.
+const MAX_BINARY_INPUT_SIZE: usize = 1024 * 1024;
+
 pub async fn disassemble(hex_input: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
     // Parse the hex input into binary data
     let binary = parse_hex_input(hex_input)?;
@@ -84,6 +89,12 @@ pub async fn disassemble(hex_input: &str, arch: Arch) -> Result<AssemblyResult, 
     if binary.is_empty() {
         return Err(AssemblerError::AssemblyFailure(
             "No valid hex data provided".to_string(),
+        ));
+    }
+
+    if binary.len() > MAX_BINARY_INPUT_SIZE {
+        return Err(AssemblerError::AssemblyFailure(
+            "Input too large. Maximum binary size is 1MB.".to_string(),
         ));
     }
 
@@ -108,18 +119,25 @@ fn parse_hex_input(input: &str) -> Result<Vec<u8>, AssemblerError> {
         .filter(|c| c.is_ascii_hexdigit())
         .collect();
 
+    // Reject odd number of hex digits — likely a typo or truncated input
+    if hex_only.len() % 2 != 0 {
+        return Err(AssemblerError::AssemblyFailure(
+            format!(
+                "Odd number of hex digits ({}). Each byte requires exactly two hex digits.",
+                hex_only.len()
+            ),
+        ));
+    }
+
     // Convert pairs of hex digits to bytes
-    let mut bytes = Vec::new();
+    let mut bytes = Vec::with_capacity(hex_only.len() / 2);
     let chars: Vec<char> = hex_only.chars().collect();
 
     for chunk in chars.chunks(2) {
-        if chunk.len() == 2 {
-            let hex_str: String = chunk.iter().collect();
-            let byte = u8::from_str_radix(&hex_str, 16)
-                .map_err(|_| AssemblerError::AssemblyFailure("Invalid hex input".to_string()))?;
-            bytes.push(byte);
-        }
-        // If there's an odd number of hex digits, ignore the last one
+        let hex_str: String = chunk.iter().collect();
+        let byte = u8::from_str_radix(&hex_str, 16)
+            .map_err(|_| AssemblerError::AssemblyFailure("Invalid hex input".to_string()))?;
+        bytes.push(byte);
     }
 
     Ok(bytes)
@@ -168,9 +186,11 @@ mod tests {
 
     #[test]
     fn test_parse_hex_odd_length() {
-        // Odd length - ignore last digit
-        let result = parse_hex_input("909").unwrap();
-        assert_eq!(result, vec![0x90]);
+        // Odd number of hex digits should return an error
+        let result = parse_hex_input("909");
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Odd number"), "Expected odd-digit error, got: {}", err);
     }
 
     #[tokio::test]

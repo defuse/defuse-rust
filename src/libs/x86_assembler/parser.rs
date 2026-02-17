@@ -6,21 +6,6 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-/// Regex to extract hex bytes from objdump disassembly lines.
-///
-/// This matches runs of hex byte pairs (e.g., "90 90 90") but excludes:
-/// - Label lines like "00000013 <location1>:"
-/// - Segment:offset patterns like "ds:0x0" or "jmp 0xf000:0xe05b"
-///
-/// The negative lookahead `(?!.*[^s\d]:)` prevents matching lines where
-/// there's a colon that isn't preceded by 's' or a digit. This filters out:
-/// - Labels (e.g., "00000013 <label>:")
-/// - But allows segment overrides (cs:, ds:, es:, fs:, gs:, ss:)
-/// - And address patterns like "0xf000:0xe05b"
-static HEX_BYTES_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"([a-fA-F0-9]{2}(\s+|$))+").unwrap()
-});
-
 /// Check if a line is a label line that should be skipped.
 ///
 /// Label lines look like: "00000013 <location1>:"
@@ -84,6 +69,13 @@ pub fn parse_objdump_output(objdump_output: &str, is_disassembly: bool) -> Resul
 
     // Normalize whitespace: replace leading whitespace on each line
     let code = normalize_code(code);
+
+    // Regex to extract hex bytes from objdump disassembly lines.
+    // Matches runs of hex byte pairs (e.g., "90 90 90") where each pair
+    // is followed by whitespace or end of string.
+    static HEX_BYTES_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"([a-fA-F0-9]{2}(\s+|$))+").unwrap()
+    });
 
     // Extract hex bytes from each line
     let mut hex_bytes = String::new();

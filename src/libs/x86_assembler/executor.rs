@@ -14,7 +14,7 @@ use tempfile::TempDir;
 use super::parser::{parse_objdump_output, AssemblyResult};
 
 /// Timeout for GCC/objdump processes (30 seconds).
-/// This is a defense-in-depth measure; with input filtering, these should complete in seconds.
+/// This is a defense-in-depth measure; with input filtering, these should complete in fractions of a second.
 const PROCESS_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Architecture for assembly/disassembly.
@@ -165,6 +165,7 @@ pub(super) async fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyRe
 /// This function is `pub(super)` because it executes external commands.
 /// Input is binary data (from hex parsing), so no code validation is needed,
 /// but access is still restricted to the module's public API.
+/// TODO: this is not actually "unsafe", or at least shouldn't be
 ///
 /// # Arguments
 /// * `binary` - The raw binary data to disassemble
@@ -223,6 +224,9 @@ pub(super) async fn disassemble_unsafe(binary: &[u8], arch: Arch) -> Result<Asse
 ///
 /// Transforms messages like "/tmp/xyz123/code.s:3: error" to "3: error"
 fn clean_error_message(message: &str, temp_path: &str) -> String {
+    use regex::Regex;
+    use std::sync::LazyLock;
+
     let mut cleaned = message.to_string();
 
     // Remove the temp directory path and filename
@@ -232,8 +236,9 @@ fn clean_error_message(message: &str, temp_path: &str) -> String {
     }
 
     // Also try to match generic patterns like /tmp/.../code.s:
-    let re = regex::Regex::new(r"/[^\s:]+/code\.s:(\d+:|\s*)").unwrap();
-    cleaned = re.replace_all(&cleaned, "").to_string();
+    static TEMP_PATH_REGEX: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"/[^\s:]+/code\.s:(\d+:|\s*)").unwrap());
+    cleaned = TEMP_PATH_REGEX.replace_all(&cleaned, "").to_string();
 
     // Remove "Assembler messages:" prefix
     cleaned = cleaned.replace("Assembler messages:\n", "");

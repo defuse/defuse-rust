@@ -7,14 +7,8 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-/// Regex to match decimal floating-point literals like 1.0, 3.14159, etc.
-/// This is used to allow floating-point arguments to .double directive.
-/// Pattern requires digits on both sides of the decimal point.
-static DECIMAL_FLOAT_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\d+\.\d+").unwrap());
-
-/// Maximum allowed input size in bytes (1MB).
-const MAX_INPUT_SIZE: usize = 1024 * 1024;
+/// Maximum allowed input size in bytes (10KB)
+const MAX_INPUT_SIZE: usize = 10 * 1024;
 
 /// Directives that are considered safe to use.
 ///
@@ -39,7 +33,7 @@ const SAFE_DIRECTIVES: &[&str] = &[
 /// 1. Size limit: Input must be under 10KB
 /// 2. Remove all safe directives from the code
 /// 3. Remove decimal floating-point literals (e.g., 1.0, 3.14159)
-/// 4. Reject if `#APP` or `#NO_APP` appears (GAS special comments)
+/// 4. Reject if `#APP` or `#NO_APP` appears (GAS special comments) -- TODO: check if this is a complete list
 /// 5. Reject if any `.` character remains after filtering
 ///
 /// This ensures only basic instructions and whitelisted directives are allowed.
@@ -65,6 +59,8 @@ pub fn is_safe_code(code: &str) -> bool {
     // Remove decimal floating-point literals (e.g., 1.0, 3.14159)
     // This allows .double directive to take floating-point arguments.
     // Safe because the pattern requires digits on both sides of the period.
+    static DECIMAL_FLOAT_REGEX: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"\d+\.\d+").unwrap());
     filtered = DECIMAL_FLOAT_REGEX.replace_all(&filtered, "").to_string();
 
     // Reject if GAS special comments are present.
