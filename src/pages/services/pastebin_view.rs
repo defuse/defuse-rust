@@ -75,34 +75,26 @@ pub async fn handler(
 
 /// Handle raw paste request (text/plain)
 async fn handle_raw_paste(paste_result: Result<crate::libs::pastebin::PasteInfo, PastebinError>) -> Response {
-    match paste_result {
+    let (status, body) = match paste_result {
         Ok(paste) => {
             if paste.jscrypt {
-                // Can't return raw for client-encrypted pastes
-                (
-                    StatusCode::OK,
-                    [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
-                    "ERROR: This paste was encrypted with client-side encryption.",
-                )
-                    .into_response()
+                (StatusCode::OK, "ERROR: This paste was encrypted with client-side encryption.".to_string())
             } else {
-                (
-                    StatusCode::OK,
-                    [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
-                    paste.text,
-                )
-                    .into_response()
+                (StatusCode::OK, paste.text)
             }
         }
         Err(_) => {
-            (
-                StatusCode::NOT_FOUND,
-                [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
-                "Sorry, the paste you were looking for could not be found.",
-            )
-                .into_response()
+            (StatusCode::NOT_FOUND, "Sorry, the paste you were looking for could not be found.".to_string())
         }
-    }
+    };
+
+    Response::builder()
+        .status(status)
+        .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
+        .header(header::CACHE_CONTROL, "no-cache, must-revalidate")
+        .header(header::EXPIRES, "Mon, 01 Jan 1990 00:00:00 GMT")
+        .body(axum::body::Body::from(body))
+        .unwrap()
 }
 
 /// Handle HTML view of paste

@@ -80,66 +80,6 @@ to build absolute URLs, they will be wrong on localhost during development.
 
 ---
 
-## BUG-04-04: 404 pages do not record hit counts
-
-**Severity: Low** -- Breaks parity with the PHP version's analytics.
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/registered_page_handler.rs`, lines 276-289
-
-In the PHP version, 404 pages are hit-counted using the key `"pages/404.php"`
-(URLParse.php line 811, index.php line 359). The Rust version uses
-`HitCounts::default()` for 404 pages and never calls `record_and_get_hits`.
-Additionally, `NOT_FOUND_PAGE_INFO` has `legacy_hit_count_id: ""` (registry/mod.rs
-line 249), so even if someone tried to count 404 hits, the key would be empty.
-
-If 404 hit analytics are desired, the `render_not_found` function should be made
-async, call `record_and_get_hits("pages/404.php", ...)`, and set
-`NOT_FOUND_PAGE_INFO.legacy_hit_count_id` to `"pages/404.php"`.
-
----
-
-## BUG-04-05: Three PHP pages missing from Rust registry
-
-**Severity: Varies** -- The `ip` page is a real missing page. The other two may be
-intentionally dropped.
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/registry/pages.rs`
-
-Comparing the PHP `$PAGE_INFO` array against the Rust `PAGE_REGISTRY`:
-
-### 5a. `"ip"` page -- **Missing** (Severity: Medium)
-
-PHP has a registered page at `"ip"` (URLParse.php line 347-352):
-```php
-"ip" => array(
-    P_FILE => "services/ip.php",
-    P_TITL => "Your IP Address",
-    P_METD => "Your IP Address!",
-    P_METK => "online IP address, what is my ip, ip address, ssl ip address",
-),
-```
-
-This was a full page (with site chrome/template) accessible at `/ip.htm` that showed
-both the HTTPS and HTTP IP addresses side by side, with an explanatory paragraph.
-The Rust version only has `/ip.php` as a plain-text endpoint returning just the raw
-IP (special_endpoints.rs), but the `/ip.htm` page with full template is missing.
-
-Anyone who has bookmarked `https://defuse.ca/ip.htm` will get a 404.
-
-### 5b. `"peerreview"` page -- **Missing** (Severity: Low)
-
-PHP has `"peerreview"` (URLParse.php line 399-404). This is an old service page
-with a contact form. If this was intentionally removed, consider adding an alias
-redirecting to `software-security-auditing` to avoid 404s for bookmarked links.
-
-### 5c. `"passwordblocks"` page -- **Missing** (Severity: Low)
-
-PHP has `"passwordblocks"` (URLParse.php line 785-790). This was a client-side
-password generator using JavaScript. If intentionally removed, consider adding an
-alias to `passgen` to avoid 404s.
-
----
-
 ## BUG-04-06: POST body buffered (up to 100 MB) before checking method support
 
 **Severity: Medium** -- Potential denial-of-service vector.
@@ -227,28 +167,6 @@ tracking visited slugs.
 
 ---
 
-## BUG-04-09: `fallback_service` serves files from `static/` including `.html` files as pages
-
-**Severity: Informational** -- Not exploitable but worth understanding.
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/main.rs`, lines 126-135
-
-The `ServeDir::new("static")` fallback will serve any file in the `static/`
-directory, including `longcat.html`, `googlec56659c80ebb2d30.html`, and blog posts.
-This is intentional (per the comments), but there's a nuance: these files bypass
-the page registry entirely, so they:
-- Do not get hit-counted
-- Do not get security headers tailored to registered pages (no-cache, etc.)
-- Do get the generic security headers from `SecurityHeadersMiddleware`
-
-Files like `static/source/*.php` and `static/source/*.c` are served with
-`Content-Disposition: attachment` by the `SecurityHeadersMiddleware` (which checks
-`path.starts_with("/source/")`), so those are handled correctly.
-
-No sensitive files (`.env`, `.git`, etc.) were found in the `static/` directory.
-
----
-
 ## BUG-04-10: `url_prefix` scheme detection does not account for `X-Forwarded-Proto`
 
 **Severity: Low** -- In production behind Caddy this works correctly due to HTTPS
@@ -284,20 +202,3 @@ incorrectly use `http://`.
 
 **Recommendation:** Check `X-Forwarded-Proto` header for consistency with the
 middleware.
-
----
-
-## Summary
-
-| ID | Severity | Description |
-|----|----------|-------------|
-| 04-01 | **Medium** | Wrong `legacy_hit_count_id` for pastebin (`.php` should be `.html`) |
-| 04-02 | Low | Duplicate BH2016 aliases silently collide |
-| 04-03 | Low | 404 page `url_prefix` hardcoded to `https://defuse.ca` |
-| 04-04 | Low | 404 pages do not record hit counts (PHP did) |
-| 04-05 | **Medium/Low** | Three PHP pages missing: `ip` (Medium), `peerreview` (Low), `passwordblocks` (Low) |
-| 04-06 | **Medium** | POST body (up to 100 MB) buffered before checking method support |
-| 04-07 | Low | Storage route not_found_service receives prefix-stripped path |
-| 04-08 | Low | `resolve_alias` can infinite-loop on circular alias chains |
-| 04-09 | Info | Static file fallback bypasses hit counting and registry metadata |
-| 04-10 | Low | `url_prefix` scheme detection doesn't use `X-Forwarded-Proto` |

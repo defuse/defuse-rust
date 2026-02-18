@@ -99,8 +99,3 @@ In practice, Axum's inner services (Router, Handler) are always-ready, so this d
 **Description**: When the Host header is empty or missing, `host_without_port` is `""`. Step 1 is skipped due to the `!host_without_port.is_empty()` guard. Step 2 then redirects to `https:///path` (note the triple slash -- empty host), which is a malformed URL. While empty Host headers are rare (HTTP/1.0 clients only, and Axum's HTTP parser may reject them), the redirect would be broken if it occurs.
 
 **Fix**: Also skip Step 2 when `host_without_port` is empty, or return a 400 Bad Request for missing Host headers.
-
-## No Global Body Size Limit for Non-Registered Routes
-**Severity**: Low
-**File**: /home/taylor/defuse-rewrite/defuse-rust/src/main.rs:145-146
-**Description**: The TODO at lines 145-146 notes that a global body size limit middleware is missing. Currently, only `registered_page_handler` enforces a 100MB limit (line 123 of registered_page_handler.rs), and `/bin/add.php` has an explicit 100MB limit. But other routes (storage routes, special endpoints) lack body size limits, which could allow memory exhaustion via large POST bodies to those endpoints. The upvote middleware's 10MB limit partially mitigates this for form-urlencoded POSTs to registered pages, but GET/PUT/PATCH/DELETE to non-registered routes have no protection.

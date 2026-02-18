@@ -261,36 +261,16 @@ impl PastebinService {
     }
 }
 
-/// Format time remaining in human-readable format
+/// Format time remaining in human-readable format.
+/// Matches PHP format: "X days, Y hours, and Z minutes."
 pub fn format_timeleft(seconds: i64) -> String {
     if seconds <= 0 {
         return "expired".to_string();
     }
 
-    const MINUTE: i64 = 60;
-    const HOUR: i64 = 60 * MINUTE;
-    const DAY: i64 = 24 * HOUR;
+    let days = seconds / (3600 * 24);
+    let hours = (seconds / 3600) % 24;
+    let minutes = (seconds / 60) % 60;
 
-    if seconds >= DAY {
-        let days = seconds / DAY;
-        let hours = (seconds % DAY) / HOUR;
-        if hours > 0 {
-            format!("{} days, {} hours", days, hours)
-        } else {
-            format!("{} days", days)
-        }
-    } else if seconds >= HOUR {
-        let hours = seconds / HOUR;
-        let minutes = (seconds % HOUR) / MINUTE;
-        if minutes > 0 {
-            format!("{} hours, {} minutes", hours, minutes)
-        } else {
-            format!("{} hours", hours)
-        }
-    } else if seconds >= MINUTE {
-        let minutes = seconds / MINUTE;
-        format!("{} minutes", minutes)
-    } else {
-        format!("{} seconds", seconds)
-    }
+    format!("{} days, {} hours, and {} minutes", days, hours, minutes)
 }

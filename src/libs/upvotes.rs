@@ -451,6 +451,10 @@ impl UpvoteService {
         page_url: &str,
         user_action: Option<VoteAction>,
     ) {
+        // TODO: safe_id is HTML-escaped but used directly in CSS class names and JS
+        // identifiers. This is safe because permanent_id comes from the hardcoded page
+        // registry. If the upvote system is ever extended to accept untrusted IDs,
+        // these concatenations would need proper CSS/JS identifier sanitization.
         let safe_id = html_escape(permanent_id);
         let js_id = js_escape(permanent_id);
         let up_form_name = format!("upvoteUpForm{}", safe_id);

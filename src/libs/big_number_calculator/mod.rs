@@ -103,6 +103,18 @@ pub async fn calculate(expr: &str, options: &CalculatorOptions) -> CalculatorRes
 
     match eval_result {
         Ok(EvalSuccess { value, result_type }) => {
+            // Defense-in-depth: HTML-escape the Ruby output before formatting.
+            // The input filter guarantees Ruby output contains only safe characters
+            // (digits, hex letters, `-`, `/`, `.`, space, `true`, `false`), so
+            // escaping should be a no-op. We assert this to catch any regression
+            // in the input filter that could lead to XSS via |safe rendering.
+            let escaped_value = crate::libs::util::html_escape(&value);
+            assert!(
+                escaped_value == value,
+                "BUG: Ruby output contains HTML-special characters: {:?}",
+                value
+            );
+
             // Step 5: Format output
             let (formatted, is_multiline_rational) = if options.add_spaces && value != "true" && value != "false" {
                 // For rationals, only group the numerator and denominator parts, not the " / "
