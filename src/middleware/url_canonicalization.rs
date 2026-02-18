@@ -125,7 +125,10 @@ where
             }
 
             // Step 3: URL canonicalization
-            if let Some(redirect_url) = canonicalize_url(path, query) {
+            // By this point, Step 1 guarantees host is MASTER_HOST or a dev host,
+            // so reusing it here is safe (no open redirect).
+            if let Some(canonical_path) = canonicalize_url(path, query) {
+                let redirect_url = build_redirect_url(is_https, &host, &canonical_path, None);
                 return Ok(redirect_301(&redirect_url));
             }
 
