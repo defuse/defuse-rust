@@ -23,7 +23,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use libs::{PhpCountService, UpvoteService};
-use middleware::{blocking_middleware, upvote_post_middleware, EtagLayer, SecurityHeadersLayer, UrlCanonicalizationLayer};
+use middleware::{blocking_middleware, upvote_post_middleware, SecurityHeadersLayer, UrlCanonicalizationLayer};
 
 /// Create a 301 Moved Permanently redirect response
 fn redirect_301(location: &'static str) -> Response {
@@ -144,9 +144,6 @@ async fn main() {
         // TODO: Add a middleware rejecting posts and such above 100MB to match old PHP behavior and DoS defense.
         // TODO: There is already an implementation of this in registered_page_handler, but it does not apply globally.
 
-        // Adds ETag headers to static files 
-        // Must wrap SecurityHeaders so it can see Cache-Control: no-store and skip ETags for sensitive pages.
-        .layer(EtagLayer)
         // Handles various things like HSTS headers, not caching pastebin posts, etc.
         .layer(SecurityHeadersLayer)
         // Upvote POST fallback - handles votes when JS is disabled, redirects after
