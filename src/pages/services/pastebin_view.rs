@@ -96,9 +96,9 @@ async fn handle_raw_paste(paste_result: Result<crate::libs::pastebin::PasteInfo,
         }
         Err(_) => {
             (
-                StatusCode::OK,
+                StatusCode::NOT_FOUND,
                 [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
-                "",
+                "Sorry, the paste you were looking for could not be found.",
             )
                 .into_response()
         }
