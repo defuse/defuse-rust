@@ -32,7 +32,7 @@ const DELETE_SECRET_HASH: &str = "a7c61e0ed10927d12ed8fa6c080874b31d1b589e679f8a
 pub async fn handler(
     Path(key): Path<String>,
     Query(query): Query<ViewQuery>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Response {
     // We've removed the bin.defuse.ca/key -> defuse.ca/b/key redirect since
     // these URLs haven't been generated in years and the maximum post lifetime

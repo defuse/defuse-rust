@@ -34,7 +34,6 @@ const IV_SIZE: usize = 16;
 pub enum CryptoError {
     InvalidBase64,
     InvalidCiphertext,
-    DecryptionFailed,
     InvalidUtf8,
 }
 
@@ -43,7 +42,6 @@ impl std::fmt::Display for CryptoError {
         match self {
             CryptoError::InvalidBase64 => write!(f, "Invalid base64 encoding"),
             CryptoError::InvalidCiphertext => write!(f, "Invalid ciphertext format"),
-            CryptoError::DecryptionFailed => write!(f, "Decryption failed"),
             CryptoError::InvalidUtf8 => write!(f, "Decrypted data is not valid UTF-8"),
         }
     }

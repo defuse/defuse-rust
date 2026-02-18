@@ -18,6 +18,10 @@ use rand::RngCore;
 /// This ensures the encoded output has no correlation with the input.
 ///
 /// WARNING: Do not re-use the output across requests.
+/// 
+/// TODO: These are not actually used by the site, but are here anyway in case I
+/// want to add the rust code to the page.
+#[allow(dead_code)]
 pub fn breach_encode(input: &str) -> String {
     let input_bytes = input.as_bytes();
     let len = input_bytes.len();
@@ -42,6 +46,9 @@ pub fn breach_encode(input: &str) -> String {
 /// Decode a breach_encode'd string back to the original.
 ///
 /// Returns None if the input is invalid (not valid hex or odd length after decoding).
+/// TODO: These are not actually used by the site, but are here anyway in case I
+/// want to add the rust code to the page.
+#[allow(dead_code)]
 pub fn breach_decode(encoded: &str) -> Option<String> {
     let bytes = hex::decode(encoded).ok()?;
 

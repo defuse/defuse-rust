@@ -59,7 +59,6 @@ struct ConfirmationInfo {
 /// Shown after a drawing is successfully completed. Contains the drawing
 /// number and a permalink to view the results.
 struct CompletionInfo {
-    drawing_num: i32,
     url: String,
 }
 
@@ -224,6 +223,7 @@ impl TrentPage {
     async fn handle_view_drawing(&mut self, drawing_num: i32) {
         match trent::get_drawing(drawing_num).await {
             Ok(Some(drawing)) => {
+                assert!(drawing_num == drawing.drawingnum);
                 if drawing.complete {
                     self.drawing_view = Some(DrawingView::Complete {
                         drawing_num,
@@ -401,7 +401,7 @@ impl TrentPage {
             "{}/trustedthirdparty.htm?drawingnum={}",
             self.ctx.url_prefix, drawing_num
         );
-        self.completion = Some(CompletionInfo { drawing_num, url });
+        self.completion = Some(CompletionInfo { url });
     }
 }
 

@@ -5,5 +5,4 @@
 
 pub use std::path::Path;
 
-pub use crate::libs::bibliography::Bibliography;
 pub use crate::libs::vim_highlight;

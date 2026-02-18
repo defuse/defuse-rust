@@ -34,7 +34,6 @@ mod filter;
 mod parser;
 
 pub use executor::{Arch, AssemblerError};
-pub use filter::SafetyRejection;
 pub use parser::AssemblyResult;
 
 /// Assemble x86/x64 assembly code.

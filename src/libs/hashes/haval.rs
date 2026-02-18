@@ -316,7 +316,6 @@ impl HavalContext {
     }
 
     fn update(&mut self, data: &[u8]) {
-        let mut offset = 0;
         let index = ((self.count[0] >> 3) & 0x7F) as usize;
 
         // Update bit count
@@ -332,7 +331,7 @@ impl HavalContext {
         if data.len() >= part_len {
             self.buffer[index..index + part_len].copy_from_slice(&data[..part_len]);
             self.transform(&self.buffer.clone());
-            offset = part_len;
+            let mut offset = part_len;
 
             while offset + 127 < data.len() {
                 let block: [u8; 128] = data[offset..offset + 128].try_into().unwrap();

@@ -102,6 +102,8 @@ impl VoteState {
 #[derive(Debug, Clone)]
 pub struct PageVoteInfo {
     pub permanent_id: String,
+    // TODO: Make all-pages break down by category at some point in the future
+    #[allow(dead_code)]
     pub category: String,
     pub title: String,
     pub description: String,

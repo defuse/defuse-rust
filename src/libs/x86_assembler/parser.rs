@@ -34,8 +34,6 @@ fn is_label_line(line: &str) -> bool {
 /// Result of parsing assembly/disassembly output.
 #[derive(Debug, Clone)]
 pub struct AssemblyResult {
-    /// Raw hex bytes as uppercase string (no spaces)
-    pub hex: String,
     /// Hex with null bytes wrapped in <b></b> tags
     pub hex_zero_bold: String,
     /// C string literal format (e.g., "\x90\x90")
@@ -112,7 +110,6 @@ pub fn parse_objdump_output(objdump_output: &str, is_disassembly: bool) -> Resul
     let array_literal = build_array_literal(&hex_bytes);
 
     Ok(AssemblyResult {
-        hex: hex_bytes,
         hex_zero_bold,
         string_literal,
         array_literal,
