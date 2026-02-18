@@ -369,4 +369,25 @@ mod tests {
         assert_eq!(result.result_type, ResultType::Float);
         assert_eq!(result.value, "7.0");
     }
+
+    #[tokio::test]
+    async fn test_scientific_notation() {
+        let result = evaluate(&safe("1e5"), OutputBase::Decimal).await.unwrap();
+        assert_eq!(result.result_type, ResultType::Float);
+        assert_eq!(result.value, "100000.0");
+    }
+
+    #[tokio::test]
+    async fn test_scientific_notation_negative_exponent() {
+        let result = evaluate(&safe("1e-5"), OutputBase::Decimal).await.unwrap();
+        assert_eq!(result.result_type, ResultType::Float);
+        assert_eq!(result.value, "1.0e-05");
+    }
+
+    #[tokio::test]
+    async fn test_scientific_notation_float_mantissa() {
+        let result = evaluate(&safe("2.5e3"), OutputBase::Decimal).await.unwrap();
+        assert_eq!(result.result_type, ResultType::Float);
+        assert_eq!(result.value, "2500.0");
+    }
 }

@@ -99,6 +99,34 @@ mod tests {
     }
 
     #[test]
+    fn test_scientific_notation() {
+        assert!(validate("1e5").is_ok());
+        assert!(validate("1E5").is_ok());
+        assert!(validate("1e+5").is_ok());
+        assert!(validate("1e-5").is_ok());
+        assert!(validate("2.5e3").is_ok());
+        assert!(validate("2.5e+3").is_ok());
+        assert!(validate("2.5e-3").is_ok());
+        assert!(validate("1e5 + 2").is_ok());
+        assert!(validate("3e-2-1").is_ok()); // (3e-2) - 1
+        // Invalid forms
+        assert!(validate("1e").is_err());    // no exponent digits
+        assert!(validate("e5").is_err());    // no mantissa
+        // Ruby rejects 5.e3 (interprets . as method call) — must not parse
+        assert!(validate("5.e3").is_err());
+        // Ruby rejects .5e3 (no leading digit before .) — must not parse
+        assert!(validate(".5e3").is_err());
+    }
+
+    #[test]
+    fn test_scientific_notation_does_not_break_hex() {
+        // Hex numbers containing 'e' must still parse as hex, not scientific
+        assert!(validate("0xe5").is_ok());
+        assert!(validate("0xfe5").is_ok());
+        assert!(validate("0xdeadbeef").is_ok());
+    }
+
+    #[test]
     fn test_rationals() {
         assert!(validate("1r").is_ok());
         assert!(validate("1r/2").is_ok());

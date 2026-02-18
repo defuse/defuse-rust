@@ -40,10 +40,18 @@ shift_op = { "<<" | ">>" }
 add_op   = { "+" | "-" }
 mult_op  = { "/" | "%" | "*" }  // * last so it doesn't match before ** in power rule
 
-// Numbers: floats, rationals, or integers
+// Numbers: scientific, floats, rationals, or integers
 // The @{} makes these atomic (no whitespace allowed inside)
 // Order matters in PEG: more specific patterns first
-number = @{ float | rational | integer }
+number = @{ scientific | float | rational | integer }
+
+// Scientific notation: 1e5, 2.5e-3, etc.
+// Ruby requires digits on both sides of "." when combined with exponent.
+// Sign (+/-) in exponent is consumed greedily before any operator parsing.
+scientific = @{
+    ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ ~ ("e"|"E") ~ ("+"|"-")? ~ ASCII_DIGIT+ |
+    ASCII_DIGIT+ ~ ("e"|"E") ~ ("+"|"-")? ~ ASCII_DIGIT+
+}
 
 // Float: supports .5, 5., 5.5, and 0.5 forms
 float = @{
