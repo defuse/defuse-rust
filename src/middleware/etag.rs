@@ -3,12 +3,15 @@
 //! Adds ETag headers to responses that have Last-Modified headers (static files).
 //! ETag format matches Apache: "<size_hex>-<mtime_hex>"
 //!
+//! Supports conditional requests: If a request includes an `If-None-Match` header
+//! matching the computed ETag, returns 304 Not Modified with an empty body.
+//!
 //! SECURITY: Does NOT add ETag to responses with Cache-Control: no-store
 //! to ensure sensitive pages like passgen remain uncacheable.
 
 use axum::{
     body::Body,
-    http::{header, Request, Response},
+    http::{header, Method, Request, Response, StatusCode},
 };
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
@@ -49,6 +52,17 @@ where
     fn call(&mut self, req: Request<Body>) -> Self::Future {
         let mut inner = self.inner.clone();
 
+        // Capture If-None-Match from request before passing to inner service
+        let if_none_match = req
+            .headers()
+            .get(header::IF_NONE_MATCH)
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_owned());
+
+        // Only handle conditional requests for GET and HEAD (per RFC 7232)
+        let is_conditional_method =
+            req.method() == Method::GET || req.method() == Method::HEAD;
+
         Box::pin(async move {
             let mut response = inner.call(req).await?;
 
@@ -68,16 +82,39 @@ where
 
             if has_last_modified && !has_etag && !has_no_store {
                 if let Some(etag) = compute_etag(response.headers()) {
-                    response.headers_mut().insert(
-                        header::ETAG,
-                        etag.parse().unwrap(),
-                    );
+                    response
+                        .headers_mut()
+                        .insert(header::ETAG, etag.parse().unwrap());
+
+                    // Handle conditional request (If-None-Match)
+                    if is_conditional_method {
+                        if let Some(ref inm) = if_none_match {
+                            if etag_matches(inm, &etag) {
+                                *response.status_mut() = StatusCode::NOT_MODIFIED;
+                                // Remove entity headers per RFC 7232, keep cache headers
+                                response.headers_mut().remove(header::CONTENT_TYPE);
+                                response.headers_mut().remove(header::CONTENT_LENGTH);
+                                response.headers_mut().remove(header::CONTENT_ENCODING);
+                                *response.body_mut() = Body::empty();
+                            }
+                        }
+                    }
                 }
             }
 
             Ok(response)
         })
     }
+}
+
+/// Check if an If-None-Match header value matches a computed ETag.
+/// Handles multiple ETags (comma-separated) and wildcard (*).
+fn etag_matches(if_none_match: &str, etag: &str) -> bool {
+    let inm = if_none_match.trim();
+    if inm == "*" {
+        return true;
+    }
+    inm.split(',').any(|tag| tag.trim() == etag)
 }
 
 /// Compute ETag from Last-Modified and Content-Length headers.
@@ -134,5 +171,36 @@ mod tests {
         assert!(etag.contains('-'));
         // Size 9233 = 0x2411
         assert!(etag.contains("2411"));
+    }
+
+    #[test]
+    fn test_etag_matches_exact() {
+        assert!(etag_matches("\"2411-5c4c5758\"", "\"2411-5c4c5758\""));
+    }
+
+    #[test]
+    fn test_etag_matches_wildcard() {
+        assert!(etag_matches("*", "\"2411-5c4c5758\""));
+    }
+
+    #[test]
+    fn test_etag_matches_multiple() {
+        assert!(etag_matches(
+            "\"aaa-111\", \"2411-5c4c5758\", \"bbb-222\"",
+            "\"2411-5c4c5758\""
+        ));
+    }
+
+    #[test]
+    fn test_etag_no_match() {
+        assert!(!etag_matches("\"wrong-etag\"", "\"2411-5c4c5758\""));
+    }
+
+    #[test]
+    fn test_etag_no_match_multiple() {
+        assert!(!etag_matches(
+            "\"aaa-111\", \"bbb-222\"",
+            "\"2411-5c4c5758\""
+        ));
     }
 }
