@@ -13,6 +13,7 @@ use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::handler::{BoxFuture, PageHandler, PostBody};
 use crate::libs::html_escape;
+use crate::libs::util::html_escape as escape_html;
 use crate::libs::vim_highlight;
 
 pub struct Handler;
@@ -99,7 +100,7 @@ impl PageHandler for Handler {
 fn get_source_html() -> String {
     let source_path = Path::new("static/source/HtmlEscape.php");
     vim_highlight::highlight_file(source_path, true).unwrap_or_else(|e| {
-        format!("<pre>Error loading source: {}</pre>", e)
+        format!("<pre>Error loading source: {}</pre>", escape_html(&e.to_string()))
     })
 }
 

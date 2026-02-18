@@ -12,6 +12,7 @@ use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::handler::{BoxFuture, PageHandler, PostBody};
 use crate::libs::breach;
+use crate::libs::util::html_escape;
 use crate::libs::vim_highlight;
 
 pub struct Handler;
@@ -22,7 +23,7 @@ impl PageHandler for Handler {
             // Highlight the PHP source file
             let source_path = Path::new("static/source/breach.php");
             let highlighted_source = vim_highlight::highlight_file(source_path, false)
-                .unwrap_or_else(|e| format!("<p>Error highlighting source: {}</p>", e));
+                .unwrap_or_else(|e| format!("<p>Error highlighting source: {}</p>", html_escape(&e.to_string())));
 
             // Generate sample breach_visual_html output
             let sample_header = breach::breach_visual_html("Sample Header");
