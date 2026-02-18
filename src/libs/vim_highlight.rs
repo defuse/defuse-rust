@@ -1,8 +1,14 @@
 //! Vim-based syntax highlighting.
+//! 
+//! WARNING: This SHOULD NOT be used on untrusted input, since there may be bugs
+//! in vim's HTML generation that enable XSS attacks. I do not know of any such
+//! bugs, but I also have not audited vim itself to be secure for this use case.
+//! It's fine on defuse.ca because I'm only highlighting static strings and 
+//! source files.
 //!
 //! This module provides syntax highlighting using Vim's TOhtml feature.
 //! It's a Rust port of VimHighlight.php from the original site.
-//!
+//! 
 //! The highlighting is done by running vim in batch mode to convert
 //! source code to HTML with syntax highlighting.
 

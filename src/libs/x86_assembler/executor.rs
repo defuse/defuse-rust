@@ -11,6 +11,7 @@ use tokio::process::Command;
 use tokio::time::timeout;
 use tempfile::TempDir;
 
+use super::filter::SafeAsm;
 use super::parser::{parse_objdump_output, AssemblyResult};
 
 /// Timeout for GCC/objdump processes (30 seconds).
@@ -45,7 +46,9 @@ impl Arch {
 /// Error type for assembly/disassembly operations.
 #[derive(Debug)]
 pub enum AssemblerError {
-    /// Input was too large or contained unsafe directives.
+    /// Input exceeded the maximum size limit.
+    InputTooLarge,
+    /// Input contained unsafe directives.
     UnsafeCode,
     /// GCC or objdump failed with an error message.
     AssemblyFailure(String),
@@ -58,10 +61,14 @@ pub enum AssemblerError {
 impl std::fmt::Display for AssemblerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            AssemblerError::InputTooLarge => write!(
+                f,
+                "Sorry, your input is too large! Maximum input size is 10KB."
+            ),
             AssemblerError::UnsafeCode => write!(
                 f,
-                "Sorry, your input is too big or contains unsafe directives! \n\
-                 The period (.) character must not appear anywhere in your source code."
+                "{}",
+                super::filter::unsafe_directives_message()
             ),
             AssemblerError::AssemblyFailure(msg) => write!(f, "{}", msg),
             AssemblerError::Timeout => write!(f, "Assembly timed out. Please try simpler input."),
@@ -72,19 +79,18 @@ impl std::fmt::Display for AssemblerError {
 
 /// Assemble code using GCC.
 ///
-/// # Safety
-///
 /// This function is `pub(super)` because it executes external commands.
-/// Callers MUST validate input using `filter::is_safe_code()` before calling.
-/// The public API in mod.rs enforces this.
+/// It takes a [`SafeAsm`] which can only be obtained from
+/// [`check_code_safety`](super::filter::check_code_safety), ensuring
+/// input has been validated at the type level.
 ///
 /// # Arguments
-/// * `code` - The assembly code (must be pre-validated)
+/// * `code` - The validated assembly code
 /// * `arch` - Target architecture
 ///
 /// # Returns
 /// The assembled result or an error.
-pub(super) async fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
+pub(super) async fn assemble_unsafe(code: &SafeAsm<'_>, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
     // Create a temporary directory for our files.
     // Using TempDir ensures cleanup even on error.
     let temp_dir = TempDir::new()
@@ -97,7 +103,7 @@ pub(super) async fn assemble_unsafe(code: &str, arch: Arch) -> Result<AssemblyRe
     // - .intel_syntax noprefix: Use Intel syntax without register prefixes
     // - _main: label: Required entry point for objdump to find the code
     // - Lowercase .s extension: Tells GCC to skip the C preprocessor
-    let asm_source = format!(".intel_syntax noprefix\n_main:\n{}\n", code);
+    let asm_source = format!(".intel_syntax noprefix\n_main:\n{}\n", code.as_str());
 
     fs::write(&source_path, &asm_source)
         .map_err(|e| AssemblerError::InternalError(format!("Failed to write source: {}", e)))?;

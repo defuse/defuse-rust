@@ -34,6 +34,7 @@ mod filter;
 mod parser;
 
 pub use executor::{Arch, AssemblerError};
+pub use filter::SafetyRejection;
 pub use parser::AssemblyResult;
 
 /// Assemble x86/x64 assembly code.
@@ -46,16 +47,18 @@ pub use parser::AssemblyResult;
 /// The assembly result containing hex bytes, literals, and disassembly.
 ///
 /// # Errors
-/// - `UnsafeCode` if the input is too large or contains unsafe directives
+/// - `InputTooLarge` if the input exceeds the size limit
+/// - `UnsafeCode` if the input contains unsafe directives
 /// - `AssemblyFailure` if GCC fails to compile the code
 /// - `Timeout` if GCC or objdump takes too long
 pub async fn assemble(code: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
     // Validate input before executing
-    if !filter::is_safe_code(code) {
-        return Err(AssemblerError::UnsafeCode);
-    }
+    let safe_code = filter::check_code_safety(code).map_err(|rejection| match rejection {
+        filter::SafetyRejection::InputTooLarge => AssemblerError::InputTooLarge,
+        filter::SafetyRejection::UnsafeDirectives => AssemblerError::UnsafeCode,
+    })?;
 
-    executor::assemble_unsafe(code, arch).await
+    executor::assemble_unsafe(&safe_code, arch).await
 }
 
 /// Disassemble a hex string into x86/x64 instructions.
@@ -203,6 +206,6 @@ mod tests {
     async fn test_assemble_large_input_rejected() {
         let large = "nop\n".repeat(300000); // > 1MB
         let result = assemble(&large, Arch::X86).await;
-        assert!(matches!(result, Err(AssemblerError::UnsafeCode)));
+        assert!(matches!(result, Err(AssemblerError::InputTooLarge)));
     }
 }
