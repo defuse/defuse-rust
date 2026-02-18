@@ -109,13 +109,13 @@ async fn handle_raw_paste(paste_result: Result<crate::libs::pastebin::PasteInfo,
 async fn handle_html_view(
     paste_result: Result<crate::libs::pastebin::PasteInfo, PastebinError>,
 ) -> Response {
-    let html = match paste_result {
-        Ok(paste) => render_paste_html(&paste),
-        Err(_) => render_not_found_html(),
+    let (status, html) = match paste_result {
+        Ok(paste) => (StatusCode::OK, render_paste_html(&paste)),
+        Err(_) => (StatusCode::NOT_FOUND, render_not_found_html()),
     };
 
     Response::builder()
-        .status(StatusCode::OK)
+        .status(status)
         .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
         .header(header::CACHE_CONTROL, "no-cache, must-revalidate")
         .header(header::EXPIRES, "Mon, 01 Jan 1990 00:00:00 GMT")
