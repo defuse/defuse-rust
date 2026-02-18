@@ -1,6 +1,6 @@
 //! defuse.ca - Port of my defuse.ca website from the original PHP code to Rust.
 
-use axum::{middleware as axum_middleware, routing::{any, get, get_service, post}, Router};
+use axum::{extract::DefaultBodyLimit, middleware as axum_middleware, routing::{any, get, get_service, post}, Router};
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -105,7 +105,8 @@ async fn main() {
         .route("/getmyip.php", get(special_endpoints::getmyip_php))
         .route("/s.php", get(special_endpoints::shout_php))
         // Pastebin routes and redirects
-        .route("/bin/add.php", post(pages::services::pastebin_add::handler))
+        .route("/bin/add.php", post(pages::services::pastebin_add::handler)
+            .layer(DefaultBodyLimit::max(100 * 1024 * 1024))) // 100 MB so the handler's 50 MB check returns a useful error
         .route("/bin/", get(|| async { redirect_301("/pastebin.htm") }))
         .route("/bin", get(|| async { redirect_301("/pastebin.htm") }))
         .route("/b/", get(|| async { redirect_301("/pastebin.htm") }))
