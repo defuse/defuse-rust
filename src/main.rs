@@ -136,27 +136,10 @@ async fn main() {
 
         // The way middleware works is that the outermost layer sees the request
         // first, passes on to the next layer, eventually arriving at the
-        // innermost middleware, then the stack unwinds. Here, the outermost
+        // innermost middleware, then the stack unwinds. Here, the INNERMOST
         // layers come first.
 
-        // Makes sure any panic results in a 500 error rather than a crash.
-        .layer(CatchPanicLayer::new())
-
-        // TODO: Add a middleware rejecting posts and such above 100MB to match old PHP behavior and DoS defense.
-        // TODO: There is already an implementation of this in registered_page_handler, but it does not apply globally.
-
-        // Handles various things like HSTS headers, not caching pastebin posts, etc.
-        .layer(SecurityHeadersLayer)
-        // Upvote POST fallback - handles votes when JS is disabled, redirects after
-        .layer(axum_middleware::from_fn_with_state(
-            state.clone(),
-            upvote_post_middleware,
-        ))
-        // Handles things like:
-        //  - Redirect to HTTPS
-        //  - /abouT -> /about.htm
-        //  - etc.
-        .layer(UrlCanonicalizationLayer)
+        // NOTE: Caddy is responsible for rejecting POSTs with too-big bodies (100MB).
 
         // BlockingMiddleware: runs handlers on blocking thread pool for OS preemption
         // This is innermost so actual request handling gets preemptive scheduling
@@ -166,7 +149,26 @@ async fn main() {
         // Without this, a long computation would block the async runtime and
         // starve all other requests.
         .layer(axum_middleware::from_fn(blocking_middleware))
-        .with_state(state);
+        .with_state(state.clone())
+
+        // Upvote POST fallback - handles votes when JS is disabled, redirects after
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            upvote_post_middleware,
+        ))
+
+        // Handles things like:
+        //  - Redirect to HTTPS
+        //  - /abouT -> /about.htm
+        //  - etc.
+        .layer(UrlCanonicalizationLayer)
+
+        // Handles various things like HSTS headers, not caching pastebin posts, etc.
+        .layer(SecurityHeadersLayer)
+
+        // Makes sure any panic results in a 500 error rather than a crash.
+        .layer(CatchPanicLayer::new());
+
 
     tracing::info!("Listening on http://{}", listen_addr);
 
