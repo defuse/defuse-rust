@@ -110,6 +110,27 @@ async fn process_submission(bytes: &[u8], ctx: &PageContext) -> SubmissionResult
     // Preserve the plaintext message for error recovery
     let textarea_contents = form.message.clone();
 
+    // Validate that all saved fields are printable ASCII with no whitespace.
+    // The archive is stored one message per line and hashed for blockchain proofs,
+    // so we must guarantee no control characters, newlines, or non-ASCII bytes.
+    for (name, value) in [
+        ("algorithm", &form.algorithm),
+        ("present_public_key", &form.present_public_key),
+        ("future_public_key", &form.future_public_key),
+        ("ciphertext", &form.ciphertext),
+    ] {
+        if !value.bytes().all(|b| b > 0x20 && b < 0x7F) {
+            return SubmissionResult {
+                error_message: Some(format!(
+                    "The {} field contains invalid characters. Only printable ASCII without spaces is allowed.",
+                    name
+                )),
+                textarea_contents,
+                ..Default::default()
+            };
+        }
+    }
+
     // Build the encrypted message line
     // Format: time:ISO8601 algorithm:... presentpublickey:... futurepublickey:... ciphertext:...
     let now = chrono::Utc::now();
@@ -124,11 +145,8 @@ async fn process_submission(bytes: &[u8], ctx: &PageContext) -> SubmissionResult
         form.ciphertext
     );
 
-    // Validate message size and format
-    if encrypted_message.len() >= 200000
-        || encrypted_message.contains('\n')
-        || encrypted_message.contains('\r')
-    {
+    // Validate message size
+    if encrypted_message.len() >= 200000 {
         return SubmissionResult {
             error_message: Some("Something went wrong, your message was too big or the encrypted version contains newlines.".to_string()),
             textarea_contents,

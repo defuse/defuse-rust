@@ -42,9 +42,13 @@ const CACHE_SUFFIX: &str = ".highlighted.html";
 pub struct VimHighlight {
     /// Whether to cache the result (vim is slow)
     pub caching: bool,
-    /// Color scheme to use (passed to :colorscheme)
+    /// Color scheme to use (passed to :colorscheme).
+    /// SAFETY: Interpolated into a vim `-c` argument. Must be a hardcoded
+    /// literal, never user input, to prevent command injection.
     pub color_scheme: String,
-    /// File type / language (None = let vim auto-detect)
+    /// File type / language (None = let vim auto-detect).
+    /// SAFETY: Interpolated into a vim `-c "set filetype=..."` argument. Must
+    /// be a hardcoded literal, never user input, to prevent command injection.
     pub file_type: Option<String>,
     /// Whether to show line numbers
     pub show_lines: bool,
@@ -73,7 +77,9 @@ impl VimHighlight {
         Self::default()
     }
 
-    /// Create with the standard settings used by printHlString
+    /// Create with the standard settings used by printHlString.
+    /// SAFETY: `file_type` is interpolated into a vim command. Only pass
+    /// hardcoded string literals, never user input.
     pub fn for_print_hl_string(file_type: &str, show_lines: bool) -> Self {
         Self {
             caching: true,
@@ -124,8 +130,9 @@ impl VimHighlight {
                 Some(cache_dir_path.join(format!("string-{}{}", hash, CACHE_SUFFIX)))
             } else {
                 // Cache dir doesn't exist, disable caching for this call
-                debug!("Cache directory {:?} doesn't exist, skipping cache", cache_dir_path);
-                None
+                panic!("Cache directory {:?} doesn't exist, skipping cache", cache_dir_path);
+                // TODO: more graceful handling, but panic for now.
+                //None
             }
         } else {
             None
@@ -142,9 +149,9 @@ impl VimHighlight {
         }
 
         let cache_path = if self.caching {
-            let real_path = input_path.canonicalize()
+            let contents = std::fs::read(input_path)
                 .map_err(|e| VimHighlightError::IoError(e.to_string()))?;
-            let hash = format!("{:x}", Md5::digest(real_path.to_string_lossy().as_bytes()));
+            let hash = self.compute_cache_key_bytes(&contents);
             Some(cache_dir().join(format!("path-{}{}", hash, CACHE_SUFFIX)))
         } else {
             None
@@ -153,9 +160,19 @@ impl VimHighlight {
         self.run_vim(input_path, cache_path.as_deref(), body_only, false)
     }
 
-    /// Compute cache key from content and settings
-    fn compute_cache_key(&self, content: &str) -> String {
-        format!("{:x}", Md5::digest(content.as_bytes()))
+    /// Compute cache key from content/identity and settings.
+    /// Includes all settings so different configurations get separate cache entries.
+    fn compute_cache_key(&self, identity: &str) -> String {
+        self.compute_cache_key_bytes(identity.as_bytes())
+    }
+
+    /// Compute cache key from raw bytes and settings.
+    fn compute_cache_key_bytes(&self, content: &[u8]) -> String {
+        let mut hasher = Md5::new();
+        hasher.update(content);
+        hasher.update(b"\0");
+        hasher.update(self.encode_info().as_bytes());
+        format!("{:x}", hasher.finalize())
     }
 
     /// Encode current settings for cache validation
@@ -495,8 +512,10 @@ impl std::fmt::Display for VimHighlightError {
 
 impl std::error::Error for VimHighlightError {}
 
-/// Convenience function matching PHP's printHlString
-/// Returns HTML wrapped in <div class="vimhighlight">
+/// Convenience function matching PHP's printHlString.
+/// Returns HTML wrapped in <div class="vimhighlight">.
+/// SAFETY: `file_type` is interpolated into a vim command. Only pass
+/// hardcoded string literals, never user input.
 pub fn highlight_string(text: &str, file_type: &str, show_lines: bool) -> Result<String, VimHighlightError> {
     let hl = VimHighlight::for_print_hl_string(file_type, show_lines);
     let body = hl.process_text(text, true)?;

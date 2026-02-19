@@ -34,8 +34,20 @@ fn redirect_301(location: &'static str) -> Response {
         .into_response()
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
+    // Build runtime with a higher blocking thread pool limit (default is 512).
+    // Every request runs on a blocking thread (via blocking_middleware), so this
+    // effectively limits max concurrent requests.
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .max_blocking_threads(4096)
+        .build()
+        .expect("failed to build Tokio runtime");
+
+    runtime.block_on(async_main());
+}
+
+async fn async_main() {
     // Initialize logging
     // Default to info level; set RUST_LOG=defuse=debug for verbose output
     tracing_subscriber::registry()

@@ -37,23 +37,6 @@ The code itself has a TODO comment acknowledging this problem. The `is_latin1_sa
 
 **Severity:** Moderate (corrupts display of historical data)
 
-### 1.3 MODERATE: `String::from_utf8_lossy` silently corrupts time capsule messages
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/libs/timecapsule.rs`, lines 82-85
-
-```rust
-Ok(rows
-    .into_iter()
-    .map(|(msg,)| String::from_utf8_lossy(&msg).into_owned())
-    .collect())
-```
-
-The time capsule `get_all_entries_in_order()` reads the `message` column as `Vec<u8>` and converts via `from_utf8_lossy`. If any legacy messages in the database are not valid UTF-8, they will be silently corrupted in the archive download. The archive download is especially critical because "various hashes of the first N lines of the file are written to blockchains" (line 253 of `quantum_computer_time_capsule.rs`).
-
-**Impact:** If any pre-existing message in the database contains non-UTF-8 bytes, the archive download would produce different output than the PHP version, breaking the blockchain hash chain. New messages are submitted as HTML form strings (always UTF-8), so this only affects legacy data or data inserted by the PHP version.
-
-**Severity:** Moderate (could break archive integrity for blockchain validation)
-
 ### 1.4 LOW: `data_as_string()` in TRENT form parsing uses `from_utf8_lossy`
 
 **File:** `/home/taylor/defuse-rewrite/defuse-rust/src/pages/services/trent.rs`, lines 515-518
@@ -116,10 +99,6 @@ drawing_num: result.last_insert_id() as i32,
 `last_insert_id()` returns `u64`, cast to `i32`. If the auto-increment counter exceeds 2^31 - 1 (2,147,483,647), the drawing number would wrap to negative, causing confusing behavior. Unlikely in practice.
 
 **Severity:** Low (would require billions of drawings)
-
-### 2.3 INFO: Paste size limit correctly enforced
-
-The paste size limit check at `pastebin_add.rs:43` checks `form.paste.len() > MAX_PASTE_SIZE` where `MAX_PASTE_SIZE = 50 * 1024 * 1024`. The body limit in `main.rs:109` is set to 100 MB to allow the handler's own check to return a useful error message. This is correctly layered.
 
 ## 3. Race Conditions
 
@@ -194,71 +173,6 @@ This is correctly handled. The `AND complete = 0` clause acts as an atomic compa
 
 ## 4. Data Corruption
 
-### 4.1 LOW: Pastebin line ending normalization is intentional and correct
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/pages/services/pastebin_add.rs`, line 48
-
-```rust
-let text = form.paste.replace("\r\n", "\n").replace('\r', "\n");
-```
-
-This normalizes CRLF and bare CR to LF. This is correct and intentional for a text pastebin. The paste data arrives as a form-urlencoded string, so it's always text (not binary). Client-side encrypted pastes (jscrypt) are encrypted in the browser before the form is submitted, so the ciphertext is base64/JSON and contains no CR/LF to normalize.
-
-**Severity:** Not a bug.
-
-### 4.2 LOW: Checksums "normalize" feature removes all line endings
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/pages/services/checksums.rs`, lines 119-123
-
-```rust
-let data = if normalize {
-    form.data.replace('\r', "").replace('\n', "")
-} else {
-    form.data.clone()
-};
-```
-
-The normalize checkbox removes ALL `\r` and `\n` characters from the input. This is intentional -- it matches the PHP behavior and the purpose is to let users paste text from different environments and get the same hash (by stripping line endings). The checkbox is clearly labeled. However, this does mean multi-line input with "normalize" checked will be hashed as a single line.
-
-**Severity:** Not a bug (intentional feature, matching PHP).
-
-### 4.3 MODERATE: Time capsule archive could be corrupted by injected messages
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/pages/services/quantum_computer_time_capsule.rs`, lines 128-131 and 283-287
-
-```rust
-// In process_submission:
-if encrypted_message.len() >= 200000
-    || encrypted_message.contains('\n')
-    || encrypted_message.contains('\r')
-
-// In build_archive_content:
-for msg in messages {
-    content.push_str(&msg);
-    content.push('\n');
-}
-```
-
-The validation correctly rejects messages containing newlines before saving. However, this validation only applies to messages submitted through the Rust version. If any messages were inserted into the database by the PHP version without this validation (or via direct DB access), they could contain newlines, which would break the archive format. Each message is expected to be a single line, and a message with embedded newlines would appear as multiple messages in the archive.
-
-Furthermore, the `from_utf8_lossy` issue (#1.3 above) could introduce U+FFFD characters, changing the byte content and breaking blockchain hash verification.
-
-**Severity:** Moderate (depends on legacy data integrity; the archive format is sensitive because of blockchain hashing)
-
-### 4.4 LOW: Vim highlight cache key does not include settings
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/libs/vim_highlight.rs`, line 157-159
-
-```rust
-fn compute_cache_key(&self, content: &str) -> String {
-    format!("{:x}", Md5::digest(content.as_bytes()))
-}
-```
-
-The cache key for string content is based only on the MD5 of the content, not on the settings (file_type, show_lines, use_css, etc.). This means that if the same text is highlighted with different settings, the cache file path would be the same. However, the cache **validation** (`check_cache` at line 362-365) does compare the stored settings against the current settings via `encode_info()`, so a cache hit with different settings would correctly be treated as a miss. The only issue is that different settings would overwrite each other's cache entries, reducing cache effectiveness. No data corruption occurs.
-
-**Severity:** Not a correctness bug (cache thrashing only, no data corruption).
-
 ## 5. Silent Failures
 
 ### 5.1 MODERATE: Hit counting silently fails and returns default counts
@@ -325,26 +239,3 @@ if let Err(e) = state
 If `ensure_page` fails (e.g., database error), the page still renders, but the upvote data for that page might not exist in the database. A subsequent vote attempt for that page could fail if the page was never created. This is only an issue for brand-new pages that haven't been visited yet, and only during database issues.
 
 **Severity:** Low
-
-## 6. Summary
-
-### Issues requiring attention before deployment:
-
-| # | Severity | Issue | File |
-|---|----------|-------|------|
-| 2.1 | **High** | TRENT `u32` timestamp overflow allows review period bypass via large `reviewtime` | `libs/trent.rs:39,286-291` |
-| 1.2 | Moderate | `from_utf8_lossy` corrupts legacy TRENT drawings with non-ASCII characters | `libs/trent.rs:161-162` |
-| 1.3 | Moderate | `from_utf8_lossy` corrupts legacy time capsule messages, breaking archive integrity | `libs/timecapsule.rs:82-85` |
-| 4.3 | Moderate | Time capsule archive format vulnerable to legacy messages with embedded newlines | `quantum_computer_time_capsule.rs:283-287` |
-| 3.2 | Low | Upvote vote counting not atomic (count drift under concurrency) | `libs/upvotes.rs:146-201` |
-| 3.1 | Low | Pastebin key uniqueness check-then-insert race | `libs/pastebin.rs:150-188` |
-| 3.3 | Low | Hit counter duplicate row creation on first visit | `libs/phpcount.rs:224-255` |
-| 5.1 | Low | Hit counts permanently lost during database outages | `registered_page_handler.rs:197-209` |
-
-### Recommended fixes:
-
-1. **TRENT review time validation (High):** Validate `prereview` against the allowed dropdown values (0, 86400, 604800, 2592000) or at least cap it so `starttime + reviewtime` cannot overflow `u32`. Consider migrating to `u64` or `i64` timestamps.
-
-2. **Latin-1 database reads (Moderate):** For TRENT and time capsule, instead of `from_utf8_lossy`, try `from_utf8` first and fall back to a proper Latin-1 decode (byte-by-byte mapping to Unicode code points with the same value). The `encoding_rs` crate provides `WINDOWS_1252.decode()` or simply `bytes.iter().map(|&b| b as char).collect::<String>()` for strict Latin-1.
-
-3. **Time capsule archive integrity (Moderate):** Validate that messages loaded from the database do not contain newlines before including them in the archive. Log a warning if any do, and either strip them or skip them.

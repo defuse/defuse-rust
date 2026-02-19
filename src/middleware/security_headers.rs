@@ -15,12 +15,15 @@
 
 use axum::{
     body::Body,
+    extract::ConnectInfo,
     http::{header, Request, Response},
 };
+use std::net::SocketAddr;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
 use super::url_canonicalization::is_dev_host;
+use crate::libs::util::is_https;
 use crate::registry::{resolve_path, PathLookupResult};
 
 /// Tower layer for security headers
@@ -76,11 +79,11 @@ where
             .unwrap_or("")
             .to_string();
 
-        let is_https = req
-            .headers()
-            .get("x-forwarded-proto")
-            .and_then(|h| h.to_str().ok())
-            .map(|p| p == "https")
+        let connection_ip = req.extensions()
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|ci| ci.0.ip());
+        let is_https = connection_ip
+            .map(|ip| is_https(ip, req.headers()))
             .unwrap_or(false);
 
         let is_dev = is_dev_host(&host);

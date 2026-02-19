@@ -15,15 +15,18 @@ use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine};
 use serde::Deserialize;
 use std::net::SocketAddr;
 
-use crate::libs::util::html_escape;
+use crate::libs::util::{client_ip, html_escape};
 
 // =============================================================================
 // /ip.php - Raw IP address
 // =============================================================================
 
 /// Returns the client's IP address as plain text
-pub async fn ip_php(ConnectInfo(addr): ConnectInfo<SocketAddr>) -> impl IntoResponse {
-    let ip = addr.ip().to_string();
+pub async fn ip_php(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let ip = client_ip(addr.ip(), &headers);
     (
         StatusCode::OK,
         [(header::CONTENT_TYPE, "text/plain")],
@@ -36,8 +39,11 @@ pub async fn ip_php(ConnectInfo(addr): ConnectInfo<SocketAddr>) -> impl IntoResp
 // =============================================================================
 
 /// Returns the client's IP address in a styled HTML page
-pub async fn ip_insecure_php(ConnectInfo(addr): ConnectInfo<SocketAddr>) -> Html<String> {
-    let ip = html_escape(&addr.ip().to_string());
+pub async fn ip_insecure_php(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> Html<String> {
+    let ip = html_escape(&client_ip(addr.ip(), &headers));
     Html(format!(
         r#"<html>
 <head>
@@ -65,13 +71,13 @@ pub async fn getmyip_php(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let ip = addr.ip().to_string();
+    let ip = client_ip(addr.ip(), &headers);
 
     // Reverse DNS lookup for hostname
     let hostname = match tokio::net::lookup_host(format!("{}:0", ip)).await {
         Ok(_) => {
             // Try to get the hostname via reverse lookup
-            match dns_lookup::lookup_addr(&addr.ip()) {
+            match dns_lookup::lookup_addr(&ip.parse().unwrap_or(addr.ip())) {
                 Ok(host) => host,
                 Err(_) => ip.clone(),
             }

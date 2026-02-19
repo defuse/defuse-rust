@@ -9,6 +9,12 @@
 //! could completely block all other request processing. With this middleware,
 //! the OS scheduler can preempt any request, providing defense-in-depth against
 //! accidental DoS from CPU-intensive handlers.
+//!
+//! Note: We use `spawn_blocking` rather than `block_in_place` because this is a
+//! global middleware wrapping the entire request lifecycle. `block_in_place`
+//! converts worker threads to blocking threads, starving the I/O reactor when
+//! many concurrent requests need async I/O (e.g., reading POST bodies).
+//! `spawn_blocking` keeps worker threads free to drive I/O.
 
 use axum::{extract::Request, middleware::Next, response::Response};
 use tokio::runtime::Handle;

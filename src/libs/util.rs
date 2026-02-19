@@ -42,6 +42,22 @@ pub fn client_ip(connection_ip: IpAddr, headers: &HeaderMap) -> String {
     }
 }
 
+/// Determine if the request was made over HTTPS by checking X-Forwarded-Proto.
+///
+/// SECURITY: Only trusts X-Forwarded-Proto when the connection comes from a
+/// trusted proxy IP, to prevent clients from spoofing the protocol.
+pub fn is_https(connection_ip: IpAddr, headers: &HeaderMap) -> bool {
+    if TRUSTED_PROXIES.contains(&connection_ip) {
+        headers
+            .get("x-forwarded-proto")
+            .and_then(|h| h.to_str().ok())
+            .map(|p| p == "https")
+            .unwrap_or(false)
+    } else {
+        false
+    }
+}
+
 /// Escape HTML special characters to prevent XSS.
 /// Also encodes non-ASCII characters as HTML entities to match PHP's htmlentities().
 ///

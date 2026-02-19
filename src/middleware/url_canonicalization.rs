@@ -10,11 +10,14 @@
 
 use axum::{
     body::Body,
+    extract::ConnectInfo,
     http::{header, Request, Response, StatusCode},
 };
+use std::net::SocketAddr;
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 
+use crate::libs::util::is_https;
 use crate::registry::{resolve_path, PathLookupResult};
 
 /// The canonical hostname - all other hosts redirect here
@@ -94,11 +97,11 @@ where
 
             let host_without_port = host.split(':').next().unwrap_or("").to_lowercase();
 
-            let is_https = req
-                .headers()
-                .get("x-forwarded-proto")
-                .and_then(|h| h.to_str().ok())
-                .map(|p| p == "https")
+            let connection_ip = req.extensions()
+                .get::<ConnectInfo<SocketAddr>>()
+                .map(|ci| ci.0.ip());
+            let is_https = connection_ip
+                .map(|ip| is_https(ip, req.headers()))
                 .unwrap_or(false);
 
             let uri = req.uri().clone();
@@ -162,6 +165,23 @@ fn canonicalize_url(path: &str, query: Option<&str>) -> Option<String> {
     }
 }
 
+/// Canonical path to the static directory, computed once at startup.
+fn static_dir_canonical() -> &'static std::path::PathBuf {
+    use std::sync::OnceLock;
+    static STATIC_DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+    STATIC_DIR.get_or_init(|| {
+        let dir = std::env::current_dir()
+            .expect("failed to get current working directory")
+            .join("static");
+        let canonical = dir.canonicalize()
+            .unwrap_or_else(|_| panic!("static directory does not exist: {}", dir.display()));
+        // Ensure it ends with a separator for prefix checking
+        let mut s = canonical.into_os_string();
+        s.push(std::path::MAIN_SEPARATOR.to_string());
+        std::path::PathBuf::from(s)
+    })
+}
+
 /// Check if a blog URL without extension should redirect to .html version.
 /// Returns Some(redirect_path) if /blog/slug should redirect to /blog/slug.html.
 fn check_blog_slug_redirect(path: &str) -> Option<String> {
@@ -182,13 +202,21 @@ fn check_blog_slug_redirect(path: &str) -> Option<String> {
         return None;
     }
 
-    // Check if the .html file exists
-    let html_path = format!("static{}.html", path);
-    if std::path::Path::new(&html_path).exists() {
-        return Some(format!("{}.html", path));
+    // Check if the .html file exists, with path traversal protection
+    // SECURITY: If it weren't for the check for '.' above, this would create a
+    // path traversal oracle revealing whether a file exists or not, since with
+    // precise timing you could distinguish whether the candidate.canonicalize()
+    // fails (which it will iff the file doesn't exist) or the starts_with fails.
+    let static_dir = static_dir_canonical();
+    let candidate = static_dir.join(path.trim_start_matches('/')).with_extension("html");
+    let canonical = candidate.canonicalize().ok()?;
+
+    // Verify the resolved path is inside the static directory
+    if !canonical.starts_with(static_dir.as_path()) {
+        return None;
     }
 
-    None
+    Some(format!("{}.html", path))
 }
 
 /// Build a full redirect URL
