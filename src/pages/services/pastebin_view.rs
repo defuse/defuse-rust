@@ -223,11 +223,13 @@ function decryptPaste(){{
         font-family: monospace;
         background-color: #F0F0F0;
         margin-right: 10px;
+        min-height: 1em;
     }}
     .div1 {{
         background-color: #FFFFFF;
         font-family: monospace;
         margin-right: 10px;
+        min-height: 1em;
     }}
 
     #timeleft {{
