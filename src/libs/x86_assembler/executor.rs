@@ -102,7 +102,10 @@ pub(super) async fn assemble_unsafe(code: &SafeAsm<'_>, arch: Arch) -> Result<As
     // Prepare the assembly source.
     // - .intel_syntax noprefix: Use Intel syntax without register prefixes
     // - _main: label: Required entry point for objdump to find the code
-    // - Lowercase .s extension: Tells GCC to skip the C preprocessor
+    // SECURITY: Two independent defenses prevent the C preprocessor from running
+    // on user code (which would allow #include to read arbitrary files, etc.):
+    // 1. Lowercase .s extension (vs .S which enables preprocessing)
+    // 2. -x assembler flag explicitly overrides extension-based language detection
     let asm_source = format!(".intel_syntax noprefix\n_main:\n{}\n", code.as_str());
 
     fs::write(&source_path, &asm_source)
@@ -113,6 +116,7 @@ pub(super) async fn assemble_unsafe(code: &SafeAsm<'_>, arch: Arch) -> Result<As
         PROCESS_TIMEOUT,
         Command::new("gcc")
             .arg(arch.gcc_flag())
+            .args(["-x", "assembler"])
             .arg("-c")
             .arg(&source_path)
             .arg("-o")

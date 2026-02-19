@@ -22,6 +22,7 @@ use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::handler::{FormField, PostBody};
 use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
+use crate::middleware::url_canonicalization::is_dev_host;
 use crate::pages::not_found::NotFoundPage;
 use crate::registry::{resolve_path, PageInfo, PathLookupResult, NOT_FOUND_PAGE_INFO};
 
@@ -61,20 +62,19 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .unwrap_or("")
         .to_string();
 
-    let host = request
+    let host = match request
         .headers()
         .get(header::HOST)
         .and_then(|v| v.to_str().ok())
-        .unwrap_or("defuse.ca");
-
-    // Build URL prefix. Use http for localhost, https for everything else.
-    // This might be wrong if the dev environment is using a different domain
-    // but it's conservative to be safe.
-    let scheme = if host.starts_with("localhost") || host.starts_with("127.0.0.1") {
-        "http"
-    } else {
-        "https"
+    {
+        Some(h) if !h.is_empty() => h.to_string(),
+        _ => {
+            return (StatusCode::BAD_REQUEST, "Missing Host header").into_response();
+        }
     };
+
+    // Use http only for dev hosts (localhost, etc.), https for everything else.
+    let scheme = if is_dev_host(&host) { "http" } else { "https" };
     let url_prefix = format!("{}://{}", scheme, host);
 
     let captcha_bypass_header = request
@@ -270,6 +270,27 @@ async fn fetch_vote_state(
             );
             VoteState::default()
         })
+}
+
+/// Standalone 404 handler for use as a not_found_service (e.g. in storage routes).
+/// Extracts client IP and DNT from the request and renders the 404 page directly,
+/// without going through resolve_path or any page dispatch logic.
+pub async fn not_found_handler(request: Request<Body>) -> Response {
+    let connection_ip = request
+        .extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
+        .0
+        .ip();
+    let client_ip = client_ip(connection_ip, request.headers());
+    let dnt_enabled = request
+        .headers()
+        .get(header::DNT)
+        .and_then(|v| v.to_str().ok())
+        .map(|v| v == "1")
+        .unwrap_or(false);
+
+    render_not_found(client_ip, dnt_enabled)
 }
 
 /// Render the 404 not found page.

@@ -79,24 +79,23 @@ pub async fn assemble(code: &str, arch: Arch) -> Result<AssemblyResult, Assemble
 /// # Errors
 /// - `AssemblyFailure` if objdump fails or input is invalid
 /// - `Timeout` if objdump takes too long
-/// Maximum binary input size for disassembly (1MB).
-/// Without this, a user could submit a huge hex string that produces a large
-/// binary blob for objdump to process.
-const MAX_BINARY_INPUT_SIZE: usize = 1024 * 1024;
+/// Maximum disassembler input size (1MB), checked on the raw hex string before
+/// any parsing. This prevents memory-intensive hex parsing on huge inputs.
+const MAX_DISASSEMBLER_INPUT_SIZE: usize = 1024 * 1024;
 
 pub async fn disassemble(hex_input: &str, arch: Arch) -> Result<AssemblyResult, AssemblerError> {
+    if hex_input.len() > MAX_DISASSEMBLER_INPUT_SIZE {
+        return Err(AssemblerError::AssemblyFailure(
+            "Input too large. Maximum input size is 1MB.".to_string(),
+        ));
+    }
+
     // Parse the hex input into binary data
     let binary = parse_hex_input(hex_input)?;
 
     if binary.is_empty() {
         return Err(AssemblerError::AssemblyFailure(
             "No valid hex data provided".to_string(),
-        ));
-    }
-
-    if binary.len() > MAX_BINARY_INPUT_SIZE {
-        return Err(AssemblerError::AssemblyFailure(
-            "Input too large. Maximum binary size is 1MB.".to_string(),
         ));
     }
 

@@ -68,7 +68,10 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        let mut inner = self.inner.clone();
+        // Take the polled-ready instance; leave a fresh clone for the next poll_ready cycle.
+        // See: https://docs.rs/tower/latest/tower/trait.Service.html#be-careful-when-cloning-inner-services
+        let clone = self.inner.clone();
+        let mut inner = std::mem::replace(&mut self.inner, clone);
 
         // Check if this is an accepted host (localhost, etc.)
         // Use full host with port to match PHP behavior (e.g., "defuse:10443")

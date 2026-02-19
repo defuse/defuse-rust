@@ -85,7 +85,10 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        let mut inner = self.inner.clone();
+        // Take the polled-ready instance; leave a fresh clone for the next poll_ready cycle.
+        // See: https://docs.rs/tower/latest/tower/trait.Service.html#be-careful-when-cloning-inner-services
+        let clone = self.inner.clone();
+        let mut inner = std::mem::replace(&mut self.inner, clone);
 
         Box::pin(async move {
             let host = req
@@ -112,9 +115,18 @@ where
             // e.g., "defuse:10443" must match exactly
             let is_dev_host = is_dev_host(&host);
 
+            // Reject requests with missing or empty Host header (HTTP/1.0 clients)
+            // to avoid generating malformed redirects like "https:///path"
+            if host.is_empty() || host_without_port.is_empty() {
+                return Ok(Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(Body::from("Missing Host header"))
+                    .unwrap());
+            }
+
             // Step 1: Host canonicalization
             // If not master host and not a dev host, redirect to master
-            if !is_dev_host && host_without_port != MASTER_HOST && !host_without_port.is_empty() {
+            if !is_dev_host && host_without_port != MASTER_HOST {
                 // Use HTTPS if FORCE_HTTPS is true or already on HTTPS
                 let use_https = FORCE_HTTPS || is_https;
                 let redirect_url = build_redirect_url(use_https, MASTER_HOST, path, query);

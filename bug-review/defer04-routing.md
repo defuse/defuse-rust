@@ -4,8 +4,6 @@ Reviewer scope: `main.rs`, `registered_page_handler.rs`, `registry/mod.rs`,
 `registry/pages.rs`, `storage_routes.rs`, `context.rs`, `app_state.rs`, plus
 cross-reference against `URLParse.php`.
 
----
-
 ## BUG-04-03: 404 page `url_prefix` is hardcoded to `https://defuse.ca`
 
 **Severity: Low** -- Affects development and any future multi-domain setup.
@@ -64,30 +62,6 @@ routes.
 
 ---
 
-## BUG-04-07: Storage route `not_found_service` receives prefix-stripped path
-
-**Severity: Low** -- Likely harmless in practice but architecturally fragile.
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/storage_routes.rs`, lines 33-48
-
-The storage routes use `nest_service` which strips the URL prefix before passing to
-`ServeDir`. When a file is not found, the `not_found_service`
-(`registered_page_handler::handle`) receives the request with the *stripped* path.
-For example, a request to `/files/nonexistent` arrives at the handler as
-`/nonexistent`.
-
-This means:
-- `resolve_path("/nonexistent")` returns `NotFound`, which correctly renders the
-  404 page in most cases.
-- However, if a file path happened to collide with a registered page slug (e.g.,
-  `/files/about` would arrive as `/about`), it would serve the page instead of
-  returning 404. No current file paths collide, but this is fragile.
-
-Additionally, the 404 page rendered in this context will have the wrong path in
-logging and the hardcoded `url_prefix` (per BUG-04-03).
-
----
-
 ## BUG-04-08: `resolve_alias` can infinite-loop on circular alias chains
 
 **Severity: Low** -- Would cause a stack overflow at startup validation or on
@@ -114,40 +88,3 @@ stack overflow. There is no cycle detection or depth limit.
 **Recommendation:** Add a max-depth counter (e.g., 10) or detect cycles by
 tracking visited slugs.
 
----
-
-## BUG-04-10: `url_prefix` scheme detection does not account for `X-Forwarded-Proto`
-
-**Severity: Low** -- In production behind Caddy this works correctly due to HTTPS
-enforcement, but the logic is inconsistent.
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/registered_page_handler.rs`, lines 70-78
-
-```rust
-let host = request
-    .headers()
-    .get(header::HOST)
-    .and_then(|v| v.to_str().ok())
-    .unwrap_or("defuse.ca");
-
-let scheme = if host.starts_with("localhost") || host.starts_with("127.0.0.1") {
-    "http"
-} else {
-    "https"
-};
-```
-
-The scheme is determined by checking if the host looks like localhost. However, the
-middleware already extracts `X-Forwarded-Proto` to determine `is_https`
-(url_canonicalization.rs line 97-102). The registered page handler does not check
-`X-Forwarded-Proto` and instead uses a heuristic based on the hostname.
-
-In production behind Caddy with HTTPS, the URL prefix will correctly be
-`https://defuse.ca`. But if someone accesses the site through a non-standard
-reverse proxy setup where the Host header is not `localhost` but the connection is
-HTTP, the `url_prefix` will incorrectly say `https://`. The opposite case is also
-possible: connecting to localhost over a TLS-terminating local proxy would
-incorrectly use `http://`.
-
-**Recommendation:** Check `X-Forwarded-Proto` header for consistency with the
-middleware.

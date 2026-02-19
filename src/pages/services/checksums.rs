@@ -150,6 +150,8 @@ async fn handle_multipart_post(ctx: PageContext, fields: Vec<FormField>) -> axum
     // Find the file field
     let file_field = fields.iter().find(|f| f.name == "filetohash");
 
+    // Note: browsers send filename: Some("") with empty data when no file is selected.
+    // We intentionally process this case (hashing the empty string is valid).
     let file_bytes = match file_field {
         Some(field) if field.filename.is_some() => field.data.clone(),
         _ => {

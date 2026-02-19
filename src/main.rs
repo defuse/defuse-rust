@@ -99,6 +99,9 @@ async fn async_main() {
     libs::timecapsule::ensure_db_connection_works().await.expect("Failed to connect to Time Capsule database");
     tracing::info!("Time Capsule database connected");
 
+    // Validate required env vars that aren't checked by the above connections
+    std::env::var("RECAPTCHA_SECRET_KEY").expect("RECAPTCHA_SECRET_KEY must be set");
+
     // Create application state
     let state = AppState::new(phpcount, upvotes);
 

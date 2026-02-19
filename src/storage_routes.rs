@@ -26,8 +26,11 @@ pub fn storage_router(storage_path: &Path, state: AppState) -> Router<AppState> 
     // /storage itself contains credentials, only ever serve dirs in "storage/extras"!
     let extras_path = storage_path.join("extras");
 
-    // Create a fallback service that renders our 404 page
-    let not_found = any(registered_page_handler::handle).with_state(state);
+    // Create a fallback service that renders our 404 page.
+    // Uses the dedicated not_found_handler instead of the full page dispatcher,
+    // because nest_service strips the URL prefix (e.g. /files/about → /about)
+    // which would cause resolve_path collisions with registered page slugs.
+    let not_found = any(registered_page_handler::not_found_handler).with_state(state);
 
     Router::new()
         .nest_service(
