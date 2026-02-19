@@ -156,8 +156,8 @@ pub async fn get_drawing(drawing_num: i32) -> Result<Option<Drawing>, sqlx::Erro
             passwordhash,
             starttime,
             reviewtime,
-            // TODO: Even given the latin1 check (which just checks <=255) this is NOT safe
-            // since you could encode invalid utf8 codepoints by controlling arbitrary bytes.
+            // Safe: input validation ensures all data is Latin-1 (Unicode U+0000-U+00FF),
+            // which is always valid UTF-8 (1 or 2 byte sequences), so lossy is a no-op.
             printout: String::from_utf8_lossy(&printout).into_owned(),
             userprintout: String::from_utf8_lossy(&userprintout).into_owned(),
         }

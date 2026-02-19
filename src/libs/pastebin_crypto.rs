@@ -281,4 +281,28 @@ mod tests {
         let result = decrypt("anykey", "AAAA");
         assert!(matches!(result, Err(CryptoError::InvalidCiphertext)));
     }
+
+    /// Test vectors from the production PHP pastebin database.
+    /// These verify that the Rust crypto is bit-for-bit compatible with the PHP implementation.
+    #[test]
+    fn test_decrypt_php_paste_standard_url() {
+        // https://defuse.ca/b/6pO75AFMIKtJB4QMb8vmsY
+        let url_key = "6pO75AFMIKtJB4QMb8vmsY";
+        let db_token = "8ff974105f98ce300aff70d21dc97296c53613311d47c8202a23f9dbbb2b4af2";
+        let db_data = "tvIUG5qFUfiaUl21epODNk64UHvM5Zb5Xlz+QUnFXCs7xlCnk+xRt38+WxMA0r78";
+
+        assert_eq!(get_database_id(url_key), db_token);
+        assert_eq!(decrypt(url_key, db_data).unwrap(), "THIS IS A SHORT PASTE 2");
+    }
+
+    #[test]
+    fn test_decrypt_php_paste_short_url() {
+        // https://defuse.ca/b/Ut1aPMHk
+        let url_key = "Ut1aPMHk";
+        let db_token = "a0918c4ddc750ae5e990a111472e92da6ae64a2c6191e6821b0c35e911444d89";
+        let db_data = "IsYfOVls+4c7H+r5eMzhYBB9Lb18bZsVXy3bAuhLciE=";
+
+        assert_eq!(get_database_id(url_key), db_token);
+        assert_eq!(decrypt(url_key, db_data).unwrap(), "THIS IS A PASTE");
+    }
 }

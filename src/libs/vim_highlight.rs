@@ -312,6 +312,8 @@ impl VimHighlight {
         debug!("Running vim with args: {:?}", args);
 
         // Run vim
+        // TODO: Add a timeout (e.g. switch to tokio::process::Command with timeout)
+        // to prevent a hung vim process from permanently blocking a thread.
         let output = Command::new(&self.vim_command)
             .args(&args)
             .output()
