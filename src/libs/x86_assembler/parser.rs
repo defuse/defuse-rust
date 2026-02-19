@@ -6,6 +6,8 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
+use crate::libs::util::html_escape;
+
 /// Check if a line is a label line that should be skipped.
 ///
 /// Label lines look like: "00000013 <location1>:"
@@ -99,6 +101,15 @@ pub fn parse_objdump_output(objdump_output: &str, is_disassembly: bool) -> Resul
     // Now remove whitespace
     let hex_bytes = hex_bytes.replace(' ', "").replace('\t', "");
     let hex_with_marker = hex_with_marker.replace(' ', "").replace('\t', "");
+
+    // Defense-in-depth: objdump output should only contain hex characters after
+    // cleaning. Assert that HTML-escaping is a no-op to catch any regression
+    // that could lead to XSS via |safe rendering of hex_zero_bold.
+    assert!(
+        html_escape(&hex_bytes) == hex_bytes,
+        "BUG: objdump hex output contains HTML-special characters: {:?}",
+        hex_bytes
+    );
 
     // Create bold version by replacing the marker with <b>00</b>
     let hex_zero_bold = hex_with_marker.replace("ZERO", "<b>00</b>");
