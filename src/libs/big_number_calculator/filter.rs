@@ -61,6 +61,7 @@ pub fn transform_operators(expr: &str) -> String {
     // xor becomes ^ (Ruby's XOR), but we already converted ^ to **
     // so this is safe
     result = result.replace("xor", "^");
+    // xor has to be done first so we don't replace the "or" in xor!
     result = result.replace("or", "|");
     result = result.replace("and", "&");
     result = result.replace("shl", "<<");

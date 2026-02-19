@@ -257,7 +257,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             title: "Secure Encrypted Pastebin - Defuse Security",
             description: "A secure pastebin with server-side and client-side encryption.",
             keywords: "pastebin, encrypted pastebin, secure pastebin, anonymous pastebin",
-            legacy_hit_count_id: "pages/services/pastebin.php",
+            legacy_hit_count_id: "pages/services/pastebin.html",
             upvote: Some(UpvoteConfig {
                 id: "pastebin",
                 category: "defuse_pages",
@@ -720,7 +720,6 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             }),
         },
         alias!("bh2016" => "side-channel-attacks-on-everyday-applications"),
-        alias!("BH2016" => "side-channel-attacks-on-everyday-applications"),
         page! {
             handler: research::side_channels_in_encoding_functions,
             slug: "side-channels-in-encoding-functions",

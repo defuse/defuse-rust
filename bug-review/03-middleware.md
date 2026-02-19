@@ -1,50 +1,5 @@
 # Middleware Stack Review
 
-## Middleware Ordering Comment is Incorrect (Actual Order is Reversed)
-**Severity**: Medium
-**File**: /home/taylor/defuse-rewrite/defuse-rust/src/main.rs:137-140
-**Description**: The comment says "the outermost layers come first" but in Axum/Tower, `.layer()` wraps the existing service, so the **last** `.layer()` call is the outermost. The actual request processing order is:
-
-```
-blocking (outermost) -> UrlCanonicalization -> upvote_post -> SecurityHeaders -> CatchPanic (innermost) -> handler
-```
-
-The comment implies the opposite. This matters because the intended design (per the comment) doesn't match the actual behavior. The developer appears to have gotten the correct ordering by coincidence or by testing, but the comment will mislead future maintainers.
-
-## Security Headers Missing on All Redirect Responses
-**Severity**: High
-**File**: /home/taylor/defuse-rewrite/defuse-rust/src/main.rs:149-159
-**Description**: Because `SecurityHeadersLayer` is an inner layer relative to `UrlCanonicalizationLayer`, redirect responses from URL canonicalization (host redirects, HTTPS enforcement, path normalization) never pass through SecurityHeaders. These 301 redirect responses are missing:
-
-- `X-Frame-Options: SAMEORIGIN`
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Strict-Transport-Security` (on HTTPS-to-HTTPS redirects like host canonicalization)
-
-This affects every user whose first request triggers a redirect (non-canonical URLs, wrong host, HTTP-to-HTTPS). The HSTS header is particularly important on redirect responses because that is often the first response a browser receives.
-
-Similarly, the 302 redirect response from `upvote_post_middleware` (line 122 of upvote_post.rs) also bypasses SecurityHeaders because upvote_post is also an outer layer relative to SecurityHeaders.
-
-**Fix**: Move `SecurityHeadersLayer` to be the outermost layer (or at least outside `UrlCanonicalizationLayer`), so it wraps all responses including redirects. Alternatively, add security headers directly in the redirect-generating code.
-
-## CatchPanicLayer is Innermost -- Cannot Catch Middleware Panics
-**Severity**: High
-**File**: /home/taylor/defuse-rewrite/defuse-rust/src/main.rs:143
-**Description**: `CatchPanicLayer` is the innermost middleware (added first), so it only catches panics from the handler itself. Panics in `SecurityHeadersMiddleware`, `upvote_post_middleware`, or `UrlCanonicalizationMiddleware` propagate uncaught to `blocking_middleware`, where `JoinHandle::await.expect()` re-panics on the async worker thread. This can crash active connections.
-
-This is not theoretical: `upvote_post_middleware` explicitly panics at line 119 (`state.upvotes.process_vote(...).expect(...)`) when the upvote database operation fails. A database timeout during an upvote POST would crash the connection instead of returning a 500 error.
-
-**Fix**: Move `CatchPanicLayer` to be the outermost layer (added last), or at minimum, outside the layers that can panic.
-
-## Upvote Middleware Panics on Database Failure
-**Severity**: High
-**File**: /home/taylor/defuse-rewrite/defuse-rust/src/middleware/upvote_post.rs:117-119
-**Description**: The upvote middleware uses `.expect("Failed to process upvote")` which panics if the database operation fails. Combined with the CatchPanicLayer ordering issue above, this panic is uncaught and will crash the connection. Any transient database error (timeout, connection reset, deadlock) during an upvote POST would trigger this.
-
-The comment says "panic on failure so user doesn't think vote succeeded" but a 500 error response would accomplish the same goal without crashing.
-
-**Fix**: Replace `.expect()` with error handling that returns a 500 Internal Server Error response instead of panicking.
-
 ## X-Forwarded-Proto Trusted Without Proxy Verification
 **Severity**: Medium
 **File**: /home/taylor/defuse-rewrite/defuse-rust/src/middleware/url_canonicalization.rs:97-102 and security_headers.rs:79-84

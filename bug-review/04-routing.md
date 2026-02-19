@@ -6,57 +6,6 @@ cross-reference against `URLParse.php`.
 
 ---
 
-## BUG-04-01: Wrong `legacy_hit_count_id` for pastebin page (hit counter continuity break)
-
-**Severity: Medium** -- Will split the hit counter into two independent counters.
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/registry/pages.rs`, line 260
-
-The PHP version uses `P_FILE => "services/pastebin.html"` for the pastebin page
-(URLParse.php line 780), making the hit counter key `pages/services/pastebin.html`.
-The Rust registry has:
-
-```rust
-legacy_hit_count_id: "pages/services/pastebin.php",
-```
-
-This should be:
-
-```rust
-legacy_hit_count_id: "pages/services/pastebin.html",
-```
-
-Without this fix, the Rust version will start a new hit counter for the pastebin
-page instead of continuing the existing count.
-
----
-
-## BUG-04-02: Duplicate `bh2016`/`BH2016` aliases silently collide in HashMap
-
-**Severity: Low** -- Functionally harmless since both point to the same target,
-but represents a latent bug in the registry construction.
-
-**File:** `/home/taylor/defuse-rewrite/defuse-rust/src/registry/pages.rs`, lines 722-723
-
-```rust
-alias!("bh2016" => "side-channel-attacks-on-everyday-applications"),
-alias!("BH2016" => "side-channel-attacks-on-everyday-applications"),
-```
-
-Both slugs are lowercased to `"bh2016"` when inserted into the HashMap. The second
-entry silently overwrites the first. Since both point to the same target this has
-no visible effect, but it masks a design flaw. The TODO comment at line 1457
-acknowledges this:
-
-```rust
-// TODO: make it a loud error if there are entries with colliding lowercased slugs
-```
-
-**Recommendation:** Remove the `BH2016` alias (it's redundant since lookup is
-case-insensitive) and add the collision check.
-
----
-
 ## BUG-04-03: 404 page `url_prefix` is hardcoded to `https://defuse.ca`
 
 **Severity: Low** -- Affects development and any future multi-domain setup.
