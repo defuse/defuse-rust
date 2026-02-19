@@ -174,7 +174,9 @@ function decryptPaste(){{
             let escaped = escaped.replace('\t', "&nbsp;&nbsp;&nbsp;&nbsp;");
             // Convert double spaces to double nbsp
             let escaped = escaped.replace("  ", "&nbsp;&nbsp;");
-            html_lines.push_str(&format!("<li><div class=\"{}\">{}</div></li>", class, escaped));
+            // Empty lines get <br /> to prevent div collapse and preserve blank lines on copy
+            let content = if escaped.is_empty() || escaped == "\r" { "<br />" } else { &escaped };
+            html_lines.push_str(&format!("<li><div class=\"{}\">{}</div></li>", class, content));
         }
         html_lines.push_str("</ol></div>");
         html_lines
