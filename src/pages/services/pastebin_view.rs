@@ -15,6 +15,7 @@ use axum::{
 use serde::Deserialize;
 
 use crate::libs::pastebin::{format_timeleft, PastebinError, PastebinService};
+use crate::libs::html_escape::escape_text;
 use crate::libs::util::html_escape;
 
 #[derive(Deserialize, Default)]
@@ -169,13 +170,9 @@ function decryptPaste(){{
         let mut html_lines = String::from("<div class=\"codebox\"><ol>");
         for (i, line) in lines.iter().enumerate() {
             let class = if i % 2 == 0 { "div0" } else { "div1" };
-            let escaped = html_escape(line);
-            // Convert tabs to 4 nbsp
-            let escaped = escaped.replace('\t', "&nbsp;&nbsp;&nbsp;&nbsp;");
-            // Convert double spaces to double nbsp
-            let escaped = escaped.replace("  ", "&nbsp;&nbsp;");
+            let escaped = escape_text(line, false, 8);
             // Empty lines get <br /> to prevent div collapse and preserve blank lines on copy
-            let content = if escaped.is_empty() || escaped == "\r" { "<br />" } else { &escaped };
+            let content = if escaped.trim().is_empty() { "<br />" } else { &escaped };
             html_lines.push_str(&format!("<li><div class=\"{}\">{}</div></li>", class, content));
         }
         html_lines.push_str("</ol></div>");
