@@ -25,10 +25,10 @@ git clone git@github.com:defuse/defuse-tester
 
 ### Running the Dev Server
 
-For this part, `cd` into `defuse-tester`:
+For this part, `cd` into `defuse-rust`:
 
 ```bash
-cd defuse-tester
+cd defuse-rust
 ```
 
 ```bash
