@@ -213,10 +213,11 @@ impl UpvoteService {
         let hash = Self::vote_hash(permanent_id, client_ip);
 
         // Single query to get counts and user's action
+        // LIMIT 1 on counts subqueries tolerates duplicate rows (no UNIQUE constraint)
         let result: (Option<i32>, Option<i32>, Option<String>) = sqlx::query_as(
             "SELECT
-                (SELECT upvotes FROM counts WHERE permanent_id = ?),
-                (SELECT downvotes FROM counts WHERE permanent_id = ?),
+                (SELECT upvotes FROM counts WHERE permanent_id = ? LIMIT 1),
+                (SELECT downvotes FROM counts WHERE permanent_id = ? LIMIT 1),
                 (SELECT action FROM history WHERE hash = ?)"
         )
         .bind(permanent_id)
@@ -288,46 +289,36 @@ impl UpvoteService {
         description: &str,
         canonical_url: &str,
     ) -> Result<(), sqlx::Error> {
-        // Check if page exists
-        let existing: Option<(String, String, String, String)> = sqlx::query_as(
-            "SELECT category, title, description, canonical_url FROM counts WHERE permanent_id = ?"
+        // Atomic insert-if-not-exists to avoid race condition creating duplicate rows
+        // (the counts table has no UNIQUE constraint on permanent_id)
+        let result = sqlx::query(
+            "INSERT INTO counts (permanent_id, category, title, description, canonical_url, upvotes, downvotes)
+             SELECT ?, ?, ?, ?, ?, 0, 0
+             FROM DUAL
+             WHERE NOT EXISTS (SELECT 1 FROM counts WHERE permanent_id = ?)"
         )
         .bind(permanent_id)
-        .fetch_optional(&self.pool)
+        .bind(category)
+        .bind(title)
+        .bind(description)
+        .bind(canonical_url)
+        .bind(permanent_id)
+        .execute(&self.pool)
         .await?;
 
-        match existing {
-            Some((old_cat, old_title, old_desc, old_url)) => {
-                // Update if anything changed
-                if old_cat != category || old_title != title || old_desc != description || old_url != canonical_url {
-                    sqlx::query(
-                        "UPDATE counts SET category = ?, title = ?, description = ?, canonical_url = ?
-                         WHERE permanent_id = ?"
-                    )
-                    .bind(category)
-                    .bind(title)
-                    .bind(description)
-                    .bind(canonical_url)
-                    .bind(permanent_id)
-                    .execute(&self.pool)
-                    .await?;
-                }
-            }
-            None => {
-                // Insert new page
-                // TODO: A race condition could lead to duplicate rows being inserted for new pages
-                sqlx::query(
-                    "INSERT INTO counts (permanent_id, category, title, description, canonical_url, upvotes, downvotes)
-                     VALUES (?, ?, ?, ?, ?, 0, 0)"
-                )
-                .bind(permanent_id)
-                .bind(category)
-                .bind(title)
-                .bind(description)
-                .bind(canonical_url)
-                .execute(&self.pool)
-                .await?;
-            }
+        if result.rows_affected() == 0 {
+            // Row already exists, update metadata
+            sqlx::query(
+                "UPDATE counts SET category = ?, title = ?, description = ?, canonical_url = ?
+                 WHERE permanent_id = ?"
+            )
+            .bind(category)
+            .bind(title)
+            .bind(description)
+            .bind(canonical_url)
+            .bind(permanent_id)
+            .execute(&self.pool)
+            .await?;
         }
 
         Ok(())
