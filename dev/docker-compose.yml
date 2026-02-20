@@ -8,8 +8,10 @@ services:
       MARIADB_ROOT_HOST: '%'
     volumes:
       - mysql-data:/var/lib/mysql
-      # Runs init.sql on first startup (when the data volume is empty)
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Run on first startup (when the data volume is empty), in alphabetical order
+      - ./01-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./02-timecapsule-seed.sql:/docker-entrypoint-initdb.d/02-timecapsule-seed.sql:ro
+      - ./03-upvotes-seed.sql:/docker-entrypoint-initdb.d/03-upvotes-seed.sql:ro
     command: >
       --max_allowed_packet=256M
       --innodb_buffer_pool_size=1G
