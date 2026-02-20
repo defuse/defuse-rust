@@ -80,6 +80,18 @@ Then, to run all of the integration tests, simply run:
 DEFUSE_URL=http://localhost:3000/ cargo test --no-fail-fast  -- --include-ignored
 ```
 
+You can also take a snapshots to compare against the PHP version:
+
+```
+cargo run --bin snapshot http://localhost:3000/ --normalize-vim-tags new-snapshot-dir
+```
+
+And the benchmarks/stress tests:
+
+```
+cargo run --bin stress http://localhost:3000/
+```
+
 ### Measuring Code Coverage
 
 Requires [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov):
