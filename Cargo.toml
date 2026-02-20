@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 # Web framework
 axum = "0.7"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "time"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "time", "signal"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["fs", "catch-panic"] }
 

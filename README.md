@@ -2,12 +2,17 @@
 
 Rust rewrite of defuse.ca.
 
-## Requirements
+## Install dependencies:
 
-- Rust (stable)
+- [Rust](https://rustup.rs) (stable)
 - vim (for syntax highlighting)
 - ruby (for big number calculator)
 - gcc (for online assembler)
+- objdump (for online assembler)
+
+```bash
+sudo apt-get install vim ruby gcc binutils
+```
 
 ## Development Setup
 
@@ -35,8 +40,15 @@ cd ..
 # 2. Copy the dev environment file to the project root
 cp dev/dotenv-example .env
 
-# 3. Run the server
-source .env
+# 3. Source the .env file to set necessary environment variables
+# We need to export the environment variables so that they are available
+# to child proceses (like when running the tests)
+set -a && source .env && set +a
+
+# 4. Run the unit tests (there may be expected failures with --include-ignored)
+cargo test --no-fail-fast -- --include-ignored
+
+# 5. Run the server
 cargo run --release
 ```
 By default, `dev/dotenv-example` will use the `dev/test-storage` directory as
@@ -55,7 +67,8 @@ docker compose up -d     # re-creates everything from init.sql
 
 ### Running the Integration Tests
 
-In another terminal, `cd` into `defuse-tester`:
+While the server and database are running, in another terminal, `cd` into
+`defuse-tester`:
 
 ```bash
 cd ../defuse-tester
@@ -69,4 +82,32 @@ DEFUSE_URL=http://localhost:3000/ cargo test --no-fail-fast  -- --include-ignore
 
 ### Measuring Code Coverage
 
-TODO
+Requires [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov):
+
+```bash
+cargo install cargo-llvm-cov
+```
+
+From the `defuse-rust` directory, with the database already running:
+
+**Terminal 1** — build and run the instrumented server:
+
+```bash
+cargo llvm-cov clean
+cargo llvm-cov run --release
+```
+
+**Terminal 2** — run the integration tests:
+
+```bash
+cd ../defuse-tester
+DEFUSE_URL=http://localhost:3000/ cargo test --no-fail-fast -- --include-ignored
+```
+
+After the tests finish, Ctrl+C the server in Terminal 1, then generate the
+report:
+
+```bash
+cargo llvm-cov report --release --html
+# Report is at target/llvm-cov-target/html/index.html
+```

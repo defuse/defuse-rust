@@ -59,7 +59,9 @@ async fn async_main() {
         .init();
 
     // Load .env file if present (for local development)
-    let _ = dotenvy::dotenv();
+    // Actually, don't, because that's confusing if a developer is trying to set
+    // env vars manually but this is overwriting them.
+    // let _ = dotenvy::dotenv();
 
     // Note this codebase only supports HTTP, not HTTPS. Caddy must be configured as a reverse proxy for HTTPS.
     let listen_addr =
@@ -192,6 +194,10 @@ async fn async_main() {
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
     )
+    .with_graceful_shutdown(async {
+        tokio::signal::ctrl_c().await.expect("failed to listen for Ctrl+C");
+        eprintln!("Shutting down...");
+    })
     .await
     .unwrap();
 }
