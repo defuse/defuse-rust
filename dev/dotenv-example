@@ -1,0 +1,21 @@
+# Development environment configuration for defuse-rust.
+# These credentials match dev/init.sql — do not use in production.
+
+LISTEN_ADDR=0.0.0.0:3000
+
+# Storage path (required)
+STORAGE_PATH=dev/test-storage
+
+# Database connections (passwords match dev/init.sql)
+PHPCOUNT_DATABASE_URL=mysql://phpcount:dev_phpcount_pass@localhost:3306/phpcount
+UPVOTES_DATABASE_URL=mysql://upvotes:dev_upvotes_pass@localhost:3306/upvotes
+PASTEBIN_DATABASE_URL=mysql://cracky_bin:dev_pastebin_pass@localhost:3306/cracky_bin
+TRENT_DATABASE_URL=mysql://cracky_trent:dev_trent_pass@localhost:3306/cracky_trent
+TIMECAPSULE_DATABASE_URL=mysql://timecapsule:dev_timecapsule_pass@localhost:3306/timecapsule
+
+# reCAPTCHA secret key (required for TRENT and time capsule forms)
+# Get test keys from https://developers.google.com/recaptcha/docs/faq#id-like-to-run-automated-tests-with-recaptcha.-what-should-i-do
+RECAPTCHA_SECRET_KEY=6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe
+
+# Logging (uncomment for debug output)
+# RUST_LOG=defuse=debug,tower_http=debug

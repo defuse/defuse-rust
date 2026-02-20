@@ -8,9 +8,8 @@ services:
       MARIADB_ROOT_HOST: '%'
     volumes:
       - mysql-data:/var/lib/mysql
-      # Mount dump directory for easy import
-      - ../db-dump:/dump:ro
-    # Increase limits for large import
+      # Runs init.sql on first startup (when the data volume is empty)
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     command: >
       --max_allowed_packet=256M
       --innodb_buffer_pool_size=1G

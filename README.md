@@ -1,56 +1,72 @@
 # defuse-rust
 
-Rust rewrite of defuse.ca
+Rust rewrite of defuse.ca.
 
 ## Requirements
 
 - Rust (stable)
 - vim (for syntax highlighting)
+- ruby (for big number calculator)
+- gcc (for online assembler)
 
 ## Development Setup
 
-```bash
-# Install vim if not already installed
-# Ubuntu/Debian:
-sudo apt install vim
+Clone `defuse-rust` and `defuse-tester`:
 
-# macOS:
-brew install vim
-
-# Create cache directory for vim highlighting
-sudo mkdir -p /storage/vimhl
-sudo chown $USER:$USER /storage/vimhl
+```
+git clone git@github.com:defuse/defuse-rust
+git clone git@github.com:defuse/defuse-tester
 ```
 
-## Running
+### Running the Dev Server
+
+For this part, `cd` into `defuse-tester`:
 
 ```bash
-# Set required environment variables
-export PHPCOUNT_DATABASE_URL="mysql://user:pass@localhost/phpcount"
-export UPVOTES_DATABASE_URL="mysql://user:pass@localhost/upvotes"
-
-# Run the server
-cargo run
+cd defuse-tester
 ```
-
-## Testing
 
 ```bash
-cargo test
+# 1. Start the database (first run creates all databases and tables)
+cd dev
+docker compose up -d
+cd ..
+
+# 2. Copy the dev environment file to the project root
+cp dev/dotenv-example .env
+
+# 3. Run the server
+source .env
+cargo run --release
+```
+By default, `dev/dotenv-example` will use the `dev/test-storage` directory as
+the storage directory. This directory contains minimal files in order to make
+the defuse-tester integration tests pass.
+
+The dev database container uses `dev/init.sql` to automatically create all
+databases, tables, and users on first startup. To reset the database to a clean
+state:
+
+```bash
+cd dev
+docker compose down -v   # -v removes the data volume
+docker compose up -d     # re-creates everything from init.sql
 ```
 
-## Production Deployment
+### Running the Integration Tests
 
-This application does not handle TLS directly. It must run behind a TLS-terminating reverse proxy (e.g., Caddy, nginx) in production.
+In another terminal, `cd` into `defuse-tester`:
 
-The app expects the proxy to set `X-Forwarded-Proto: https` on HTTPS requests. Without this header, the app assumes HTTP and will redirect to HTTPS, which fails if there's no proxy handling TLS.
-
-**Recommended: Caddy**
-
-```
-defuse.ca {
-    reverse_proxy localhost:3000
-}
+```bash
+cd ../defuse-tester
 ```
 
-Caddy automatically provisions Let's Encrypt certificates and sets the correct headers.
+Then, to run all of the integration tests, simply run:
+
+```
+DEFUSE_URL=http://localhost:3000/ cargo test --no-fail-fast  -- --include-ignored
+```
+
+### Measuring Code Coverage
+
+TODO
