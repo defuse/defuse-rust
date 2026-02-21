@@ -2,7 +2,7 @@
 
 Rust rewrite of defuse.ca.
 
-## Install dependencies:
+### Install dependencies:
 
 - [Rust](https://rustup.rs) (stable)
 - vim (for syntax highlighting)
@@ -14,7 +14,7 @@ Rust rewrite of defuse.ca.
 sudo apt-get install vim ruby gcc binutils
 ```
 
-## Development Setup
+### Development Setup
 
 Clone `defuse-rust` and `defuse-tester`:
 
@@ -23,7 +23,7 @@ git clone git@github.com:defuse/defuse-rust
 git clone git@github.com:defuse/defuse-tester
 ```
 
-### Running the Dev Server
+#### Running the Dev Server
 
 For this part, `cd` into `defuse-rust`:
 
@@ -65,7 +65,7 @@ docker compose down -v   # -v removes the data volume
 docker compose up -d     # re-creates everything from init.sql
 ```
 
-### Running the Integration Tests
+#### Running the Integration Tests
 
 While the server and database are running, in another terminal, `cd` into
 `defuse-tester`:
@@ -95,7 +95,7 @@ And the benchmarks/stress tests:
 cargo run --bin stress http://localhost:3000/
 ```
 
-### Measuring Code Coverage
+#### Measuring Code Coverage
 
 Requires [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov):
 
