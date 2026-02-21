@@ -214,7 +214,7 @@ a:hover {
 #undergrad {
     background-image: url('/images/undergrad.png');
     height: 10px;
-    margin-top: 1px;
+    margin-top: 0px;
     width: 100%;
 }
 
