@@ -7,3 +7,4 @@ Disallow: /bitcannon-cryptography.htm
 Disallow: /r&d/
 Disallow: /301/
 Disallow: /tor-mirror/
+Disallow: /files2/poc/
