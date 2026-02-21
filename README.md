@@ -1,8 +1,8 @@
 # defuse-rust
 
-Rust rewrite of defuse.ca.
+A Rust rewrite of defuse.ca, ported from [the old PHP code](https://defuse.ca/defuse/defuse.ca).
 
-### Install dependencies:
+### Dependencies
 
 - [Rust](https://rustup.rs) (stable)
 - vim (for syntax highlighting)
@@ -14,7 +14,7 @@ Rust rewrite of defuse.ca.
 sudo apt-get install vim ruby gcc binutils
 ```
 
-### Development Setup
+### Development Environment Setup
 
 Clone `defuse-rust` and `defuse-tester`:
 
