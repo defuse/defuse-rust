@@ -165,7 +165,7 @@
 
 .menu ul li ul {
 	display:none;                  /* initially hide the entire list hierarchy */
-	padding:1px;                               /* this is our box border width */
+	padding:3px;                               /* this is our box border width */
 }
 
 .menu ul li a,
