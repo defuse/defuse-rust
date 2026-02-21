@@ -15,10 +15,11 @@
 use fs2::FileExt;
 use md5::{Md5, Digest};
 use std::fs;
-use std::io::Write;
+use std::io::{Read as _, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::sync::OnceLock;
+use std::time::{Duration, Instant};
 use tempfile::NamedTempFile;
 use tracing::{debug, warn};
 
@@ -311,18 +312,51 @@ impl VimHighlight {
 
         debug!("Running vim with args: {:?}", args);
 
-        // Run vim
-        // TODO: Add a timeout (e.g. switch to tokio::process::Command with timeout)
-        // to prevent a hung vim process from permanently blocking a thread.
-        let output = Command::new(&self.vim_command)
+        // Run vim with a timeout to prevent hung processes from blocking forever.
+        const VIM_TIMEOUT: Duration = Duration::from_secs(20);
+
+        let mut child = Command::new(&self.vim_command)
             .args(&args)
-            .output()
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
             .map_err(|e| VimHighlightError::VimError(format!("Failed to run vim: {}", e)))?;
 
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            warn!("Vim exited with status {}: {}", output.status, stderr);
-            // Don't fail - vim often exits with non-zero even when successful
+        let start = Instant::now();
+        loop {
+            match child.try_wait() {
+                Ok(Some(status)) => {
+                    if !status.success() {
+                        let stderr = child.stderr.take()
+                            .map(|mut s| {
+                                let mut buf = String::new();
+                                s.read_to_string(&mut buf).ok();
+                                buf
+                            })
+                            .unwrap_or_default();
+                        warn!("Vim exited with status {}: {}", status, stderr);
+                        // Don't fail - vim often exits with non-zero even when successful
+                    }
+                    break;
+                }
+                Ok(None) => {
+                    if start.elapsed() > VIM_TIMEOUT {
+                        warn!("Vim process timed out after {}s, killing", VIM_TIMEOUT.as_secs());
+                        child.kill().ok();
+                        child.wait().ok();
+                        return Err(VimHighlightError::VimError(
+                            format!("Vim process timed out after {} seconds", VIM_TIMEOUT.as_secs())
+                        ));
+                    }
+                    std::thread::sleep(Duration::from_millis(100));
+                }
+                Err(e) => {
+                    return Err(VimHighlightError::VimError(
+                        format!("Error waiting for vim: {}", e)
+                    ));
+                }
+            }
         }
 
         // Read the generated HTML

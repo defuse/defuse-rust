@@ -83,10 +83,11 @@ DEFUSE_URL=http://localhost:3000/ cargo test --no-fail-fast  -- --include-ignore
 Note: If you want to run the integration tests against the production server,
 you need to put the CAPTCHA bypass key at `secrets/captcha-bypass-key.txt`.
 
-You can also take a snapshots to compare against the PHP version:
+You can also take snapshots to compare against the PHP version:
 
 ```
-cargo run --bin snapshot http://localhost:3000/ --normalize-vim-tags new-snapshot-dir
+cargo run --bin snapshot http://localhost:3000/ --normalize-vim-tags new-dev-snapshot-dir
+cargo run --bin snapshot https://defuse.ca/ --normalize-vim-tags new-prod-snapshot-dir
 ```
 
 And the benchmarks/stress tests:
