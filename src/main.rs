@@ -197,11 +197,8 @@ async fn async_main() {
     .with_graceful_shutdown(async {
         tokio::signal::ctrl_c().await.expect("failed to listen for Ctrl+C");
         eprintln!("Shutting down gracefully (Ctrl+C again to force quit)...");
-        tokio::spawn(async {
-            tokio::signal::ctrl_c().await.expect("failed to listen for Ctrl+C");
-            eprintln!("Forced shutdown!");
-            std::process::exit(1);
-        });
+        // Reset SIGINT to default OS behavior so the next Ctrl+C kills immediately
+        unsafe { libc::signal(libc::SIGINT, libc::SIG_DFL); }
     })
     .await
     .unwrap();

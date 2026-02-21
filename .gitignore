@@ -21,3 +21,6 @@ dev/test-storage/vimhl/*.lock
 # OS files
 .DS_Store
 Thumbs.db
+
+# file used to tell the production server to rebuild
+.rebuild

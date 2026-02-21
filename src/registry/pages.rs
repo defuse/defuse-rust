@@ -254,9 +254,9 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         page! {
             handler: services::pastebin,
             slug: "pastebin",
-            title: "Secure Encrypted Pastebin - Defuse Security",
-            description: "A secure pastebin with server-side and client-side encryption.",
-            keywords: "pastebin, encrypted pastebin, secure pastebin, anonymous pastebin",
+            title: "Encrypted Pastebin - Keep your data private and secure! - Defuse Security",
+            description: "An Encrypted, Anonymous, Secure, and PRIVATE Pastebin. Send large amounts of text to your friends without it being leaked onto the internet!",
+            keywords: "private pastebin, encrypted pastebin, secure pastebin, anonymous pastebin, privacy",
             legacy_hit_count_id: "pages/services/pastebin.html",
             upvote: Some(UpvoteConfig {
                 id: "pastebin",

@@ -416,6 +416,7 @@ dependencies = [
  "gost94",
  "hex",
  "hmac",
+ "libc",
  "md-5",
  "md2",
  "md4",
