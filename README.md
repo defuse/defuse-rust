@@ -1,6 +1,6 @@
 # defuse-rust
 
-A Rust rewrite of defuse.ca, ported from [the old PHP code](https://defuse.ca/defuse/defuse.ca).
+A Rust rewrite of defuse.ca, ported from [the old PHP code](https://github.com/defuse/defuse.ca).
 
 ### Dependencies
 
