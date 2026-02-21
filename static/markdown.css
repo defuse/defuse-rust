@@ -1,0 +1,52 @@
+/* Styles for comrak-rendered GitHub Flavored Markdown */
+
+.markdown-content pre {
+    padding: 10px;
+    font-family: monospace;
+    font-size: 8pt;
+    color: #c0c0c0;
+    background-color: #000000;
+    border-radius: 15px;
+    box-shadow: 6px 6px 4px 2px #888;
+    background-image: url('/images/code-top.png');
+    background-repeat: repeat-x;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    width: 99%;
+}
+
+.markdown-content code {
+    font-family: monospace;
+    font-size: 9pt;
+}
+
+.markdown-content :not(pre) > code {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 1px 4px;
+    white-space: nowrap;
+}
+
+.markdown-content table {
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.markdown-content th {
+    background-color: #000;
+    color: #fff;
+    padding: 5px 10px;
+    border: 1px solid #888;
+}
+
+.markdown-content td {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+}
+
+.markdown-content tr:nth-child(even) {
+    background-color: #f5f5f5;
+}

@@ -1239,6 +1239,15 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             }),
         },
         page! {
+            handler: software::vfy_backup_tester,
+            slug: "vfy-backup-tester",
+            title: "`vfy` Directory Comparer",
+            description: "A directory comparison tool for checking if backups have been completed or restored successfully.",
+            keywords: "backup verify, directory comparison, blake3, backup tester, vfy",
+            legacy_hit_count_id: "vfy-backup-tester",
+            upvote: None,
+        },
+        page! {
             handler: software::helloworld_cms,
             slug: "helloworld-cms",
             title: "Secure and Light CMS for PHP - Defuse Security",

@@ -4,4 +4,5 @@ pub mod passgen;
 pub mod php_hash_cracker;
 pub mod sockstress;
 pub mod software;
+pub mod vfy_backup_tester;
 pub mod winrrng;

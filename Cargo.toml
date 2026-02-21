@@ -84,3 +84,6 @@ dns-lookup = "2"
 base64 = "0.22"
 urlencoding = "2"
 subtle = "2.6.1"
+
+# Markdown rendering (GitHub Flavored Markdown)
+comrak = "0.36"

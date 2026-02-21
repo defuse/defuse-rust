@@ -1,4 +1,5 @@
 pub mod csrf;
+pub mod markdown;
 pub mod bibliography;
 pub mod big_number_calculator;
 pub mod breach;

@@ -212,6 +212,11 @@
 	width:8.08333em;   /* with a 12px default font, this is 97px width (97/12) */
 }
 
+.menu ul li:hover ul.wide,
+.menu ul li a:hover ul.wide {               /* 2nd level wide drop-down box */
+	width:23em;
+}
+
 .menu ul.rightmenu li:hover ul,
 .menu ul.rightmenu li a:hover ul {    /* 2nd level neighborhood drop-down box */
 	left:auto;
@@ -253,6 +258,13 @@
 .menu ul li:hover ul.skinny li a:hover,
 .menu ul li a:hover ul.skinny li a:hover {     /* 2nd level un+selected items */
 	width:8.08333em;
+}
+
+.menu ul li:hover ul.wide li a,
+.menu ul li a:hover ul.wide li a,
+.menu ul li:hover ul.wide li a:hover,
+.menu ul li a:hover ul.wide li a:hover {       /* 2nd level wide items */
+	width:23em;
 }
 
 /*======================== 3RD LEVEL MENU DEFINITIONS ========================*/

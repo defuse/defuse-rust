@@ -10,6 +10,7 @@
 {% block head_extra %}{% endblock %}<link rel="stylesheet" media="all" type="text/css" href="/main.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/mainmenu.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/vimhl.css" />
+<link rel="stylesheet" media="all" type="text/css" href="/markdown.css" />
 <link rel="stylesheet" media="print" type="text/css" href="/print.css" />
 <!--[if !IE 7]>
 	<style type="text/css">
@@ -30,10 +31,18 @@
     <div id="sm">
         <a href="https://twitter.com/defusesec" title="Follow @DefuseSec on twitter!">
             <img id="twitterlogo" src="/images/twitter.png" alt="Follow me on twitter!" height="25" width="30" />
-            Twitter
+            X/Twitter
         </a>
         &nbsp;&middot;&nbsp;
-        <a href="https://github.com/defuse" title="Defuse Security's GitHub">GitHub</a>
+        <a href="https://github.com/defuse" title="Defuse Security's GitHub">
+            <img id="githublogo" src="/images/github.png" alt="GitHub" height="32" width="32" />
+            GitHub
+        </a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://bsky.app/profile/defusesec.bsky.social" title="Defuse Security on Bluesky">
+            <img id="bskylogo" src="/images/bluesky.png" alt="Bluesky" height="25" width="29" />
+            Bluesky
+        </a>
     </div>
 </div>
 
@@ -73,11 +82,18 @@
 
 <ul>
     <li class="headerlink" ><a href="/projects.htm">Software<img class="downimg" src="/images/downarrow.gif" alt="&#9660;"/><!--[if gt IE 6]><!--></a><!--<![endif]--><!--[if lt IE 7]><table border="0" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
-        <ul>
-            <li><a href="/passgen.htm">&nbsp;Password Generator</a></li>
-            <li><a href="/helloworld-cms.htm">&nbsp;HelloWorld! Secure CMS</a></li>
-            <li><a href="/php-hash-cracker.htm">&nbsp;PHP Hash Cracker</a></li>
-            <li><a href="/backup-verify-script.htm">&nbsp;Backup Checker</a></li>
+        <ul class="wide">
+            <li><a href="/passgen.htm">&nbsp;`passgen` Password Generator</a></li>
+            <li><a href="/vfy-backup-tester.htm">&nbsp;`vfy` Directory Comparer</a></li>
+            <li>
+                <a href="#"><span class="drop"><span>Deprecated</span>&raquo;</span><!--[if gt IE 6]><!--></a><!--<![endif]--><!--[if lt IE 7]><table border="0" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
+                <ul>
+                    <li><a href="/helloworld-cms.htm">&nbsp;HelloWorld! Secure CMS</a></li>
+                    <li><a href="/php-hash-cracker.htm">&nbsp;PHP Hash Cracker</a></li>
+                    <li><a href="/backup-verify-script.htm">&nbsp;Ruby Backup Checker</a></li>
+                </ul>
+                <!--[if lte IE 6]></td></tr></table></a><![endif]-->
+            </li>
         </ul>
         <!--[if lte IE 6]></td></tr></table></a><![endif]-->
     </li>
@@ -319,7 +335,7 @@
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US"><img alt="Creative Commons License" style="border-width:0; vertical-align: bottom;" src="/images/cc-by-sa.png" /></a>
          <a href="/about.htm">Defuse Security</a> | 
         <a href="/pastebin.htm">Secure Pastebin</a> | 
-        <a href="/passgen.htm">Password Generator</a> |
+        <a href="/online-x86-assembler.htm">Online Assembler</a> |
         <a href="http://crackstation.net/" rel="external">&raquo; CrackStation</a>
         </div> <!-- end footer -->
         </div> <!-- footerwrapper -->
