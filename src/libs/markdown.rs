@@ -3,6 +3,11 @@ use comrak::{markdown_to_html, Options};
 /// Render a README markdown string to HTML, stripping the leading `# ...` heading
 /// if present (since pages provide their own `<h1>`), and shifting all heading
 /// levels down by one (h1->h2, h2->h3, etc.) so they nest under the page heading.
+///
+/// # Safety
+///
+/// Raw HTML passthrough is enabled, so this must only be used with trusted input
+/// (e.g. our own README files). Do not use with user-supplied markdown.
 pub fn render_readme(md: &str) -> String {
     let body = match md.strip_prefix("# ") {
         Some(rest) => rest.split_once('\n').map_or("", |(_, after)| after),
@@ -21,6 +26,7 @@ pub fn render_readme(md: &str) -> String {
     options.extension.strikethrough = true;
     options.extension.autolink = true;
     options.extension.tasklist = true;
+    options.render.unsafe_ = true;
 
     let html = markdown_to_html(&body, &options);
     demote_headings(&html)

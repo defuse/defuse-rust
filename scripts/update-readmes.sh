@@ -11,4 +11,20 @@ echo "Downloading passgenr README..."
 curl -sS -o static/markdown/passgenr-readme.md \
     https://raw.githubusercontent.com/defuse/passgenr/master/README.md
 
+echo "Downloading crackstation-hashdb README..."
+curl -sS -o static/markdown/crackstation-hashdb-readme.md \
+    https://raw.githubusercontent.com/defuse/crackstation-hashdb/master/README.md
+
+echo "Downloading dawr README..."
+curl -sS -o static/markdown/dawr-readme.md \
+    https://raw.githubusercontent.com/defuse/dawr/master/README.md
+
+echo "Downloading wavetool README..."
+curl -sS -o static/markdown/wavetool-readme.md \
+    https://raw.githubusercontent.com/defuse/wavetool/master/README.md
+
+echo "Downloading claude-statusline README..."
+curl -sS -o static/markdown/claude-statusline-readme.md \
+    https://raw.githubusercontent.com/defuse/claude-statusline/main/README.md
+
 echo "Done."

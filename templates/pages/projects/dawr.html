@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}<h1><span class="monowb">DAWr</span> &nbsp;&ndash;&nbsp; Audio Playground for Rust</h1>
+
+<div class="github-source-boxes">
+    <div class="github-source-box">
+        <a href="https://github.com/defuse/dawr">
+            <img src="/images/github.png" alt="GitHub" height="32" width="32" />Source Code on GitHub
+        </a>
+    </div>
+    <div class="github-source-box">
+        <a class="cargoinstall" href="https://crates.io/crates/dawr">
+            <img src="/images/rust-logo-white.png" alt="Rust" height="32" width="32" />&nbsp;crates.io/crates/dawr
+        </a>
+    </div>
+</div>
+
+<div class="readme-box">
+<div class="readme-box-header">README.md:</div>
+<div class="markdown-content">
+{{ content_html|safe }}
+</div>
+</div>
+
+{% endblock %}

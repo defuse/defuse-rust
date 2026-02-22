@@ -1,5 +1,6 @@
 pub mod blowfish;
 pub mod bochs_images;
+pub mod dawr;
 pub mod email_spoofing_in_ruby;
 pub mod force_print_background;
 pub mod generating_random_passwords;
@@ -12,5 +13,6 @@ pub mod php_pbkdf2;
 pub mod projects;
 pub mod secure_php_encryption;
 pub mod syntax_highlighting_in_php_with_vim;
+pub mod wavetool;
 pub mod web_browser_negative_feedback;
 pub mod wordlists;

@@ -6,7 +6,6 @@ pub mod pastebin;
 pub mod pastebin_add;
 pub mod pastebin_view;
 pub mod quantum_computer_time_capsule;
-pub mod services;
 pub mod software_security_auditing;
 pub mod softwaredevelopment;
 pub mod trent;

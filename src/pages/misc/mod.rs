@@ -1,5 +1,6 @@
 pub mod advice_to_aspiring_computer_engineers;
 pub mod centripetal_acceleration;
+pub mod claude_statusline;
 pub mod contributors;
 pub mod fractal_zoom;
 pub mod ideas;

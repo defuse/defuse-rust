@@ -1,4 +1,5 @@
 pub mod backup_verify_script;
+pub mod crackstation_hashdb;
 pub mod helloworld_cms;
 pub mod passgen;
 pub mod php_hash_cracker;

@@ -186,15 +186,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         },
 
         // ===== Services =====
-        page! {
-            handler: services::services,
-            slug: "services",
-            title: "Defuse Security's Services",
-            description: "Defuse Security's Services.",
-            keywords: "",
-            legacy_hit_count_id: "pages/services/services.html",
-            upvote: None,
-        },
+        alias!("services" => "software-security-auditing"),
         page! {
             handler: services::checksums,
             slug: "checksums",
@@ -1031,6 +1023,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("Short tips to make your writing better."),
             }),
         },
+        page! {
+            handler: misc::claude_statusline,
+            slug: "claude-statusline",
+            title: "Claude Code Status Line",
+            description: "A custom status line for Claude Code showing context usage, costs, and git branch.",
+            keywords: "claude code, status line, statusline, cli",
+            legacy_hit_count_id: "claude-statusline",
+            upvote: Some(UpvoteConfig {
+                id: "claudestatusline",
+                category: "defuse_pages",
+                title: Some("Claude Code Status Line"),
+                description: Some("A custom status line for Claude Code showing context usage, costs, and git branch."),
+            }),
+        },
 
         // ===== Projects =====
         page! {
@@ -1222,6 +1228,34 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/wordlists.html",
             upvote: None,
         },
+        page! {
+            handler: projects::dawr,
+            slug: "dawr",
+            title: "DAWr - Audio Playground for Rust",
+            description: "A simple DAW library for Rust with a wavetable synthesizer, sampler, and audio effects.",
+            keywords: "daw, rust, audio, synthesizer, wavetable, sampler",
+            legacy_hit_count_id: "dawr",
+            upvote: Some(UpvoteConfig {
+                id: "dawr",
+                category: "defuse_pages",
+                title: Some("DAWr - Audio Playground for Rust"),
+                description: Some("A simple DAW library for Rust with a wavetable synthesizer, sampler, and audio effects."),
+            }),
+        },
+        page! {
+            handler: projects::wavetool,
+            slug: "wavetool",
+            title: "wavetool - Serum Wavetable Processor",
+            description: "A command-line tool for processing and analyzing Serum wavetables, with spectrogram generation and harmonic filtering.",
+            keywords: "wavetable, serum, spectrogram, harmonics, sound design",
+            legacy_hit_count_id: "wavetool",
+            upvote: Some(UpvoteConfig {
+                id: "wavetool",
+                category: "defuse_pages",
+                title: Some("wavetool - Serum Wavetable Processor"),
+                description: Some("A command-line tool for processing and analyzing Serum wavetables."),
+            }),
+        },
 
         // ===== Software =====
         page! {
@@ -1245,7 +1279,12 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             description: "A directory comparison tool for checking if backups have been completed or restored successfully.",
             keywords: "backup verify, directory comparison, blake3, backup tester, vfy",
             legacy_hit_count_id: "vfy-backup-tester",
-            upvote: None,
+            upvote: Some(UpvoteConfig {
+                id: "vfybackuptester",
+                category: "defuse_pages",
+                title: Some("`vfy` Directory Comparer"),
+                description: Some("A directory comparison tool for checking if backups have been completed or restored successfully."),
+            }),
         },
         page! {
             handler: software::helloworld_cms,
@@ -1325,6 +1364,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         alias!("passwords" => "passgen"),
         alias!("password" => "passgen"),
         alias!("pass" => "passgen"),
+        page! {
+            handler: software::crackstation_hashdb,
+            slug: "crackstation-hashdb",
+            title: "CrackStation's Hash Cracking Utility",
+            description: "The indexing and lookup code behind CrackStation.net's hash cracking service.",
+            keywords: "crackstation, hash cracking, lookup table, rainbow table, password cracking",
+            legacy_hit_count_id: "crackstation-hashdb",
+            upvote: Some(UpvoteConfig {
+                id: "crackstationhashdb",
+                category: "defuse_pages",
+                title: Some("CrackStation's Hash Cracking Utility"),
+                description: Some("The indexing and lookup code behind CrackStation.net's hash cracking service."),
+            }),
+        },
 
         // ===== Audits =====
         page! {

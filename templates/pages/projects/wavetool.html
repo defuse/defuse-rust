@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}<h1><span class="monowb">$ wavetool</span> &nbsp;&ndash;&nbsp; Serum Wavetable Processor</h1>
+
+<div class="github-source-boxes">
+    <div class="github-source-box">
+        <a href="https://github.com/defuse/wavetool">
+            <img src="/images/github.png" alt="GitHub" height="32" width="32" />Source Code on GitHub
+        </a>
+    </div>
+</div>
+
+<div class="readme-box">
+<div class="readme-box-header">README.md:</div>
+<div class="markdown-content">
+{{ content_html|safe }}
+</div>
+</div>
+
+{% endblock %}

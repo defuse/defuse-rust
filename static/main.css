@@ -59,7 +59,7 @@ p.indent {
     position: absolute;
     top: 62px;
     right: 30px;
-    font-size: 16pt;
+    font-size: 11pt;
     /* font-weight: bold; */
     color: #FAFAFA;
     font-family: Helvetica, Arial, sans-serif;
@@ -337,6 +337,14 @@ ul {
 
 #footer a:hover {
     color: red;
+}
+
+#footer a.footer-highlight {
+    color: #E8C872;
+}
+
+#footer a.footer-highlight:hover {
+    color: #FFE08A;
 }
 
 .codeskillbox {
