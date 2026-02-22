@@ -9,7 +9,10 @@ use axum::response::IntoResponse;
 use crate::app_state::AppState;
 use crate::context::PageContext;
 use crate::handler::{BoxFuture, PageHandler, PostBody};
+use crate::libs::markdown;
 use crate::libs::passgen;
+
+static README_MD: &str = include_str!("../../../static/markdown/passgenr-readme.md");
 
 pub struct Handler;
 
@@ -20,12 +23,14 @@ impl PageHandler for Handler {
             let ascii = passgen::generate_ascii_password(64);
             let alpha = passgen::generate_alphanumeric_password(64);
             let hex = passgen::generate_hex_password(64);
+            let readme_html = markdown::render_readme(README_MD);
 
             PassgenPage {
                 ctx,
                 ascii,
                 alpha,
                 hex,
+                readme_html,
             }
             .into_response()
         })
@@ -44,4 +49,5 @@ struct PassgenPage {
     ascii: String,
     alpha: String,
     hex: String,
+    readme_html: String,
 }

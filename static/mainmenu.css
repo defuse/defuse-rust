@@ -194,7 +194,7 @@
 	top:30px;              /* place us just up underneath the top-level images */
 	left:-12px;      /* left-align our drop-down to the previous button border */
 	height:auto;      /* the drop-down height will be determiend by line count */
-	width:18em;
+	width:19em;
 	color:black;                        /* this sets the unselected-text color */
 	background:black;         /* this sets our menu's effective "border" color */
 	border: solid #404040 1px;
@@ -238,7 +238,7 @@
 	color:#FFFFFF;               /* this sets the unselected drop-down text color */
 	/*background:#444444;*/      /* this sets the drop-down menu background color */
 	background:black;
-	width:18em;
+	width:19em;
 	box-sizing:border-box;
 }
 
@@ -281,7 +281,7 @@
 	margin-top:-1px;	      /* bring the top edge of the 3rd level menu up one */
 	top:0;
 	/*left:8.08333em;*/ /*CHANGE BY DEFUSE: use super wide always*/
-	left:18em;
+	left:19em;
 	width:18.5em;
 }
 
