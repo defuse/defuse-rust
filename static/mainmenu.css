@@ -309,6 +309,18 @@
 	color: #AAFFFF;
 }
 
+/* 3rd level wide drop-down box */
+.menu ul li:hover ul li:hover ul.wide,
+.menu ul li a:hover ul li a:hover ul.wide {
+	width:23em;
+}
+.menu ul li:hover ul li:hover ul.wide li a,
+.menu ul li a:hover ul li a:hover ul.wide li a,
+.menu ul li:hover ul li:hover ul.wide li a:hover,
+.menu ul li a:hover ul li a:hover ul.wide li a:hover {
+	width:23em;
+}
+
 
 #text {           /* the Mac's standard Safari browser will not see this code */
 	height:1.215em;#           /* ...  but every other browser will and should */
