@@ -309,6 +309,12 @@
 	color: #AAFFFF;
 }
 
+/* 3rd level popout from a wide 2nd level parent */
+.menu ul li:hover ul.wide li:hover ul,
+.menu ul li a:hover ul.wide li a:hover ul {
+	left:23em;
+}
+
 /* 3rd level wide drop-down box */
 .menu ul li:hover ul li:hover ul.wide,
 .menu ul li a:hover ul li a:hover ul.wide {
