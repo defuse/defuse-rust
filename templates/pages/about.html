@@ -1,50 +1,70 @@
 {% extends "base.html" %}
 
-{% block content %}<h1>About Defuse Security</h1>
+{% block content %}<h1>About Taylor Hornby</h1>
 
-
-<p>
+<p class="indent">
 Defuse Security is Taylor Hornby's personal homepage for security research,
-consulting services, and a whole bunch of other random stuff.
+consulting services, and a whole bunch of other random stuff, like an argument that <a href="/the-universe-is-made-of-cheese.htm">the universe is made out of cheese</a>.
 </p>
 
 <p>
-I build useful tools for security engineers like the <a
-href="/online-x86-assembler.htm">Online x86 Assembler/Disassembler</a>, and
-I've recently been exploring a niche of "high assurance AI coding" (if that
-isn't an oxymoron) by creating tools like <a
-href="/vfy-backup-tester.htm">vfy</a> while simultaneously developing a
-claude-based tool for cryptographic security audits.
+I build useful tools for security engineers like the <a href="/online-x86-assembler.htm" >online x86 assembler</a>, I think about <a href="https://github.com/defuse/ictm" >how to write user-friendly threat models</a>, and I solve cryptography vulnerabilities by writing <a href="https://github.com/defuse/php-encryption" >secure implementations</a> and <a href="https://crackstation.net/hashing-security.htm" >explainers</a> that teach the adversarial mindset. I can also be hired for professional <a href="/software-security-auditing.htm">security audits</a>.
 </p>
 
 <p>
-I have a degree in Computer Science and a Masters in Quantum Information. Most
-of my career has been centered around auditing cryptography-related software, my
-most recent project being to provide audits and community security support to
-the Zcash community. I'm currently a board member of the <a
-href="https://zfnd.org/">Zcash Foundation</a>.</p>
+I've recently been exploring a niche of "high assurance AI coding" (discovering the extent to which that is even possible) by creating tools like <a
+href="/vfy-backup-tester.htm" >vfy</a> while simultaneously developing a
+set of Claude-based agents for cryptographic security auditing. I also <a href="https://soundcloud.com/earthrise5">make EDM</a> and <a href="https://github.com/defuse/fft-anything">fun</a> <a href="https://github.com/defuse/wavetool">tools</a> for music producers. Or, when I'm feeling unhinged, a <a href="https://github.com/defuse/DAWr/blob/master/src/bin/demotrack.rs">future bass track coded in Rust</a>.
+</p>
 
 <p>
 What I enjoy most of all is thinking critically about systems to understand
-their intricate behavior, then finding clever ways to exploit those intricacies
-to make the system do something unexpected. I also like cryptography for its
-ability to level power imbalances through decentralization and to increase our
-freedom by giving us privacy to express our deepest thoughts to only those
-who we trust. I'm also interested in complexity theory, mathematical logic,
-physics, and philosophy of mind.
+their intricate behavior, a kind of naturalism applied to invented things, and
+leveraging my understanding of those intricacies to make the system do something
+unexpected. I see exploits as proofs that a system has behaviors even its
+creators don't understand, and vulnerabilities as instances of users relying on
+security properties that don't exist, bringing usability and user experience
+concerns into the picture, not just focusing on code bugs.
 </p>
 
 <p>
-If you would like to hire me for a security audit, see my <a class="monowb"
-href="/software-security-auditing.htm">Security Consulting</a> page. I
-specialize in auditing all sorts of cryptography-related protocols and software,
-but I do general application security audits as well.
+I like cryptography for its ability to level out power imbalances through
+decentralization and for its ability to increase our freedom by protecting our
+privacy and right to express our deepest thoughts to only those we trust.
+I'm also interested in complexity theory, mathematical logic, physics,
+philosophy of mind, and applying learnings from safety engineering to
+information security. I've been told that alongside my technical rigor, I also
+have a good "product" mindset.
 </p>
+
+<p>
+I have a degree in Computer Science and a Master's in Quantum Information. Most
+of my career has been centered around auditing cryptography-related software; my
+most recent project being to provide audits and security support to the Zcash
+community. I was previously a Senior Security Engineer at the Electric Coin
+Company, working on Zcash. I'm currently a board member of the <a
+href="https://zfnd.org/">Zcash Foundation</a>, elected by the community.
+</p>
+
+<p>
+I've found some cool bugs through my work, including one that would have made it possible to <a href="https://github.com/zcash/zcash/issues/738">create free money out of thin air</a> had the problem not been found early, and a way to steal money out of a hardware wallet by <a href="https://zecsec.com/audits/zcash-ledger-audit-report-v2.pdf">confusing its state machine</a>. I've also applied the Flush+Reload side-channel to <a href="/side-channel-attacks-on-everyday-applications.htm">spy on everyday applications</a> like your web browser and PDF reader.
+</p>
+
+<p>
+If you would like to hire me for a security audit, see my <a
+href="/software-security-auditing.htm">security consulting</a> page. I
+specialize in auditing all sorts of cryptography protocols and
+cryptography-related software, but I do general application security audits as
+well. I can also help you by writing a threat model that's simple enough for
+your users to actually understand.
+</p>
+
+<br />
 
 <div class="github-source-boxes">
     <div class="github-source-box">
         <a href="/contact.htm">
-            <img src="/images/email-icon-white.png" alt="Contact" height="24" width="24" />Contact me
+            <img src="/images/email-icon-white.png" alt="Contact" height="24" width="24" />taylor@defuse.ca
         </a>
     </div>
     <div class="github-source-box">
@@ -67,21 +87,4 @@ but I do general application security audits as well.
     </div>
 </div>
 
-
-<h2>Like the Script-Free Drop-Down Menu?</h2>
-
-<p>
-<a href="https://www.grc.com/intro.htm">Steve Gibson</a> created the CSS-only
-menu that this website uses. He put it in the public domain, so anyone can use
-it for free. It is the most reliable (and maybe the only reliable) CSS-only
-drop-down menu ever created!
-</p>
-
-<center>
-    <strong>
-        <a href="http://www.grc.com/menu2/invitro.htm">
-                Click Here to get Steve Gibson's script-free CSS menu
-        </a>
-    </strong>
-</center>
 {% endblock %}
