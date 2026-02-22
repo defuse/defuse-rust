@@ -324,6 +324,38 @@ impl UpvoteService {
         Ok(())
     }
 
+    /// Delete a page from the upvote system by its permanent_id.
+    /// Removes the page from the counts table and its vote history.
+    async fn delete_page(&self, permanent_id: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM counts WHERE permanent_id = ?")
+            .bind(permanent_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    /// Sync all registered pages with upvote configs to the database.
+    /// Call at startup to ensure categories and metadata are up-to-date.
+    pub async fn sync_all_pages(&self) -> Result<(), sqlx::Error> {
+        use crate::registry::PAGE_REGISTRY;
+
+        // Remove pages that have been removed from the upvote system.
+        let removed_ids = ["pphos", "writing_tips", "auditencfsold"];
+        for id in removed_ids {
+            self.delete_page(id).await?;
+        }
+
+        for page in PAGE_REGISTRY.values() {
+            if let Some(ref upvote) = page.upvote {
+                let title = upvote.title.unwrap_or(page.title_or_default());
+                let description = upvote.description.unwrap_or(page.description_or_default());
+                let url = page.relative_url();
+                self.ensure_page(upvote.id, upvote.category, title, description, &url).await?;
+            }
+        }
+        Ok(())
+    }
+
     // -------------------------------------------------------------------------
     // HTML Rendering (matches PHP's Upvote::render_list)
     // -------------------------------------------------------------------------

@@ -1,15 +1,13 @@
 pub mod advice_to_aspiring_computer_engineers;
 pub mod centripetal_acceleration;
 pub mod claude_statusline;
+pub mod miscellaneous;
 pub mod contributors;
 pub mod fractal_zoom;
-pub mod ideas;
-pub mod known_unknowns;
 pub mod new_york_times_algebra;
 pub mod pocorgtfo;
 pub mod rules_for_working_with_me;
 pub mod the_meaning_of_if;
 pub mod the_universe_is_made_of_cheese;
 pub mod truecrypt_7_1a_hashes;
-pub mod writing_tips;
 pub mod x_plane_combat;

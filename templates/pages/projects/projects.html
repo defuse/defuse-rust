@@ -1,87 +1,9 @@
 {% extends "base.html" %}
 
-{% block content %}<h1>Complete Project List</h1>
-<p>Here is a list of the projects I've completed, what I'm working on, and what's to come.</p>
-
-<h2>What I've done</h2>
-<ul>
-	<li>
-		<h3><a href="http://crackstation.net/">CrackStation - Online Hash Cracker (Lookup Table)</a></h3>
-		<p>An online hash cracking lookup table, that supports many hash algorithms: MD5, SHA1, SHA256, SHA512, RipeMD160</p>
-	</li>
-	<li>
-		<h3><a href="/web-application-security.htm">Why are web applications so vulnerable to attack?</a></h3>
-		<p>An analysis of the data flow in web applications, and why attacks like SQL injection are so hard to prevent.</p>
-	</li>
-	<li>
-		<h3><a href="http://crackstation.net/hashing-security.html">Salted Password Hashing - Doing it Right</a></h3>
-		<p>A clear explanation of the proper way to store hashes in a database.</p>
-	</li>
-	<li>
-		<h3><a href="/helloworld-cms.htm">HelloWorld! Secure &amp; Light CMS System</a></h3>
-		<p>An open source, lightweight and secure CMS system in PHP. The very same CMS that this website is using.</p>
-	</li>
-	<li>
-		<h3><a href="/onedetection.htm">PUP Confusion</a></h3>
-		<p>A technique for bypassing antivirus detection.</p>
-	</li>
-	<li>
-		<h3><a href="/filesystem-events-ntfs-permissions.htm">File System Events Disclose NTFS Protected Folder Contents</a></h3>
-		<p>Using the .NET framework's FileSystemWatcher class, it's possible to monitor a folder and it's sub-folders for file creations, modifications, and deletions. The Windows API fails to take NTFS permissions into account when raising these events. By logging these events, it is possible to obtain a partial list of files inside a private folder. This also extends to folders shared over the network.</p>
-	</li>
-	<li>
-		<h3><a href="/pastebin.htm">Secure, Encrypted, Anonymous Pastebin</a></h3>
-		<p>Programmers need a secure way to quickly send code snippets to friends over IM. After noticing that pastebin.com publishes everything you "paste" to the internet, I had to make my own secure version of the service.</p>
-	</li>
-	<li>
-		<h3><a href="/pdfcleaner.htm">PDFCleaner</a></h3>
-		<p>Almost weekly we hear about a new exploit for Adobe Reader, the most used program to view PDF files. PDF files have become a major security problem. I decided to fix this by creating a service that lets you "sanitize" a PDF file. PDFCleaner lets you upload any PDF, and gives you the same PDF without any exploits that may have been attached to the original. PDFCleaner is better than antivirus software, because it even works with unknown exploits.</p>
-	</li>
-	<li>
-		<h3><a href="/checksums.htm">Checksum Calculator</a></h3>
-		<p>There aren't many trustworthy online hash calculators that support multiple algorithms. The highest ranking md5 hash calculator on google is running on the same server as a hash cracking service, which I find very suspicious. I made my own so that I can be 100% sure that the data I hash isn't getting added to a hash cracking database.</p>
-	</li>
-	<li>
-		<h3><a href="/gpucrack.htm">GPU MD5+Salt Cracker</a></h3>
-		<p>Parallel computation is many times faster on a GPU than a CPU. There is lots of code out there for brute forcing plain MD5 hashes using Nvidia's CUDA technology. To get a feel for GPU computing, I wrote a CUDA program that can crack <i>salted</i> MD5 hashes.</p>
-	</li>
-	<li>
-		<h3><a href="/passgen.htm">Password Generator</a></h3>
-		<p>There are some great websites for generating secure passwords, like <a href="http://grc.com/passwords.htm">GRC's Ultra High Security Password Generator</a>, but I TNO (Trust No One). I made my own offline password generator because I didn't want to trust anyone else's servers with creating my passwords. </p>
-
-	</li>
-	<li>
-		<h3><a href="/html-sanitize.htm">Online HTML Sanitize Tool (htmlspecialchars)</a></h3>
-		<p>This tool will take your text and convert all the special characters to their proper HTML codes, so you can paste text with special characters or HTML code onto your website.</p>
-	</li>
-	<li>
-		<h3><a href="/eotp.htm">EOTP - Encrypting One Time Passwords</a></h3>
-		<p>One time passwords that provide the server with a static encryption key.</p>
-	</li>
-	<li>
-		<h3><a href="/trustedthirdparty.htm">TRENT - Trusted Random Entropy Generator</a></h3>
-		<p>TRENT is a service that allows online contests and drawings to be done securely. TRENT allows both the contest organizer and the contestants to trust the results. The organizer knows the random numbers were created using a secure CSPRNG and the contestants know that the organizer did not have any influence over the random numbers.</p>
-	</li>
-</ul>
-<h2>What I'm working on right now</h2>
-<ul>
-	<li>
-		<h3>University</h3>
-	</li>
-    <li>
-        <h3>Secure User Account System for PHP</h3>
-        <p>I'm writing a secure user account system for PHP - with a bunch of crypto built in - so that myself and other developers have a secure "starting point" for their websites.</p>
-    </li>
-</ul>
-<h2>What I plan to do</h2>
-<ul>
-	<li>
-		<h3><a href="/passwordbolt.htm">Password Bolt</a></h3>
-	</li>
-    <li>
-        <h3>CryptoHost / BitCannon</h3>
-        <p>A secure temporary file upload and transfer service/program.</p>
-    </li>
-</ul>
-<br /><br />
-{% endblock %}
+{% block content %}<h1>Projects &amp; Code (By Popularity)</h1>
+<p>
+A list of projects and code, sorted by upvotes and downvotes.
+Please upvote the pages you like and downvote the ones you don't.
+</p>
+{{ all_pages_html|safe }}
+{%- endblock %}

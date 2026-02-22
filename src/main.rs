@@ -86,6 +86,10 @@ async fn async_main() {
     let upvotes = UpvoteService::connect(&upvotes_url).await.expect("Failed to connect to Upvotes database");
     tracing::info!("Upvotes database connected");
 
+    // Sync all registered pages to upvote database (ensures categories/metadata are current)
+    upvotes.sync_all_pages().await.expect("Failed to sync pages to upvote database");
+    tracing::info!("Upvote pages synced");
+
     // pastebin database
     tracing::info!("Connecting to Pastebin database...");
     libs::pastebin::ensure_db_connection_works().await.expect("Failed to connect to Pastebin database");

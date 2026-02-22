@@ -14,9 +14,9 @@ impl PageHandler for Handler {
         let client_ip = ctx.client_ip.clone();
         Box::pin(async move {
             let all_pages = upvotes
-                .get_all_pages(Some("defuse_projects"))
+                .get_all_pages(Some("defuse_misc"))
                 .await
-                .expect("BUG: Failed to get project pages from database");
+                .expect("BUG: Failed to get misc pages from database");
 
             let user_actions = upvotes
                 .get_user_actions_batch(&all_pages, &client_ip)
@@ -29,14 +29,14 @@ impl PageHandler for Handler {
                 &user_actions,
             );
 
-            ProjectsPage { ctx, all_pages_html }.into_response()
+            MiscellaneousPage { ctx, all_pages_html }.into_response()
         })
     }
 }
 
 #[derive(Template)]
-#[template(path = "pages/projects/projects.html")]
-struct ProjectsPage {
+#[template(path = "pages/misc/miscellaneous.html")]
+struct MiscellaneousPage {
     ctx: PageContext,
     all_pages_html: String,
 }
