@@ -124,7 +124,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/vimrc.php",
             upvote: Some(UpvoteConfig {
                 id: "myvimrc",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("My Vim Configuration"),
                 description: Some("My configuration of the Vim text and code editor."),
             }),
@@ -147,7 +147,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/honestyware.php",
             upvote: Some(UpvoteConfig {
                 id: "honestyware",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Honestyware"),
                 description: Some("A philosophy for selling software and other digital content on the internet."),
             }),
@@ -161,7 +161,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/reading-list.php",
             upvote: Some(UpvoteConfig {
                 id: "reading_list",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Reading List"),
                 description: Some("A list of the books I have read."),
             }),
@@ -196,7 +196,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/checksums.php",
             upvote: Some(UpvoteConfig {
                 id: "onlinechecksums",
-                category: "defuse_pages",
+                category: "defuse_services",
                 title: Some("Online Hash Calculator"),
                 description: Some("A tool for computing hashes (MD5, SHA1, SHA2, etc.) of text and files."),
             }),
@@ -210,7 +210,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/big-number-calculator.php",
             upvote: Some(UpvoteConfig {
                 id: "bignumbercalculator",
-                category: "defuse_pages",
+                category: "defuse_services",
                 title: Some("Big Number Calculator"),
                 description: Some("A tool for calculating with huge numbers."),
             }),
@@ -224,7 +224,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/html-sanitize.php",
             upvote: Some(UpvoteConfig {
                 id: "onlinehtmlsanitize",
-                category: "defuse_pages",
+                category: "defuse_services",
                 title: Some("HTML Escape Tool"),
                 description: Some("A tool for HTML-escaping text so that it looks and behaves exactly like it does in a text editor."),
             }),
@@ -238,7 +238,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/online-x86-assembler.php",
             upvote: Some(UpvoteConfig {
                 id: "onlinex86assembler",
-                category: "defuse_pages",
+                category: "defuse_services",
                 title: Some("Online x86 / x64 Assembler"),
                 description: Some("Assemble x86 and x64 code in your browser!"),
             }),
@@ -252,7 +252,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/pastebin.html",
             upvote: Some(UpvoteConfig {
                 id: "pastebin",
-                category: "defuse_pages",
+                category: "defuse_services",
                 title: Some("PIE Bin"),
                 description: Some("A pastebin with both client-side and server-side encryption."),
             }),
@@ -266,7 +266,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/quantum-computer-time-capsule.php",
             upvote: Some(UpvoteConfig {
                 id: "quantumcomputertimecapsule",
-                category: "defuse_pages",
+                category: "defuse_services",
                 title: Some("Send a Message to the Future"),
                 description: Some("Save a message that will become readable after quantum computers are built."),
             }),
@@ -317,7 +317,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/services/trustedthirdparty.php",
             upvote: Some(UpvoteConfig {
                 id: "trent",
-                category: "defuse_pages",
+                category: "defuse_services",
                 title: Some("TRENT - Trusted Random Entropy"),
                 description: Some("A free trusted third party random number generator."),
             }),
@@ -334,7 +334,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/asuskeyboarddefect.html",
             upvote: Some(UpvoteConfig {
                 id: "asuskeyboarddefect",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Asus G Series Keyboard Design Error"),
                 description: Some("Fixing a problem with the keyboard in an ASUS laptop."),
             }),
@@ -349,7 +349,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/bitcoin-pool-ddos.html",
             upvote: Some(UpvoteConfig {
                 id: "bitcoinpoolddos",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Centralization is Killing Bitcoin"),
                 description: Some("An article on Bitcoin, centralization, and DDoS attacks."),
             }),
@@ -363,7 +363,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/blind-birthday-attack.php",
             upvote: Some(UpvoteConfig {
                 id: "blindbirthdayattack",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Blind Birthday Attack"),
                 description: Some("A birthday attack without knowing what the collision actually is."),
             }),
@@ -386,7 +386,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/bochs-hacking-guide.php",
             upvote: Some(UpvoteConfig {
                 id: "bochshacking",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Bochs Hacking Guide"),
                 description: Some("Hacking the Bochs x86 CPU emulator."),
             }),
@@ -400,7 +400,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/cbcmodeiv.html",
             upvote: Some(UpvoteConfig {
                 id: "cbcmodeiv",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Encryption - CBC Mode IV: Secret or Not?"),
                 description: Some("Should the IV in CBC mode be kept secret?"),
             }),
@@ -423,7 +423,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/concentration-bounds-from-parallel-repetition-theorems.php",
             upvote: Some(UpvoteConfig {
                 id: "mastersthesis",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Concentration Bounds from Parallel Repetition Theorems"),
                 description: Some("My master's thesis, showing how concentration bounds can be derived from parallel repetition theorems for nonlocal games and interactive proofs."),
             }),
@@ -437,7 +437,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/cracking-synergy-bad-cryptography.php",
             upvote: Some(UpvoteConfig {
                 id: "synergy_cracking",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Cracking Synergy's Bad Cryptography"),
                 description: Some("A tool to crack Synergy's homebrew cryptography."),
             }),
@@ -460,7 +460,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/exploiting-cpp-vtables.php",
             upvote: Some(UpvoteConfig {
                 id: "cppvtables",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Exploiting C++ VTABLES: Instance Replacement"),
                 description: Some("Use a memory corruption vulnerability to change an instance of class A into an instance of class B."),
             }),
@@ -474,7 +474,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/in-browser-port-scanning.php",
             upvote: Some(UpvoteConfig {
                 id: "inbrowserportscanner",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Timing Side Channel Port Scanner in the Browser"),
                 description: Some("How web pages can use a timing side channel to \"scan\" your local network."),
             }),
@@ -488,7 +488,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/filesystemevents.html",
             upvote: Some(UpvoteConfig {
                 id: "filesystemevents",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("File System Events Leak Folder Contents"),
                 description: Some("An information disclosure vulnerability in Windows shared folders that lets you see what's in folers you can't access."),
             }),
@@ -502,7 +502,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/flush-reload-side-channel.php",
             upvote: Some(UpvoteConfig {
                 id: "flushreload",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("FLUSH+RELOAD: Multi-User Systems are Doomed"),
                 description: Some("The FLUSH+RELOAD side-channel attack breaks the security of multi-user systems."),
             }),
@@ -516,7 +516,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/godel-second-incompleteness-theorem-by-turing-machines.php",
             upvote: Some(UpvoteConfig {
                 id: "godelsecondtms",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines"),
                 description: Some("Proving Gödel's second incompleteness theorem in a way that should be understandable to anyone who understands the proof that the halting problem is undecidable."),
             }),
@@ -539,7 +539,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/how-do-we-model-this-robot.php",
             upvote: Some(UpvoteConfig {
                 id: "howdowemodelthisrobot",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("How do we model this robot?"),
                 description: Some("The difference between Computational Ability and Informational Ability"),
             }),
@@ -571,7 +571,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/is-security-local.php",
             upvote: Some(UpvoteConfig {
                 id: "issecuritylocal",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Is Security Local?"),
                 description: Some("Is security a locally-verifiable property of computation?"),
             }),
@@ -585,7 +585,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/onedetection.html",
             upvote: Some(UpvoteConfig {
                 id: "pupconfusion",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("The PUP Confusion Technique"),
                 description: Some("Undetecting malware by making it look like a Potentially Unwanted Program (PUP)."),
             }),
@@ -599,7 +599,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/password-hashing-after-phc.php",
             upvote: Some(UpvoteConfig {
                 id: "passhashingphc",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Password Hashing After the PHC"),
                 description: Some("Giving authenticators an advantage over password crackers with cache."),
             }),
@@ -622,7 +622,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/plausible-reason-p-noteq-np-is-hard-to-prove.php",
             upvote: Some(UpvoteConfig {
                 id: "plausiblepneqnpprove",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("A Plausible Reason It's So Hard To Prove P!=NP"),
                 description: Some("Attempting to show why P!=NP is hard to prove using hash functions."),
             }),
@@ -645,7 +645,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/hallofshame.php",
             upvote: Some(UpvoteConfig {
                 id: "pphos",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Password Policy Hall of Shame"),
                 description: Some("A list of web sites that store passwords in plain text, restrict password length, or restrict password characters"),
             }),
@@ -669,7 +669,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/race-conditions-in-web-applications.php",
             upvote: Some(UpvoteConfig {
                 id: "raceconditions",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Practical Race Condition Vulnerabilities in Web Applications"),
                 description: Some("An example of a web application (PHP) vulnerable to a race condition, and how to fix it."),
             }),
@@ -692,7 +692,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/mitigating-breach-tls-attack-in-php.php",
             upvote: Some(UpvoteConfig {
                 id: "breachmitigate",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Mitigating BREACH in PHP"),
                 description: Some("PHP code for mitigating the BREACH attack."),
             }),
@@ -706,7 +706,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/side-channel-attacks-on-everyday-applications.php",
             upvote: Some(UpvoteConfig {
                 id: "side-channel-attacks-on-everyday-applications",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Side-Channel Attacks on Everyday Applications"),
                 description: Some("My Black Hat USA 2016 talk about the Flush+Reload side channel."),
             }),
@@ -757,7 +757,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/manual-random-number-generator.php",
             upvote: Some(UpvoteConfig {
                 id: "manualrng",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("A Manual Random Number Generator"),
                 description: Some("Generating random numbers with paper coins."),
             }),
@@ -771,7 +771,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/microsoft-reads-your-skype-messages.php",
             upvote: Some(UpvoteConfig {
                 id: "skypemitm",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Confirmed: Microsoft Visits Links You Send In Skype"),
                 description: Some("I sent a link through Skype and Microsoft visted it, confirming The H's claims."),
             }),
@@ -785,7 +785,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/eotp.html",
             upvote: Some(UpvoteConfig {
                 id: "eotp",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Encrypting One Time Passwords (EOTP)"),
                 description: Some("EOTP is a cryptographic One Time Password (OTP) protocol designed to provide a static encryption key across login sessions."),
             }),
@@ -799,7 +799,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/triangle-of-secure-code-delivery.php",
             upvote: Some(UpvoteConfig {
                 id: "trianglesecurecodedelivery",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Triangle of Secure Code Delivery"),
                 description: Some("Three properties necessary and sufficient for delivering code safely."),
             }),
@@ -813,7 +813,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/truecrypt-plausible-deniability-useless-by-game-theory.php",
             upvote: Some(UpvoteConfig {
                 id: "truecryptgametheory",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("TrueCrypt's Plausible Deniability is Theoretically Useless"),
                 description: Some("Why you really ought to have a hidden volume, even if you don't need one."),
             }),
@@ -827,7 +827,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/web-application-security.html",
             upvote: Some(UpvoteConfig {
                 id: "webappsec",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Data Flow in Web Applications"),
                 description: Some("A look at the flow of data in web applications and how it can be tamed for security."),
             }),
@@ -841,7 +841,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/research/web-browser-javascript-cryptography.php",
             upvote: Some(UpvoteConfig {
                 id: "webbrowsercryptography",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Web Browser Cryptography is a Good Thing"),
                 description: Some("Why we should support the development of browser-based crypto applications."),
             }),
@@ -866,7 +866,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/advice-to-aspiring-computer-engineers.php",
             upvote: Some(UpvoteConfig {
                 id: "advicetocs",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Advice to Aspiring Computer Security Engineers/Scientists"),
                 description: Some("Some advice for new computer science students based on my experience."),
             }),
@@ -880,7 +880,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/centripetal-acceleration.php",
             upvote: Some(UpvoteConfig {
                 id: "centripetalaccel",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Centripetal Acceleration"),
                 description: Some("Deriving the centripetal acceleration equation."),
             }),
@@ -903,7 +903,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/fractal-zoom.php",
             upvote: Some(UpvoteConfig {
                 id: "fractalzoom",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Fractal Zoom"),
                 description: Some("A psychedelic short story."),
             }),
@@ -935,7 +935,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/new-york-times-algebra.php",
             upvote: Some(UpvoteConfig {
                 id: "newyorktimesalgebra",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("The New York Times and Algebra"),
                 description: Some("The New York Times does not (necessarily) fail at algebra."),
             }),
@@ -976,7 +976,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/the-universe-is-made-of-cheese.php",
             upvote: Some(UpvoteConfig {
                 id: "universeOfCheese",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("The Cheese Universe Paradox"),
                 description: Some("A formal proof that the universe is made entirely of cheese."),
             }),
@@ -990,7 +990,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/truecrypt-7.1a-hashes.php",
             upvote: Some(UpvoteConfig {
                 id: "truecrypthashes",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Hashes of TrueCrypt Version 7.1a Files"),
                 description: Some("Hashes of all files from the last version of TrueCrypt"),
             }),
@@ -1004,7 +1004,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/x-plane-combat.php",
             upvote: Some(UpvoteConfig {
                 id: "xplanecombat",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Combat in X-Plane 10"),
                 description: Some("How to configure X-Plane 10 for combat."),
             }),
@@ -1018,7 +1018,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/misc/writing-tips.php",
             upvote: Some(UpvoteConfig {
                 id: "writing_tips",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Writing Tips"),
                 description: Some("Short tips to make your writing better."),
             }),
@@ -1032,7 +1032,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "claude-statusline",
             upvote: Some(UpvoteConfig {
                 id: "claudestatusline",
-                category: "defuse_pages",
+                category: "defuse_misc",
                 title: Some("Claude Code Status Line"),
                 description: Some("A custom status line for Claude Code showing context usage, costs, and git branch."),
             }),
@@ -1057,7 +1057,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/bochs-images.php",
             upvote: Some(UpvoteConfig {
                 id: "bochsdiskimages",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("Bochs Disk Images"),
                 description: Some("Disk images for the Bochs x86 emulator."),
             }),
@@ -1071,7 +1071,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/email-spoofing-in-ruby.php",
             upvote: Some(UpvoteConfig {
                 id: "email_spoofing_ruby",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("Email Spoofing in Ruby"),
                 description: Some("A Ruby script for spoofing email to SMTP servers."),
             }),
@@ -1085,7 +1085,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/force-print-background.php",
             upvote: Some(UpvoteConfig {
                 id: "forceprinthtmlbg",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("Forcing HTML/CSS Background Color to Print"),
                 description: Some("How to force browsers to print the background color of HTML elements (using images)."),
             }),
@@ -1099,7 +1099,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/generating-random-passwords.php",
             upvote: Some(UpvoteConfig {
                 id: "generatingrandompasswords",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("Generating Random Passwords in PHP"),
                 description: Some("How to generate unbiased passwords in PHP (plus some common mistakes)."),
             }),
@@ -1113,7 +1113,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/gnutls-psk-client-server-example.php",
             upvote: Some(UpvoteConfig {
                 id: "gnutlspsk",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("GnuTLS Pre-Shared Key Client-Server Example"),
                 description: Some("How to establish an SSL/TLS connection with GnuTLS and PSK authentication."),
             }),
@@ -1154,7 +1154,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/php-hit-counter.html",
             upvote: Some(UpvoteConfig {
                 id: "phphitcounter",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("\"Privacy Aware\" Unique Hit Counter for PHP"),
                 description: Some("A simple hit counter that stores only a hash of your visitor's IP address."),
             }),
@@ -1168,7 +1168,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/php-pbkdf2.php",
             upvote: Some(UpvoteConfig {
                 id: "phppbkdf2",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("PBKDF2 for PHP"),
                 description: Some("A fast implementation of the PBKDF2 key stretching function in PHP."),
             }),
@@ -1191,7 +1191,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/secure-php-encryption.php",
             upvote: Some(UpvoteConfig {
                 id: "securephpencryption",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("How to Encrypt Data in PHP"),
                 description: Some("The right way to encrypt data in PHP."),
             }),
@@ -1205,7 +1205,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/projects/syntax-highlighting-in-php-with-vim.php",
             upvote: Some(UpvoteConfig {
                 id: "syntaxhighlightingvim",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("Using the Vim Editor for Syntax Highlighting in PHP"),
                 description: Some("Generate syntax-highlighted code automatically in PHP with Vim."),
             }),
@@ -1237,7 +1237,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "dawr",
             upvote: Some(UpvoteConfig {
                 id: "dawr",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("DAWr - Audio Playground for Rust"),
                 description: Some("A simple DAW library for Rust with a wavetable synthesizer, sampler, and audio effects."),
             }),
@@ -1251,7 +1251,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "wavetool",
             upvote: Some(UpvoteConfig {
                 id: "wavetool",
-                category: "defuse_pages",
+                category: "defuse_projects",
                 title: Some("wavetool - Serum Wavetable Processor"),
                 description: Some("A command-line tool for processing and analyzing Serum wavetables."),
             }),
@@ -1267,7 +1267,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/software/backup-verify-script.php",
             upvote: Some(UpvoteConfig {
                 id: "backupverifyscript",
-                category: "defuse_pages",
+                category: "defuse_software",
                 title: Some("Backup Verifier Script (Ruby)"),
                 description: Some("A Ruby script that compares two directories and reports the differences."),
             }),
@@ -1281,7 +1281,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "vfy-backup-tester",
             upvote: Some(UpvoteConfig {
                 id: "vfybackuptester",
-                category: "defuse_pages",
+                category: "defuse_software",
                 title: Some("`vfy` Directory Comparer"),
                 description: Some("A directory comparison tool for checking if backups have been completed or restored successfully."),
             }),
@@ -1295,7 +1295,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/software/helloworld-cms.html",
             upvote: Some(UpvoteConfig {
                 id: "helloworld",
-                category: "defuse_pages",
+                category: "defuse_software",
                 title: Some("HelloWorld! - A Light & Secure CDS for PHP"),
                 description: Some("A lightweight, ultra-secure, CMS/CDS for PHP"),
             }),
@@ -1318,7 +1318,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/software/php-hash-cracker.php",
             upvote: Some(UpvoteConfig {
                 id: "phphashcracker",
-                category: "defuse_pages",
+                category: "defuse_software",
                 title: Some("Salted Hash Cracking PHP Script"),
                 description: Some("A script for cracking hashes when all you have is PHP."),
             }),
@@ -1332,7 +1332,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/software/sockstress.php",
             upvote: Some(UpvoteConfig {
                 id: "sockstress",
-                category: "defuse_pages",
+                category: "defuse_software",
                 title: Some("Sockstress DoS Tool"),
                 description: Some("A public domain C implementation of the sockstress DoS attack."),
             }),
@@ -1355,7 +1355,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/software/passgen.html",
             upvote: Some(UpvoteConfig {
                 id: "passgen",
-                category: "defuse_pages",
+                category: "defuse_software",
                 title: Some("High-Security Offline Password Generator"),
                 description: Some("A secure random password generator for Windows, Linux, and Mac."),
             }),
@@ -1373,7 +1373,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "crackstation-hashdb",
             upvote: Some(UpvoteConfig {
                 id: "crackstationhashdb",
-                category: "defuse_pages",
+                category: "defuse_software",
                 title: Some("CrackStation's Hash Cracking Utility"),
                 description: Some("The indexing and lookup code behind CrackStation.net's hash cracking service."),
             }),
@@ -1389,7 +1389,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/encfs.php",
             upvote: Some(UpvoteConfig {
                 id: "auditencfs",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("EncFS Security Audit"),
                 description: Some("The results of an EncFS security audit."),
             }),
@@ -1403,7 +1403,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/encfs-old.php",
             upvote: Some(UpvoteConfig {
                 id: "auditencfsold",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("EncFS Security Audit (Old)"),
                 description: Some("The results of an older EncFS security audit."),
             }),
@@ -1417,7 +1417,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/ecryptfs.php",
             upvote: Some(UpvoteConfig {
                 id: "auditecryptfs",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("eCryptfs Security Audit"),
                 description: Some("The results of an eCryptfs security audit."),
             }),
@@ -1431,7 +1431,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/pefs.php",
             upvote: Some(UpvoteConfig {
                 id: "auditpefs",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("PEFS Security Audit"),
                 description: Some("Security audit of the Private Encrypted File System (PEFS)."),
             }),
@@ -1445,7 +1445,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/zerobin.php",
             upvote: Some(UpvoteConfig {
                 id: "auditzerobin",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("ZeroBin Security Audit"),
                 description: Some("A security audit of the ZeroBin pastebin."),
             }),
@@ -1459,7 +1459,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/gocryptfs.php",
             upvote: Some(UpvoteConfig {
                 id: "auditgocryptfs0",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Gocryptfs Security Audit"),
                 description: Some("A security audit of the gocryptfs encrypted filesystem."),
             }),
@@ -1473,7 +1473,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             legacy_hit_count_id: "pages/audits/hash0.php",
             upvote: Some(UpvoteConfig {
                 id: "audithashzero",
-                category: "defuse_pages",
+                category: "defuse_research",
                 title: Some("Hash0 Security Audit"),
                 description: Some("A security audit of the Hash0 pastebin."),
             }),
