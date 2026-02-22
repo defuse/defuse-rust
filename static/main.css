@@ -391,6 +391,33 @@ ul {
 .badcode {
     background-image: url('/images/grid-red.gif') !important;
 }
+/* CONTACT TABLE {{{1 */
+
+.contact-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.contact-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.contact-table tr:last-child td {
+    border-bottom: none;
+}
+
+.contact-table td:first-child {
+    font-weight: bold;
+    white-space: nowrap;
+    width: 1%;
+    color: #8B0000;
+}
+
+.contact-table tr:hover {
+    background-color: #f5f0f0;
+}
+
 /* PPHOS {{{1 */
 /* ============ PPHOS ================= */
 
