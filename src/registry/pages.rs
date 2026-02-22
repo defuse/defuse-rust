@@ -282,7 +282,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         page! {
             handler: services::software_security_auditing,
             slug: "software-security-auditing",
-            title: "Software Security Auditing",
+            title: "Cryptography & Software Security Auditing",
             description: "Get your software audited for security bugs.",
             keywords: "software security, exploits, auditing",
             legacy_hit_count_id: "pages/services/software-security-auditing.php",

@@ -1,48 +1,257 @@
 {% extends "base.html" %}
 
-{% block content %}<h1>Security Consulting</h1>
+{% block content %}<h1>Security Consulting & Auditing</h1>
 
-<p>
-I want to work with you to make sure your programs, your people, and your
-company are secure. I'm available for a daily rate to look over your protocol
-designs, software implementations, and for consulting to help you keep your
-business secure. To give back to the community, I substantially reduce my rate
-for published open-source software (GPL, MIT, BSD, CC0, etc.) as well as
-open-access research.
+<div class="github-source-boxes">
+    <div class="github-source-box">
+        <a href="mailto:taylor@defuse.ca">
+            <img src="/images/email-icon-white.png" alt="Contact" height="24" width="24" />taylor@defuse.ca
+        </a>
+    </div>
+    <div class="github-source-box">
+        <a href="https://x.com/defusesec">
+            <img src="/images/twitter.png" alt="X/Twitter" height="25" width="30" />Contact on X/Twitter
+        </a>
+    </div>
+</div>
+
+
+<p class="indent">
+I specialize in auditing cryptographic protocols and implementations. I'm
+especially interested in auditing privacy-enhancing technologies and products
+that bring advanced cryptography to real users. But I'm a generalist; I have
+experience auditing all sorts of designs and codebases for all sorts of
+vulnerabilities.
 </p>
 
 <p>
-What I can do:
+I've found some cool bugs through my work, including one that would have made it possible to <a href="https://github.com/zcash/zcash/issues/738">create infinite money</a>, a way to steal money out of a hardware wallet by <a href="https://zecsec.com/audits/zcash-ledger-audit-report-v2.pdf">confusing its state machine</a>, and <a href="https://zecsec.com/audits/ZGo-Security-Audit-v1.1.pdf">many ways</a> of stealing money or otherwise getting free stuff out of a payment processor. I've also applied the Flush+Reload side-channel to <a href="/side-channel-attacks-on-everyday-applications.htm">spy on everyday applications</a> like your web browser and PDF reader.
 </p>
-
-<ul>
-    <li>Evaluate the design and implementation of cryptographic protocols.</li>
-    <li>Check web code for XSS, SQL injection, session, password hashing, etc. vulnerabilities.</li>
-    <li>Find memory corruption / threading bugs in C and C++ code.</li>
-    <li>Write proof-of-concept exploits for vulnerabilities.</li>
-    <li>Verifying vulnerability fixes.</li>
-    <li>Train your developers and staff.</li>
-</ul>
 
 <p>
-Here are some examples of my security auditing work:
+What's unique about my approach is that I see security through the lens of
+usability and user experience. A security issue, in my opinion, occurs any time
+a user relies on a security or privacy property that isn't actually there. Security bugs aren't just incorrect equations or lines of code that need
+fixing, they also come from the ways your product makes its own security
+properties hard to understand, and from design choices that make your
+product hard to use safely. This point of view is baked right in to my <a href="https://github.com/defuse/ictm">threat modeling methodology</a>.
 </p>
-
-<ul>
-    <li><a href="https://zecsec.com/posts/zgo-security-audit/">Critical bugs found in ZGo, a cryptographic payment processor</a></li>
-    <li><a href="https://zecsec.com/posts/security-audit-of-hanhs-ledger-app/">Audit of a cryptocurrency hardware wallet</a></li>
-    <li><a href="https://github.com/defuse/ictm">The "invariant-centric" threat modeling approach</a></li>
-    <li><a href="/audits/gocryptfs.htm">gocryptfs</a></li>
-    <li><a href="/audits/encfs.htm">EncFS</a></li>
-    <li><a href="/audits/ecryptfs.htm">eCryptfs</a></li>
-    <li><a href="/audits/pefs.htm">PEFS</a></li>
-    <li><a href="/audits/zerobin.htm">ZeroBin</a></li>
-    <li><a href="http://www.cryptofails.com/">Crypto Fails</a></li>
-    <li><a href="https://github.com/keboola/php-encryption/issues/3">Padding Oracle PoC</a></li>
-</ul>
 
 <p>
-Interested? Email me at <a href="mailto:taylor@defuse.ca">taylor@defuse.ca</a> or
-mention <a href="https://twitter.com/defusesec">@DefuseSec</a> on Twitter/X.
+I combine my technical rigor with good "product" sense to see your project from
+two perspectives at once: I gain a deep technical understanding of its internal
+workings, and at the same time see it through the eyes of real, hurried,
+just-wants-to-get-the-job-done, user. This way I don't just point out flaws, I
+help you figure out how to design your product to work as easily and as securely
+as possible, for real people.
 </p>
+
+<p>
+Because I see the big picture, I can get started right away without being handed
+a detailed audit scope. I will automatically figure out what matters most to
+your users, and to your project, and focus my review there. My goal is always to
+find flaws that have a real chance of hurting real people, and to inform you
+about how your security processes are failing.
+</p>
+
+<p>
+If it's your first time getting an audit, I'll make it easy by figuring out the
+scope for you. If you already have a mature security program, or are experienced
+at commissioning security audits, I'll work with you to narrow down how my work
+will best augment your existing practices.
+</p>
+
+<h2>What I audit, and other services</h2>
+
+<table class="contact-table">
+    <tr>
+        <td>Applied Cryptography</td>
+        <td>
+            Encryption libraries, primitive implementations, protocol designs
+            and implementations. Any software that uses cryptography as a key
+            feature.
+        </td>
+    </tr>
+    <tr>
+        <td>General Application Security</td>
+        <td>Web apps, mobile apps, desktop apps. Anything, really!</td>
+    </tr>
+    <tr>
+        <td>Blockchain & Wallets</td>
+        <td>Hardware wallets, light clients, consensus code, smart contracts, etc.</td>
+    </tr>
+    <tr>
+        <td>Threat Modeling</td>
+        <td>I'll write a threat model that your users can actually understand, distilling the complex security properties of your product into a simple, accurate model everyone can read.</td>
+    </tr>
+    <tr>
+        <td>Organizational Security</td>
+        <td>
+            Your organization should have internal security training,
+            out-of-band confirmation practices, code review strategies, and
+            incident response drills. I'll either help you figure all of that
+            out, only recommending high-impact practices that will actually
+            work, or review the practices you already have. Security is a
+            process, not a product.
+        </td>
+    </tr>
+    <tr>
+        <td>Science & Technology Due Diligence</td>
+        <td>
+            Considering making an investment, but unsure if the underlying
+            technology is legit? I'll dive into the product's technical workings
+            and roadmap, learning how it works as well as all of the science
+            behind why it works. Then I'll give you a technical feasibility
+            report, including bear/bull theses grounded in an accurate
+            understanding of the science. <br /> <strong>Focus areas:</strong> Quantum,
+            cryptography, blockchain, security and privacy, AI.
+        </td>
+    </tr>
+</table>
+
+<h2>Work Sample</h2>
+
+<p>
+You can get a sense for the quality of my work by looking at my past, public
+audit reports. Here are a couple of my favorites:
+</p>
+
+<div class="github-source-boxes">
+
+    <div class="github-source-box">
+        <a href="https://zecsec.com/audits/zcash-ledger-audit-report-v2.pdf">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Report: Hardware Wallet
+        </a>
+    </div>
+
+    <div class="github-source-box">
+        <a href="https://zecsec.com/audits/ZGo-Security-Audit-v1.1.pdf">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Report: Payment Processor
+        </a>
+    </div>
+</div>
+
+<h2>Pricing</h2>
+
+<p>
+I work on a daily rate, generally starting with a timeboxed 10 to 25-day audit,
+depending on the risks involved and complexity of the design or codebase. I
+offer reduced rates for open-source projects and open-access research.
+</p>
+
+<h2>How does an audit work?</h2>
+
+<p>
+"Given enough eyeballs, all bugs are shallow," the saying goes. Conversely, if
+the same set of eyes have been poring over the same designs and code for a long
+time, it's almost guaranteed that there are some "shallow" bugs going unnoticed.
+</p>
+
+<p>A security audit is worth investing in for three main reasons:</p>
+
+<ol>
+    <li>
+        <strong>Fresh Eyes:</strong> An audit provides a fresh set of eyes to look over your designs/code.
+        Fresh eyes, especially from someone learning how your product works for
+        the first time, are more likely to spot problems that your own engineers
+        have become blind to through repeated exposure. It's an opportunity to
+        question the background assumptions the system was designed
+        under, to find and fix problems that put users at risk.
+    </li>
+    <li>
+        <strong>Feedback:</strong> An audit measures the effectiveness of all your security practices
+        leading up to the audit. Did a vulnerability make it into your shipped
+        product? If so, that's an indicator that your security practices can
+        be improved. The audit report gives you real information that helps you
+        improve the way you work, it's not just a list of problems.
+    </li>
+    <li>
+        <strong>Reputation:</strong> By publishing audits you've acquired for
+        your products, it shows technical people that you are taking security
+        seriously and that your products can be trusted. Publishing the audit
+        report is optional, but being open and honest about mistakes, especially
+        when you're actively investing in finding them, is one of the best ways
+        to build trust.
+    </li>
+</ol>
+
+<p>What happens when you get an audit? The basic process is:</p>
+
+<ol>
+    <li>
+        <strong>Scoping & Timeline</strong> &ndash; 
+
+        We agree on which areas of your project need review the most, how long
+        the audit will last, and when it will take place. Audits are usually
+        "timeboxed" efforts, meaning I make the most out of a set amount of time
+        to find as many high-impact issues as possible. You can either leave the
+        scope up to me, or point me at a specific scope to fill in some security
+        gaps you've already identified.
+    </li>
+    <li>
+        <strong>Security Review</strong> &ndash;
+
+        The actual security review happens. I verify that you've correctly
+        implemented your cryptography according to spec, look for
+        vulnerabilities in the specification itself, find subtle mistakes in the
+        most security-critical code, and make recommendations for improving the
+        overall robustness, reliability, and usability of your project. If you'd like a detailed breakdown of my process, I've documented it <a href="https://zecsec.com/posts/security-audit-process/">here</a>.
+    </li>
+    <li>
+        <strong>Interim Report</strong> &ndash;
+
+        Halfway through the audit (or at the end of every week, if you prefer),
+        you'll be sent a draft of the current report. This will let you know
+        about any issues the audit has found so far, and gives you an
+        opportunity to adjust the audit's focus areas given the findings so far.
+    </li>
+    <li>
+        <strong>Remediation</strong> &ndash;
+        
+        At the end of the security review phase, you will be sent a draft final
+        audit report detailing all of the issues and recommendations the audit
+        uncovered. At this point, the audit is complete and remediation begins.
+        After your engineers fix the most critical issues, I'll review the
+        changes to ensure the vulnerability was completely resolved. I usually
+        include a couple days of remediation time in audit scope, and that's
+        often enough, but sometimes, when a lot of vulnerabilities are found,
+        the remediation will require billing for more time.
+    </li>
+    <li>
+        <strong>Final Report</strong> &ndash;
+        
+        At last the final report is updated to reflect the remediation status of
+        all the issues, we both look over the report for any technical
+        inaccuracies that need to be corrected, and then, at your option, it can
+        be published.
+    </li>
+</ol>
+
+<h3>Resources &amp; Assumptions</h3>
+
+<p>
+Usually, you'll make one of your engineers available to answer technical
+questions about the project, but this is not mandatory; I can usually dive right
+in to a codebase and learn it on my own without assistance.
+</p>
+
+<h2>Get in touch</h2>
+
+<p>
+Email me at <a href="mailto:taylor@defuse.ca">taylor@defuse.ca</a> with a brief description of your project and I'll suggest some ways I can help.
+</p>
+
+<div class="github-source-boxes">
+    <div class="github-source-box">
+        <a href="mailto:taylor@defuse.ca">
+            <img src="/images/email-icon-white.png" alt="Email" height="24" width="24" />taylor@defuse.ca
+        </a>
+    </div>
+    <div class="github-source-box">
+        <a href="https://x.com/defusesec">
+            <img src="/images/twitter.png" alt="X/Twitter" height="25" width="30" />Contact on X/Twitter
+        </a>
+    </div>
+</div>
+
 {% endblock %}
