@@ -340,7 +340,7 @@ impl UpvoteService {
         use crate::registry::PAGE_REGISTRY;
 
         // Remove pages that have been removed from the upvote system.
-        let removed_ids = ["pphos", "writing_tips", "auditencfsold"];
+        let removed_ids = ["pphos", "insanepasswordrestrict", "writing_tips", "auditencfsold", "auditgocryptfs"];
         for id in removed_ids {
             self.delete_page(id).await?;
         }
