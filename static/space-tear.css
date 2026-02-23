@@ -7,7 +7,7 @@
 
 /* --- Space background (overrides inline style on body) --- */
 body {
-    background: radial-gradient(ellipse at 30% 80%, #0d0221 0%, #0a0a2e 40%, #020108 100%) no-repeat fixed !important;
+    background: radial-gradient(ellipse at 30% 80%, #080a18 0%, #0a0e21 40%, #020306 100%) no-repeat fixed !important;
 }
 
 /* --- Star layers --- */
@@ -26,14 +26,18 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 9528px;
-    height: 8312px;
+    width: 5717px;
+    height: 4987px;
     background: url('/images/hubble-extreme-deep.png') no-repeat top left;
-    background-size: 9528px 8312px;
+    background-size: 5717px 4987px;
     opacity: 0.10;
     pointer-events: none;
 }
 
+
+.stars-small, .stars-medium, .stars-large {
+    will-change: transform;
+}
 
 .stars-small {
     width: 1px;

@@ -85,4 +85,26 @@
 </div>
 
 <!-- Total site hits: {{ ctx.hit_counts.total_hits }} / {{ ctx.hit_counts.total_unique_hits }} unique -->
+
+<script>
+(function() {
+    var small = document.querySelector('.stars-small');
+    var medium = document.querySelector('.stars-medium');
+    var large = document.querySelector('.stars-large');
+    var ticking = false;
+
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            requestAnimationFrame(function() {
+                var y = window.scrollY;
+                small.style.transform = 'translateY(' + (y * 0.02) + 'px)';
+                medium.style.transform = 'translateY(' + (y * 0.05) + 'px)';
+                large.style.transform = 'translateY(' + (y * 0.08) + 'px)';
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+})();
+</script>
 {% endblock %}
