@@ -1,79 +1,112 @@
 {% extends "base.html" %}
 
-{% block content %}<center><h1>Welcome to <a href="/about.htm" style="color: black; text-decoration: none;">Defuse Security</a></h1></center>
-<div style="padding: 10px; padding-top: 0; width: 800px; margin: 0 auto;">
+{% block head_extra %}<link rel="stylesheet" media="all" type="text/css" href="/space-tear.css" />
+<script src="/cellular-automata.js" defer></script>
+{% endblock %}
 
-<p>Please feel free to check out, download, and share some of our free software, services, and research...</p>
-
-<div style="background-image: url('/images/grid.gif'); background-color: #bcfffe; padding: 10px; border: solid black 1px; text-align: center;">
-    <span style="font-size: 12pt; font-weight: bold;">
-        Newest Page: &nbsp;
-        <a href="/godel-second-incompleteness-theorem-by-turing-machines.htm">
-            A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines
-        </a></span>
+{% block content %}
+<!-- Star field (fixed behind everything) -->
+<div class="space-stars" aria-hidden="true">
+    <div class="hubble-bg"></div>
+    <div class="stars-small"></div>
+    <div class="stars-medium"></div>
+    <div class="stars-large"></div>
 </div>
 
-<h2>Top 8 Pages</h2>
+<!-- White paper background with diagonal cutoff (absolutely positioned behind content) -->
+<div class="paper-tear-clip">
+    <div class="paper-bg"></div>
+    <canvas id="ca-canvas"></canvas>
+</div>
 
-{{ top_pages_html|safe }}<a href="/all-pages.htm" style="padding-left: 70px; text-decoration: none;"><b>more pages...</b></a>
+<!-- Page content (transparent, floats above the paper background) -->
+<div style="padding-bottom: 200px;">
+<div id="homespaceship" style="padding: 10px; padding-top: 0; width: 800px; margin: 0 auto; background-color: white; padding-left: 80px; padding-right: 80px; padding-bottom: 40px;">
+<div class="home-content">
+<center><h1>Welcome to <a href="/about.htm" style="color: black; text-decoration: none;">Defuse Security</a></h1></center>
+
+<p>Please feel free to check out, download, and share some of my free software, services, and research...</p>
+
+<div id="newest-page">
+    <span class="newest-page-label">Latest Page</span>
+    <a class="newest-page-link" href="/godel-second-incompleteness-theorem-by-turing-machines.htm">
+        A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines
+    </a>
+</div>
 
 <h2>Services</h2>
-<ul>
-    <li><a href="/pastebin.htm"><strong>PIE BIN</strong></a><br />
-        "Pre-Internet Encryption for Text" - A pastebin with client-side (JavaScript) encryption. 
+<ul class="homelist">
+    <li><a href="/software-security-auditing.htm" class="highlight-service"><strong>Security Auditing & Consulting</strong></a><br />
+        Professional security auditing services for cryptography and application security.
     </li>
-    <li><a href="http://crackstation.net/"><strong>CrackStation.net Hash Cracker</strong></a><br />
-        A HUGE database of precomputed password hashes, rainbow tables, and more.
+    <li><a href="/online-x86-assembler.htm"><strong>Online x86 / x64 Assembler</strong></a><br />
+        Assemble and disassemble x86 instructions from the comfort of your browser (useful for shellcode development).
     </li>
-    <li><a href="/trent.htm"><strong>TRENT - Trusted Random Entropy</strong></a><br />
-        A trusted third party for doing online drawings, contests, or anything else that needs unbiased random numbers.
+    <li><a href="/pastebin.htm"><strong>Encrypted Pastebin</strong></a><br />
+        A pastebin with server-side and (optional) client-side encryption.
     </li>
-    <li><a href="online-x86-assembler.htm"><strong>Online x86 / x64 Assembler</strong></a><br />
-        Convert any x86 or x64 intel assembly language code into the bytes the CPU executes. 
-        Useful for shellcode development and reverse engineering.
+    <li><a href="/quantum-computer-time-capsule.htm"><strong>Quantum Computer Time Capsule</strong></a><br />
+        Add your message to a time capsule that can only be opened once large-scale quantum computers exist.
     </li>
-    <li><a href="big-number-calculator.htm"><strong>Big Number Calculator</strong></a><br />
-        A calculator for obtaining the decimal representation of very large numbers.
+    <li><a href="https://crackstation.net/"><strong>CrackStation.net Hash Cracker</strong></a><br />
+        A massive database of precomputed password hashes; cracks unsalted hashes insanely fast.
     </li>
 </ul>
 
 <h2>Software</h2>
-<ul>
-    <li><a href="/passgen.htm"><strong>Password Generator</strong></a><br />
-        Ultra-random Windows, Linux, and UNIX password generator.
-    </li>
-    <li><a href="/helloworld-cms.htm"><strong>"HelloWorld!" Secure CMS for PHP</strong></a><br />
-        A very lightweight, but very secure, Content Management System for PHP.
-    </li>
-    <li><a href="/php-hash-cracker.htm"><strong>PHP Hash Cracker</strong></a><br />
-        A versatile hash cracking script written in PHP.
-    </li>
-    <li><a href="/backup-verify-script.htm"><strong>Backup Verification Script (Ruby)</strong></a><br />
-        A probabilistic recursive directory comparison tool.
-    </li>
-    <li><a href="/sockstress.htm"><strong>Sockstress</strong></a><br />
-    A C implementation of the sockstress attack discovered in 2008.
-</ul>
 
-<h2>Security Research</h2>
-
-<ul>
-    <li><a href="http://crackstation.net/hashing-security.htm"><strong>How to Hash Passwords (The Right Way)</strong></a><br />
-        A detailed explanation of why passwords need to be hashed, and how to do it right.
+<ul class="homelist">
+    <li><a href="/passgen.htm"><strong><span class="monowb">$ passgenr</span> Password Generator</strong></a><br />
+        Ultra-random Windows, Linux, and Mac password generator.
     </li>
-    <li><a href="/password-policy-hall-of-shame.htm"><strong>Password Policy Hall of Shame</strong></a><br />
-        A list of websites that probably aren't hashing their users' passwords.
-    </li>
-    <li><a href="/filesystem-events-ntfs-permissions.htm"><strong>NTFS File System Events Filename Disclosure</strong></a><br />
-        It is possible to view the names of files in protected NTFS folders while they are being created or modified.
-    </li>
-    <li><a href="/onedetection.htm"><strong>PUP Confusion</strong></a><br />
-        Evading antivirus detection using PUPs - Potentially Unwanted Programs.
+    <li><a href="/vfy-backup-tester.htm"><strong><span class="monowb">$ vfy</span> Directory Comparison Tool</strong></a><br />
+        A tool for comparing directories, useful for testing backups.
     </li>
 </ul>
 
-<p>... we hope you find our pages useful. Thanks for visiting!</p>
+<h2>Research</h2>
 
-</div>
+<ul class="homelist">
+    <li><a href="/side-channel-attacks-on-everyday-applications.htm"><strong>Side-Channel Attacks on Everyday Applications</strong></a><br />
+        Cache side-channel attacks on a web browser and PDF viewer. Presented at Black Hat USA 2016.
+    </li>
+    <li><a href="/concentration-bounds-from-parallel-repetition-theorems.htm"><strong>Concentration Bounds from Parallel Repetition Theorems</strong></a><br />
+        My master's thesis in quantum information, on turning parallel repetition theorems into concentration bounds.
+    </li>
+</ul>
+
+<h2>Top Pages</h2>
+
+{{ top_pages_html|safe }}<a href="/all-pages.htm" style="padding-left: 70px; text-decoration: none;"><b>more pages...</b></a>
+
+
+<p>... I hope you find my pages useful. Thanks for visiting!</p>
+
+</div><!-- end home-content -->
+</div><!-- end homespaceship -->
+</div><!-- end padding wrapper -->
+
 <!-- Total site hits: {{ ctx.hit_counts.total_hits }} / {{ ctx.hit_counts.total_unique_hits }} unique -->
+
+<script>
+(function() {
+    var small = document.querySelector('.stars-small');
+    var medium = document.querySelector('.stars-medium');
+    var large = document.querySelector('.stars-large');
+    var ticking = false;
+
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            requestAnimationFrame(function() {
+                var y = window.scrollY;
+                small.style.transform = 'translateY(' + (y * -0.02) + 'px)';
+                medium.style.transform = 'translateY(' + (y * -0.15) + 'px)';
+                large.style.transform = 'translateY(' + (y * -0.25) + 'px)';
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+})();
+</script>
 {% endblock %}
