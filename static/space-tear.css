@@ -373,8 +373,8 @@ body {
 }
 
 .stars-large {
-    width: 2px;
-    height: 2px;
+    width: 3px;
+    height: 3px;
     border-radius: 50%;
     box-shadow:
         1305px 537px 1px #fff,
