@@ -99,9 +99,9 @@
         if (!ticking) {
             requestAnimationFrame(function() {
                 var y = window.scrollY;
-                small.style.transform = 'translateY(' + (y * 0.02) + 'px)';
-                medium.style.transform = 'translateY(' + (y * 0.10) + 'px)';
-                large.style.transform = 'translateY(' + (y * 0.30) + 'px)';
+                small.style.transform = 'translateY(' + (y * -0.02) + 'px)';
+                medium.style.transform = 'translateY(' + (y * -0.15) + 'px)';
+                large.style.transform = 'translateY(' + (y * -0.25) + 'px)';
                 ticking = false;
             });
             ticking = true;
