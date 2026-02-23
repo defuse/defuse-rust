@@ -1,26 +1,45 @@
 {% extends "base.html" %}
 
-{% block content %}<center><h1>Welcome to <a href="/about.htm" style="color: black; text-decoration: none;">Defuse Security</a></h1></center>
-<div style="padding: 10px; padding-top: 0; width: 800px; margin: 0 auto;">
+{% block head_extra %}<link rel="stylesheet" media="all" type="text/css" href="/space-tear.css" />
+{% endblock %}
+
+{% block content %}
+<!-- Star field (fixed behind everything) -->
+<div class="space-stars" aria-hidden="true">
+    <div class="hubble-bg"></div>
+    <div class="stars-small"></div>
+    <div class="stars-medium"></div>
+    <div class="stars-large"></div>
+</div>
+
+<!-- White paper background with diagonal cutoff (absolutely positioned behind content) -->
+<div class="paper-tear-clip">
+    <div class="paper-bg"></div>
+</div>
+
+<!-- Page content (transparent, floats above the paper background) -->
+<div style="padding-bottom: 300px;">
+<div id="homespaceship" style="padding: 10px; padding-top: 0; width: 800px; margin: 0 auto; background-color: white; padding-left: 80px; padding-right: 80px; padding-bottom: 40px;">
+<div class="home-content">
+<center><h1>Welcome to <a href="/about.htm" style="color: black; text-decoration: none;">Defuse Security</a></h1></center>
 
 <p>Please feel free to check out, download, and share some of our free software, services, and research...</p>
 
-<div style="background-image: url('/images/grid.gif'); background-color: #bcfffe; padding: 10px; border: solid black 1px; text-align: center;">
-    <span style="font-size: 12pt; font-weight: bold;">
-        Newest Page: &nbsp;
-        <a href="/godel-second-incompleteness-theorem-by-turing-machines.htm">
-            A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines
-        </a></span>
+<div id="newest-page">
+    <span class="newest-page-label">Latest Page</span>
+    <a class="newest-page-link" href="/godel-second-incompleteness-theorem-by-turing-machines.htm">
+        A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines
+    </a>
 </div>
 
-<h2>Top 8 Pages</h2>
+<h2>Top Pages</h2>
 
 {{ top_pages_html|safe }}<a href="/all-pages.htm" style="padding-left: 70px; text-decoration: none;"><b>more pages...</b></a>
 
 <h2>Services</h2>
 <ul>
     <li><a href="/pastebin.htm"><strong>PIE BIN</strong></a><br />
-        "Pre-Internet Encryption for Text" - A pastebin with client-side (JavaScript) encryption. 
+        "Pre-Internet Encryption for Text" - A pastebin with client-side (JavaScript) encryption.
     </li>
     <li><a href="http://crackstation.net/"><strong>CrackStation.net Hash Cracker</strong></a><br />
         A HUGE database of precomputed password hashes, rainbow tables, and more.
@@ -29,7 +48,7 @@
         A trusted third party for doing online drawings, contests, or anything else that needs unbiased random numbers.
     </li>
     <li><a href="online-x86-assembler.htm"><strong>Online x86 / x64 Assembler</strong></a><br />
-        Convert any x86 or x64 intel assembly language code into the bytes the CPU executes. 
+        Convert any x86 or x64 intel assembly language code into the bytes the CPU executes.
         Useful for shellcode development and reverse engineering.
     </li>
     <li><a href="big-number-calculator.htm"><strong>Big Number Calculator</strong></a><br />
@@ -75,5 +94,8 @@
 <p>... we hope you find our pages useful. Thanks for visiting!</p>
 
 </div>
+</div><!-- end home-content -->
+</div>
+
 <!-- Total site hits: {{ ctx.hit_counts.total_hits }} / {{ ctx.hit_counts.total_unique_hits }} unique -->
 {% endblock %}
