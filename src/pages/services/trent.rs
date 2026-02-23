@@ -248,12 +248,12 @@ impl TrentPage {
         }
     }
 
+    /// Allowed review time values (in seconds), matching the dropdown in the template.
+    /// 5 is included for integration testing (review_period_blocks_then_allows).
+    const ALLOWED_REVIEW_TIMES: &[u32] = &[0, 5, 21600, 86400, 345600, 518400, 1123200, 2592000];
+
     /// Handle drawing reservation
     async fn handle_reserve(&mut self, form: &TrentForm) {
-        // TODO: validate review_time against the allowed dropdown values.
-        // Currently any u32 is accepted; a large value can overflow draw_date()
-        // (starttime + reviewtime wraps in release mode). Not a security issue
-        // since instant (0) review is allowed, but it's sloppy.
         let review_time: u32 = match form.prereview.parse() {
             Ok(v) => v,
             Err(_) => {
@@ -261,6 +261,11 @@ impl TrentPage {
                 return;
             }
         };
+
+        if !Self::ALLOWED_REVIEW_TIMES.contains(&review_time) {
+            self.set_error("Invalid review time.".to_string(), form);
+            return;
+        }
 
         match trent::reserve_drawing(review_time).await {
             Ok(result) => {
