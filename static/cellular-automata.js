@@ -16,7 +16,7 @@
 
     var CELL_PX   = 4;    // CSS pixels per cell
     var TPS       = 8;   // simulation ticks per second
-    var CELL_RGBA = [0, 0, 30, 11]; // [R, G, B, A] — faint blue-gray
+    var CELL_RGBA = [0, 0, 0, 11];  // [R, G, B, A] — faint gray
 
     // Order in which modes are shown (cycles via cookie)
     var MODE_ORDER = ['edge_growth', 'glider_chaos', 'random_seed'];
