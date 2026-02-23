@@ -456,7 +456,7 @@ body {
     background: #FCFCFC;
     clip-path: polygon(
         0 0, 100% 0,
-        100% calc(900px - 100vw * tan(8deg)),
+        100% calc(900px - 100vw * 0.1405), /* tan(8deg) */
         0 900px
     );
 }
