@@ -473,12 +473,12 @@ body {
     position: relative;
     border-left: 3px solid #778899;
     border-right: 3px solid #778899;
-    border-bottom: 4px solid #8899aa;
+    border-bottom: 3px solid #8899aa;
     border-image: linear-gradient(
         to bottom,
         #334455 0%,
-        #556677 30%,
-        #99aabb 60%,
+        #778899 15%,
+        #99aabb 40%,
         #8899aa 100%
     ) 1;
     border-top: 3px solid #445566;
