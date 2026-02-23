@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block head_extra %}<link rel="stylesheet" media="all" type="text/css" href="/space-tear.css" />
+<script src="/cellular-automata.js" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -15,6 +16,7 @@
 <!-- White paper background with diagonal cutoff (absolutely positioned behind content) -->
 <div class="paper-tear-clip">
     <div class="paper-bg"></div>
+    <canvas id="ca-canvas"></canvas>
 </div>
 
 <!-- Page content (transparent, floats above the paper background) -->

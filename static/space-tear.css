@@ -461,6 +461,16 @@ body {
     );
 }
 
+/* --- Cellular automata canvas (overlays paper-bg, same clip) --- */
+#ca-canvas {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    pointer-events: none;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
 /* --- Z-index stack --- */
 .menuminwidth0, .menuminwidth1, .menuminwidth2 {
     position: relative;
