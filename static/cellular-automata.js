@@ -1,155 +1,206 @@
 /* Cellular Automata on the torn paper background.
- * Three modes, randomly selected each page load:
- *   0 - Game of Life with continuous random seeding
- *   1 - Game of Life seeded from the diagonal tear edge
- *   2 - Glider chaos: grid packed with gliders in random directions
+ *
+ * Modes cycle each page load via cookie:
+ *   edge_growth → glider_chaos → random_seed → repeat
+ *
+ * To add a new mode, define an object with { init, tick } methods and
+ * append its key to MODE_ORDER. The mode can use any of the shared
+ * helpers (grid, setCell, getCell, stepGameOfLife, placePattern, etc.).
  */
 (function() {
     'use strict';
+
+    // ================================================================
+    // Configuration
+    // ================================================================
+
+    var CELL_PX   = 4;    // CSS pixels per cell
+    var TPS       = 8;   // simulation ticks per second
+    var CELL_RGBA = [0, 0, 30, 11]; // [R, G, B, A] — faint blue-gray
+
+    // Order in which modes are shown (cycles via cookie)
+    var MODE_ORDER = ['edge_growth', 'glider_chaos', 'random_seed'];
+
+    // ================================================================
+    // Canvas & grid setup
+    // ================================================================
+
     var canvas = document.getElementById('ca-canvas');
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
 
-    var CELL = 4;   // CSS pixels per cell
-    var TPS  = 8;   // ticks per second
+    // Size the canvas to cover the full paper-tear region.
+    // Fixed pixel size so it doesn't squash on window resize.
+    var canvasW = Math.max(screen.width, document.documentElement.clientWidth, 2000);
+    var canvasH = 1200;
+    canvas.style.width  = canvasW + 'px';
+    canvas.style.height = canvasH + 'px';
 
-    // Cell color: faint blue-gray marks on white paper
-    var CR = 0, CG = 0, CB = 30, CA = 11;
+    var cols = Math.ceil(canvasW / CELL_PX);
+    var rows = Math.ceil(canvasH / CELL_PX);
+    canvas.width  = cols;
+    canvas.height = rows;
 
-    var cols, rows, grid, buf, imgData;
-    var mode;
+    var grid    = new Uint8Array(cols * rows);
+    var gridBuf = new Uint8Array(cols * rows);
+    var imgData = ctx.createImageData(cols, rows);
 
-    // ---- Setup ----
+    // ================================================================
+    // Shared helpers — available to all modes
+    // ================================================================
 
-    function init() {
-        // Fixed size: wide enough for the diagonal to reach the top
-        // (900 / tan(8°) ≈ 6405px). Cells are invisible on the dark
-        // space background so no clip-path is needed.
-        var w = Math.max(document.documentElement.clientWidth, 2000);
-        var h = 1200;
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
-        cols = Math.ceil(w / CELL);
-        rows = Math.ceil(h / CELL);
-        canvas.width = cols;
-        canvas.height = rows;
-        grid = new Uint8Array(cols * rows);
-        buf  = new Uint8Array(cols * rows);
-        imgData = ctx.createImageData(cols, rows);
-        return true;
+    /** Read a cell (0 for out-of-bounds). */
+    function getCell(x, y) {
+        return (x >= 0 && x < cols && y >= 0 && y < rows)
+            ? grid[y * cols + x] : 0;
     }
 
-    function at(x, y) {
-        return (x >= 0 && x < cols && y >= 0 && y < rows) ? grid[y * cols + x] : 0;
+    /** Set a cell (bounds-checked). */
+    function setCell(x, y, v) {
+        if (x >= 0 && x < cols && y >= 0 && y < rows)
+            grid[y * cols + x] = v;
     }
 
-    // ---- Game of Life step (double-buffered) ----
+    /** Seed random cells across the entire grid. */
+    function seedRandom(density) {
+        for (var i = 0; i < grid.length; i++)
+            if (Math.random() < density) grid[i] = 1;
+    }
 
-    function stepGoL() {
+    /** Sprinkle n random live cells anywhere on the grid. */
+    function sprinkle(n) {
+        for (var i = 0; i < n; i++)
+            grid[Math.floor(Math.random() * grid.length)] = 1;
+    }
+
+    /**
+     * Place a pattern on the grid at (cx, cy).
+     * Pattern is an array of [row, col] offsets.
+     */
+    function placePattern(pattern, cx, cy) {
+        for (var i = 0; i < pattern.length; i++)
+            setCell(cx + pattern[i][1], cy + pattern[i][0], 1);
+    }
+
+    /** One generation of Conway's Game of Life (double-buffered). */
+    function stepGameOfLife() {
         for (var y = 0; y < rows; y++) {
             for (var x = 0; x < cols; x++) {
-                var n = at(x-1,y-1)+at(x,y-1)+at(x+1,y-1)+
-                        at(x-1,y)            +at(x+1,y)+
-                        at(x-1,y+1)+at(x,y+1)+at(x+1,y+1);
+                var n = getCell(x-1,y-1) + getCell(x,y-1) + getCell(x+1,y-1) +
+                        getCell(x-1,y)                     + getCell(x+1,y) +
+                        getCell(x-1,y+1) + getCell(x,y+1) + getCell(x+1,y+1);
                 var i = y * cols + x;
-                buf[i] = grid[i] ? ((n===2||n===3)?1:0) : (n===3?1:0);
+                gridBuf[i] = grid[i] ? ((n === 2 || n === 3) ? 1 : 0)
+                                     : ((n === 3) ? 1 : 0);
             }
         }
-        var t = grid; grid = buf; buf = t;
+        var t = grid; grid = gridBuf; gridBuf = t;
     }
 
-    // ---- Mode 0: Random seeding + GoL ----
-
-    function initMode0() {
-        for (var i = 0; i < grid.length; i++)
-            grid[i] = Math.random() < 0.25 ? 1 : 0;
+    /**
+     * Compute the y-coordinate of the diagonal tear edge at column x
+     * (in grid units). Useful for modes that seed along the paper boundary.
+     */
+    function tearEdgeY(x) {
+        var leftY  = 900 / CELL_PX;
+        var rightY = (900 - canvasW * Math.tan(8 * Math.PI / 180)) / CELL_PX;
+        return Math.floor(leftY + (x / cols) * (rightY - leftY));
     }
 
-    function tickMode0() {
-        for (var i = 0; i < 50; i++)
-            grid[Math.floor(Math.random() * grid.length)] = 1;
-        stepGoL();
+    // ================================================================
+    // Pattern library
+    // ================================================================
+
+    var PATTERNS = {
+        // Standard glider in 4 directions
+        glider_SE: [[0,1],[1,2],[2,0],[2,1],[2,2]],
+        glider_SW: [[0,1],[1,0],[2,0],[2,1],[2,2]],
+        glider_NE: [[0,0],[0,1],[0,2],[1,2],[2,1]],
+        glider_NW: [[0,0],[0,1],[0,2],[1,0],[2,1]],
+
+        // Lightweight spaceship (LWSS) in 4 directions
+        lwss_E: [[0,1],[0,4],[1,0],[2,0],[2,4],[3,0],[3,1],[3,2],[3,3]],
+        lwss_W: [[0,0],[0,3],[1,4],[2,0],[2,4],[3,1],[3,2],[3,3],[3,4]],
+        lwss_S: [[0,3],[1,0],[1,3],[2,3],[3,3],[4,0],[4,1],[4,2],[4,3]],
+        lwss_N: [[0,0],[0,1],[0,2],[0,3],[1,0],[2,0],[3,0],[3,3],[4,3]],
+
+        // R-pentomino — chaotic long-lived methuselah
+        r_pentomino: [[0,1],[0,2],[1,0],[1,1],[2,1]]
+    };
+
+    /** Place a randomly-chosen pattern from a list of pattern keys. */
+    function placeRandomPattern(keys, cx, cy) {
+        var key = keys[Math.floor(Math.random() * keys.length)];
+        placePattern(PATTERNS[key], cx, cy);
     }
 
-    // ---- Mode 1: Diagonal edge seeding + GoL ----
-
-    var edgeSpread;
-
-    function initMode1() {
-        edgeSpread = 4;
-    }
-
-    function tickMode1() {
-        edgeSpread = Math.min(edgeSpread + 2.0, rows * 0.8);
-        var spread = Math.floor(edgeSpread);
-
-        var vw = canvas.clientWidth;
-        var leftY  = 900 / CELL;
-        var rightY = (900 - vw * Math.tan(8 * Math.PI / 180)) / CELL;
-        for (var x = 0; x < cols; x++) {
-            var edgeY = Math.floor(leftY + (x / cols) * (rightY - leftY));
-            for (var dy = -spread; dy <= 0; dy++) {
-                var y = edgeY + dy;
-                if (y >= 0 && y < rows && Math.random() < 0.06)
-                    grid[y * cols + x] = 1;
-            }
-        }
-        stepGoL();
-    }
-
-    // ---- Mode 2: Glider chaos ----
-    // Spaceship patterns in all 4 directions, 3 types:
-    // Standard glider (5 cells, speed c/4)
-    // Lightweight spaceship / LWSS (9 cells, speed c/2)
-    // R-pentomino (5 cells, chaotic long-lived methuselah)
-    var SHIPS = [
-        // -- Standard gliders (4 directions) --
-        // SE
-        [[0,1],[1,2],[2,0],[2,1],[2,2]],
-        // SW
-        [[0,1],[1,0],[2,0],[2,1],[2,2]],
-        // NE
-        [[0,0],[0,1],[0,2],[1,2],[2,1]],
-        // NW
-        [[0,0],[0,1],[0,2],[1,0],[2,1]],
-        // -- LWSS (4 directions) --
-        // East
-        [[0,1],[0,4],[1,0],[2,0],[2,4],[3,0],[3,1],[3,2],[3,3]],
-        // West
-        [[0,0],[0,3],[1,4],[2,0],[2,4],[3,1],[3,2],[3,3],[3,4]],
-        // South
-        [[0,3],[1,0],[1,3],[2,3],[3,3],[4,0],[4,1],[4,2],[4,3]],
-        // North
-        [[0,0],[0,1],[0,2],[0,3],[1,0],[2,0],[3,0],[3,3],[4,3]],
-        // -- R-pentomino (chaotic debris generator) --
-        [[0,1],[0,2],[1,0],[1,1],[2,1]]
+    // All spaceship/methuselah pattern keys (for glider_chaos mode)
+    var ALL_SHIPS = [
+        'glider_SE', 'glider_SW', 'glider_NE', 'glider_NW',
+        'lwss_E', 'lwss_W', 'lwss_S', 'lwss_N',
+        'r_pentomino'
     ];
 
-    function placeShip(cx, cy) {
-        var g = SHIPS[Math.floor(Math.random() * SHIPS.length)];
-        for (var i = 0; i < g.length; i++) {
-            var x = cx + g[i][1], y = cy + g[i][0];
-            if (x >= 0 && x < cols && y >= 0 && y < rows)
-                grid[y * cols + x] = 1;
-        }
-    }
+    // ================================================================
+    // Modes — each is { init(), tick() }
+    // ================================================================
 
-    function initMode2() {
-        var spacing = 12;
-        for (var gy = 2; gy < rows - 2; gy += spacing) {
-            for (var gx = 2; gx < cols - 2; gx += spacing) {
-                var jx = gx + Math.floor(Math.random() * 5) - 2;
-                var jy = gy + Math.floor(Math.random() * 5) - 2;
-                placeShip(jx, jy);
+    var MODES = {};
+
+    // --- Random seeding + Game of Life ---
+    MODES.random_seed = {
+        init: function() {
+            seedRandom(0.25);
+        },
+        tick: function() {
+            sprinkle(50);
+            stepGameOfLife();
+        }
+    };
+
+    // --- Growing from diagonal tear edge + Game of Life ---
+    MODES.edge_growth = (function() {
+        var spread;
+        return {
+            init: function() {
+                spread = 4;
+            },
+            tick: function() {
+                spread = Math.min(spread + 2.0, rows * 0.8);
+                var s = Math.floor(spread);
+                for (var x = 0; x < cols; x++) {
+                    var edgeY = tearEdgeY(x);
+                    for (var dy = -s; dy <= 0; dy++) {
+                        var y = edgeY + dy;
+                        if (y >= 0 && y < rows && Math.random() < 0.06)
+                            grid[y * cols + x] = 1;
+                    }
+                }
+                stepGameOfLife();
             }
+        };
+    })();
+
+    // --- Grid packed with gliders, LWSS, and R-pentominoes ---
+    MODES.glider_chaos = {
+        init: function() {
+            var spacing = 12;
+            for (var gy = 2; gy < rows - 2; gy += spacing) {
+                for (var gx = 2; gx < cols - 2; gx += spacing) {
+                    var jx = gx + Math.floor(Math.random() * 5) - 2;
+                    var jy = gy + Math.floor(Math.random() * 5) - 2;
+                    placeRandomPattern(ALL_SHIPS, jx, jy);
+                }
+            }
+        },
+        tick: function() {
+            stepGameOfLife();
         }
-    }
+    };
 
-    function tickMode2() {
-        stepGoL();
-    }
-
-    // ---- Draw ----
+    // ================================================================
+    // Rendering
+    // ================================================================
 
     function draw() {
         var d = imgData.data;
@@ -157,36 +208,36 @@
         for (var i = 0; i < grid.length; i++) {
             if (grid[i]) {
                 var p = i << 2;
-                d[p]   = CR;
-                d[p+1] = CG;
-                d[p+2] = CB;
-                d[p+3] = CA;
+                d[p]     = CELL_RGBA[0];
+                d[p + 1] = CELL_RGBA[1];
+                d[p + 2] = CELL_RGBA[2];
+                d[p + 3] = CELL_RGBA[3];
             }
         }
         ctx.putImageData(imgData, 0, 0);
     }
 
-    // ---- Main loop ----
+    // ================================================================
+    // Mode selection (cycles via cookie)
+    // ================================================================
 
-    if (!init()) return;
-
-    // Cycle: edge(1) → glider(2) → random(0) → repeat
-    var ORDER = [1, 2, 0];
-    var prev = document.cookie.replace(/(?:^|.*;\s*)ca_seq\s*=\s*(\d).*$/, '$1');
-    var seq = prev.length === 1 ? (parseInt(prev, 10) + 1) % 3 : 0;
+    var prev = document.cookie.replace(/(?:^|.*;\s*)ca_seq\s*=\s*(\d+).*$/, '$1');
+    var seq  = /^\d+$/.test(prev) ? (parseInt(prev, 10) + 1) % MODE_ORDER.length : 0;
     document.cookie = 'ca_seq=' + seq + ';path=/;max-age=31536000;SameSite=Lax';
-    mode = ORDER[seq];
-    var initFns = [initMode0, initMode1, initMode2];
-    var tickFns = [tickMode0, tickMode1, tickMode2];
 
-    initFns[mode]();
+    var current = MODES[MODE_ORDER[seq]];
+    current.init();
 
-    var tickMs = 1000 / TPS;
+    // ================================================================
+    // Main loop
+    // ================================================================
+
+    var tickMs   = 1000 / TPS;
     var lastTick = 0;
 
     function loop(ts) {
         if (ts - lastTick >= tickMs) {
-            tickFns[mode]();
+            current.tick();
             draw();
             lastTick = ts;
         }

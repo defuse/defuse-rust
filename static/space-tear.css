@@ -635,14 +635,25 @@ body {
 }
 
 .upvote_list_titlecell {
+    position: relative;
     padding: 4px 0 !important;
     vertical-align: top;
+    cursor: pointer;
 }
 
 .upvote_list_title {
     font-weight: bold;
     color: #8B0000;
     text-decoration: none;
+}
+
+.upvote_list_title::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 .upvote_list_desc {
