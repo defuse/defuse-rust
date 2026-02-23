@@ -428,8 +428,7 @@ body {
 
 /* --- Paper background (absolutely positioned behind content) --- */
 /* The clip container extends above #contenthome to seamlessly connect
-   with #undergrad (the navbar-to-content gradient bar). overflow:hidden
-   crops out SVG filter edge artifacts from the inner element. */
+   with #undergrad (the navbar-to-content gradient bar). */
 .paper-tear-clip {
     position: absolute;
     top: -30px; /* extend above #contenthome (20px margin + 10px undergrad) */
@@ -572,6 +571,7 @@ body {
     border-left: 3px solid #e8dede;
     font-size: 0.93em;
     line-height: 1.5;
+    cursor: pointer;
     transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
@@ -603,9 +603,6 @@ body {
     bottom: 0;
 }
 
-.homelist li {
-    cursor: pointer;
-}
 
 /* --- Top Pages upvote list --- */
 .upvote_pagelist {
@@ -630,7 +627,7 @@ body {
 
 .upvote_list_title {
     font-weight: bold;
-    color: #1a3a5c;
+    color: #8B0000;
     text-decoration: none;
 }
 
