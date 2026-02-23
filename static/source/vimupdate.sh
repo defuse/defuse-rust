@@ -2,7 +2,7 @@
 
 # Script for pulling Taylor's vim config from https://defuse.ca/vimrc.htm
 # This will destroy the current user's vim configuration (~/.vim, ~/.vimrc)
-# and replace it with Havoc's.
+# and replace it with Taylor's.
 
 # Use unique temp file names so the script can be run by many users at the
 # same time.
