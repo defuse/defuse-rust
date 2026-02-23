@@ -15,8 +15,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::util::{html_escape, js_escape};
 
-/// Let IP addresses vote again after this many seconds (24 hours)
-const VOTE_OLD_AFTER_SECONDS: i64 = 86400;
+/// Let IP addresses vote again after this many seconds (30 days)
+const VOTE_OLD_AFTER_SECONDS: i64 = 30 * 86400;
 
 /// Errors that can occur during voting
 #[derive(Debug)]
