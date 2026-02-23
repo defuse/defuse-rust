@@ -446,7 +446,7 @@ body {
 
 /* White paper background with a diagonal cutoff.
    Uses clip-path polygon: straight across the top, then a diagonal
-   line from ~500px down on the left to ~900px down on the right. */
+   line from ~900px down on the left to less on the right (8° angle). */
 .paper-bg {
     position: absolute;
     top: -100px;
@@ -468,7 +468,6 @@ body {
     left: 0;
     pointer-events: none;
     image-rendering: pixelated;
-    image-rendering: crisp-edges;
 }
 
 /* --- Z-index stack --- */
@@ -554,7 +553,6 @@ body {
 
 .newest-page-link:hover {
     background: linear-gradient(135deg, #444, #666, #555);
-    text-decoration-color: #555;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
