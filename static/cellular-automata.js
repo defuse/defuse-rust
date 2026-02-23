@@ -223,7 +223,7 @@
 
     var prev = document.cookie.replace(/(?:^|.*;\s*)ca_seq\s*=\s*(\d+).*$/, '$1');
     var seq  = /^\d+$/.test(prev) ? (parseInt(prev, 10) + 1) % MODE_ORDER.length : 0;
-    document.cookie = 'ca_seq=' + seq + ';path=/;max-age=31536000;SameSite=Lax';
+    document.cookie = 'ca_seq=' + seq + ';path=/;max-age=2592000;SameSite=Lax';
 
     var current = MODES[MODE_ORDER[seq]];
     current.init();
