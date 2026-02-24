@@ -14,6 +14,7 @@
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use sqlx::MySqlPool;
+use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -484,29 +485,83 @@ fn count_lines(content: &[u8]) -> usize {
         + if content.last() != Some(&b'\n') { 1 } else { 0 }
 }
 
-/// Get a specific line from file content (0-indexed)
-/// Returns the line including trailing newline if present
-fn get_line(content: &[u8], line_idx: usize) -> Option<String> {
-    let mut current_line = 0;
-    let mut start = 0;
+/// Build byte ranges for each line in the file.
+///
+/// Each tuple is `(start, end)` and includes the trailing newline byte if
+/// present, matching PHP fgets behavior.
+fn line_ranges(content: &[u8]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
 
+    if content.is_empty() {
+        return ranges;
+    }
+
+    let mut start = 0;
     for (i, &byte) in content.iter().enumerate() {
         if byte == b'\n' {
-            if current_line == line_idx {
-                // Include the newline in the result (matches PHP fgets)
-                return Some(String::from_utf8_lossy(&content[start..=i]).into_owned());
-            }
-            current_line += 1;
+            ranges.push((start, i + 1));
             start = i + 1;
         }
     }
 
-    // Handle last line without trailing newline
-    if current_line == line_idx && start < content.len() {
-        return Some(String::from_utf8_lossy(&content[start..]).into_owned());
+    // Last line without trailing newline.
+    if start < content.len() {
+        ranges.push((start, content.len()));
     }
 
-    None
+    ranges
+}
+
+/// Get a specific line from file content (0-indexed)
+/// Returns the line including trailing newline if present
+fn get_line(content: &[u8], line_idx: usize) -> Option<String> {
+    let ranges = line_ranges(content);
+    get_line_from_ranges(content, &ranges, line_idx)
+}
+
+/// Get a line using precomputed line ranges.
+fn get_line_from_ranges(
+    content: &[u8],
+    ranges: &[(usize, usize)],
+    line_idx: usize,
+) -> Option<String> {
+    ranges
+        .get(line_idx)
+        .map(|(start, end)| String::from_utf8_lossy(&content[*start..*end]).into_owned())
+}
+
+/// Draw `count` unique indices from `[0, total_items)` without replacement.
+///
+/// This is an O(count) sparse version of the first `count` steps of
+/// Fisher-Yates. At step `i`, it chooses uniformly from the remaining
+/// `total_items - i` positions, which is the same distribution as the previous
+/// rejection-sampling loop (uniform over ordered draws without replacement).
+fn draw_without_replacement(total_items: usize, count: usize) -> Vec<usize> {
+    assert!(
+        count <= total_items,
+        "cannot draw {} items from a population of {}",
+        count,
+        total_items,
+    );
+
+    let mut swaps: HashMap<usize, usize> = HashMap::with_capacity(count.saturating_mul(2));
+    let mut drawn = Vec::with_capacity(count);
+
+    for i in 0..count {
+        let j = select_random_number(i as i64, total_items as i64 - 1) as usize;
+
+        let value_at_i = *swaps.get(&i).unwrap_or(&i);
+        let value_at_j = *swaps.get(&j).unwrap_or(&j);
+
+        swaps.insert(i, value_at_j);
+        swaps.insert(j, value_at_i);
+
+        // After swapping positions i and j in an identity array, position i
+        // now contains the drawn index.
+        drawn.push(value_at_j);
+    }
+
+    drawn
 }
 
 /// Select random lines from file content.
@@ -517,7 +572,9 @@ fn select_random_lines(
     num_lines: usize,
     allow_repeat: bool,
 ) -> Vec<(usize, String)> {
-    let total_lines = count_lines(content);
+    let ranges = line_ranges(content);
+    let total_lines = ranges.len();
+
     if total_lines == 0 || num_lines == 0 {
         return Vec::new();
     }
@@ -528,25 +585,18 @@ fn select_random_lines(
     );
 
     let mut results = Vec::with_capacity(num_lines);
-    let mut excluded: Vec<usize> = Vec::new();
-
-    // TODO: This is vulnerable to a CPU DoS attack where you upload a file with
-    // lots of lines N and ask for N lines without replacement. It will take
-    // something like N^2 loops. Replace this with an algorithm that actually
-    // removes the drawn line when allow_repeat = false.
-    for _ in 0..num_lines {
-        loop {
+    if allow_repeat {
+        for _ in 0..num_lines {
             let line_idx = select_random_number(0, total_lines as i64 - 1) as usize;
-
-            if allow_repeat || !excluded.contains(&line_idx) {
-                if !allow_repeat {
-                    excluded.push(line_idx);
-                }
-                let line_text = get_line(content, line_idx)
-                    .expect("line index out of bounds despite count_lines check");
-                results.push((line_idx, line_text));
-                break;
-            }
+            let line_text = get_line_from_ranges(content, &ranges, line_idx)
+                .expect("line index out of bounds despite line range indexing");
+            results.push((line_idx, line_text));
+        }
+    } else {
+        for line_idx in draw_without_replacement(total_lines, num_lines) {
+            let line_text = get_line_from_ranges(content, &ranges, line_idx)
+                .expect("line index out of bounds despite line range indexing");
+            results.push((line_idx, line_text));
         }
     }
 
@@ -604,6 +654,36 @@ mod tests {
         let content2 = b"a\nb";
         assert_eq!(get_line(content2, 0), Some("a\n".to_string()));
         assert_eq!(get_line(content2, 1), Some("b".to_string()));
+    }
+
+    #[test]
+    fn test_draw_without_replacement_unique_and_in_range() {
+        for _ in 0..100 {
+            let drawn = draw_without_replacement(8, 8);
+            assert_eq!(drawn.len(), 8);
+
+            let mut seen = std::collections::HashSet::new();
+            for idx in drawn {
+                assert!(idx < 8);
+                assert!(seen.insert(idx));
+            }
+        }
+    }
+
+    #[test]
+    fn test_select_random_lines_without_replacement_has_no_duplicates() {
+        let content = b"line0\nline1\nline2\nline3\n";
+
+        for _ in 0..100 {
+            let lines = select_random_lines(content, 4, false);
+            assert_eq!(lines.len(), 4);
+
+            let mut seen = std::collections::HashSet::new();
+            for (line_idx, line_text) in lines {
+                assert!(seen.insert(line_idx));
+                assert_eq!(get_line(content, line_idx), Some(line_text));
+            }
+        }
     }
 
     #[test]
