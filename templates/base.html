@@ -6,12 +6,14 @@
 <meta name="keywords" content="{{ ctx.page_info.keywords_or_default() }}" />
 <meta name="google-site-verification" content="LjgndE9fyTkxbPz8aMFyJQFSS3cQiXIrYchE_b2VXlg" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script type="text/javascript" src="/js/upvote.js"></script>
 {% block head_extra %}{% endblock %}<link rel="stylesheet" media="all" type="text/css" href="/main.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/mainmenu.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/vimhl.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/markdown.css" />
 <link rel="stylesheet" media="print" type="text/css" href="/print.css" />
+<link rel="stylesheet" media="all" type="text/css" href="/mobile.css" />
 <!--[if !IE 7]>
 	<style type="text/css">
 		#wrap {display:table;height:100%}
@@ -21,7 +23,163 @@
 <body {% if ctx.is_home() %}style="background:white;" {% endif %} >
 <div id="wrap">
 
-<!-- This menuing system was made by Steve Gibson at GRC.COM 
+<!-- Mobile navigation (hidden on desktop via mobile.css media query) -->
+<div class="mobile-header">
+    <button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('mobile-nav-open')">
+        <span></span><span></span><span></span>
+    </button>
+</div>
+<div class="mobile-menubar">
+    <button onclick="document.body.classList.toggle('mobile-nav-open')">Menu</button>
+</div>
+<div class="mobile-undergrad"></div>
+<div class="mobile-nav-overlay" onclick="document.body.classList.remove('mobile-nav-open')">
+    <nav class="mobile-nav" onclick="event.stopPropagation()">
+        <div class="mobile-nav-close">
+            <button aria-label="Close menu" onclick="document.body.classList.remove('mobile-nav-open')">&times;</button>
+        </div>
+        <details>
+            <summary>Home</summary>
+            <a href="/">Home</a>
+            <a href="/about.htm">About Defuse</a>
+            <a href="/contact.htm">Contact</a>
+            <a href="/security-contact-vulnerability-disclosure.htm">Vulnerability Disclosure</a>
+            <a href="https://bqp.io/">Old Blog 1</a>
+            <a href="https://defuse.ca/blog/">Old Blog 2</a>
+            <a href="https://x.com/defusesec">X/Twitter</a>
+            <a href="https://bsky.app/profile/defusesec.bsky.social">Bluesky</a>
+            <a href="https://github.com/defuse">GitHub</a>
+        </details>
+        <details>
+            <summary>Services</summary>
+            <a href="/software-security-auditing.htm">Security Auditing</a>
+            <a href="/pastebin.htm">Encrypted Pastebin</a>
+            <a href="/online-x86-assembler.htm">Online x86 Assembler</a>
+            <a href="/big-number-calculator.htm">Big Number Calculator</a>
+            <a href="/checksums.htm">Checksum Calculator</a>
+            <a href="/html-sanitize.htm">HTML Sanitizer</a>
+            <a href="/trustedthirdparty.htm">TRENT &ndash; Trusted Drawings</a>
+            <a href="/quantum-computer-time-capsule.htm">Quantum Time Capsule</a>
+            <a href="http://crackstation.net/">CrackStation Hash Cracker</a>
+        </details>
+        <details>
+            <summary>Software</summary>
+            <a href="/vfy-backup-tester.htm">`vfy` Directory Comparer</a>
+            <a href="/passgen.htm">`passgen` Password Generator</a>
+            <details>
+                <summary>Deprecated</summary>
+                <a href="/helloworld-cms.htm">HelloWorld! Secure CMS</a>
+                <a href="/php-hash-cracker.htm">PHP Hash Cracker</a>
+                <a href="/backup-verify-script.htm">Ruby Backup Checker</a>
+            </details>
+        </details>
+        <details>
+            <summary>Projects &amp; Code</summary>
+            <a href="/secure-php-encryption.htm">`php-encryption` Library</a>
+            <a href="/dawr.htm">`DAWr` Audio Playground</a>
+            <a href="/wavetool.htm">`wavetool` Wavetable Processor</a>
+            <a href="/crackstation-hashdb.htm">Hash Cracking Utility</a>
+            <a href="/force-print-background.htm">HTML Force Print Background Color</a>
+            <details>
+                <summary>Deprecated</summary>
+                <a href="/bochs-images.htm">Bochs Disk Images</a>
+                <a href="/gnutls-psk-client-server-example.htm">GnuTLS PSK Example</a>
+                <a href="/email-spoofing-in-ruby.htm">Ruby Email Spoofing</a>
+                <a href="/syntax-highlighting-in-php-with-vim.htm">PHP &amp; Vim Highlighting</a>
+                <a href="/php-hit-counter.htm">PHP Hit Counter</a>
+                <a href="/php-pbkdf2.htm">PBKDF2 For PHP</a>
+                <a href="/generating-random-passwords.htm">PHP Random Passwords</a>
+            </details>
+        </details>
+        <details>
+            <summary>Research</summary>
+            <details>
+                <summary>Vulnerabilities &amp; Exploits</summary>
+                <a href="/side-channel-attacks-on-everyday-applications.htm">Side Channels in Everyday Apps</a>
+                <a href="/flush-reload-side-channel.htm">FLUSH+RELOAD</a>
+                <a href="/exploiting-cpp-vtables.htm">C++ VTABLES</a>
+                <a href="/cracking-synergy-bad-cryptography.htm">Cracking Synergy</a>
+                <a href="/sockstress.htm">Sockstress</a>
+                <a href="/in-browser-port-scanning.htm">Browser Port Scanner</a>
+                <a href="/mitigating-breach-tls-attack-in-php.htm">PHP BREACH Defense</a>
+                <a href="/race-conditions-in-web-applications.htm">Race Conditions in Web Apps</a>
+                <a href="/filesystem-events-ntfs-permissions.htm">Windows File-System Event Leakage</a>
+                <a href="/onedetection.htm">PUP Confusion</a>
+                <a href="/instruction-filters.htm">Instruction Filter RCE Defense</a>
+            </details>
+            <details>
+                <summary>Audits</summary>
+                <a href="https://zecsec.com/posts/zgo-security-audit/">ZGo</a>
+                <a href="https://zecsec.com/posts/zecwallet-lite-cli-security-audit/">zecwallet-lite-cli</a>
+                <a href="https://zecsec.com/posts/security-audit-of-hanhs-ledger-app/">Zcash Ledger App</a>
+                <a href="https://zecsec.com/posts/free2z-security-audit/">Free2Z</a>
+                <a href="https://zecsec.com/posts/ywallet-audit-published/">YWallet</a>
+                <a href="/audits/encfs.htm">EncFS</a>
+                <a href="/audits/ecryptfs.htm">eCryptfs</a>
+                <a href="/audits/zerobin.htm">ZeroBin</a>
+                <a href="/audits/pefs.htm">PEFS</a>
+                <a href="/audits/hash0.htm">Hash0</a>
+                <a href="/audits/gocryptfs.htm">Gocryptfs</a>
+                <a href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_globaleaks.html">GlobaLeaks</a>
+            </details>
+            <details>
+                <summary>Cryptography</summary>
+                <a href="/blind-birthday-attack.htm">Blind Birthday Attack</a>
+                <a href="/cbcmodeiv.htm">CBC Mode IV Security</a>
+                <a href="/truecrypt-plausible-deniability-useless-by-game-theory.htm">TrueCrypt &amp; Game Theory</a>
+                <a href="/web-browser-javascript-cryptography.htm">Browser Cryptography</a>
+                <a href="/eotp.htm">EOTP (abandoned)</a>
+            </details>
+            <details>
+                <summary>Passwords</summary>
+                <a href="/password-hashing-after-phc.htm">Hash Caching</a>
+                <a href="http://crackstation.net/hashing-security.html">Salted Password Hashing</a>
+            </details>
+            <details>
+                <summary>Theory</summary>
+                <a href="/concentration-bounds-from-parallel-repetition-theorems.htm">My Master's Thesis</a>
+                <a href="/how-do-we-model-this-robot.htm">Robot Modelling</a>
+                <a href="/is-security-local.htm">Is Security Local?</a>
+                <a href="/plausible-reason-p-noteq-np-is-hard-to-prove.htm">Why It's Hard To Prove P!=NP</a>
+                <a href="/godel-second-incompleteness-theorem-by-turing-machines.htm">Gödel's Second Theorem</a>
+            </details>
+            <details>
+                <summary>Other</summary>
+                <a href="/bochs-hacking-guide.htm">Hacking Bochs</a>
+                <a href="/triangle-of-secure-code-delivery.htm">Secure Code Delivery</a>
+                <a href="/web-application-security.htm">Website Security</a>
+                <a href="/bitcoin-pool-ddos.htm">BitCoin Centralization</a>
+                <a href="/web-browser-negative-feedback.htm">Negative http:// Feedback</a>
+                <a href="/microsoft-reads-your-skype-messages.htm">Skype Spying</a>
+            </details>
+        </details>
+        <details>
+            <summary>Miscellaneous</summary>
+            <a href="/vimrc.htm">My Vim Configuration</a>
+            <a href="/claude-statusline.htm">Claude Code Status Line</a>
+            <a href="/reading-list.htm">Reading List</a>
+            <a href="/advice-to-aspiring-computer-engineers.htm">Advice for CS Students</a>
+            <a href="/online-free-computer-science-education.htm">CS Lecture Links</a>
+            <a href="/new-york-times-algebra.htm">NYT Algebra</a>
+            <a href="/x-plane-combat.htm">X-Plane Combat</a>
+            <a href="/fractal-zoom.htm">Fractal Zoom</a>
+            <a href="/the-universe-is-made-of-cheese.htm">Cheese Universe</a>
+            <a href="/manual-random-number-generator.htm">Paper Coin TRNG</a>
+            <a href="/asuskeyboarddefect.htm">ASUS G51 Keyboard</a>
+            <a href="/honestyware.htm">Honestyware</a>
+            <a href="/centripetal-acceleration.htm">Centripetal Acceleration</a>
+            <a href="/contributors.htm">Contributors</a>
+            <details>
+                <summary>Mirrors</summary>
+                <a href="/pocorgtfo.htm">PoC || GTFO Mirror</a>
+                <a href="/truecrypt-7.1a-hashes.htm">TrueCrypt Hashes</a>
+            </details>
+        </details>
+    </nav>
+</div>
+<!-- End mobile navigation -->
+
+<!-- This menuing system was made by Steve Gibson at GRC.COM
             see more at http://www.grc.com/menudemo.htm -->
 
 
@@ -38,11 +196,11 @@
             <img id="githublogo" src="/images/github.png" alt="GitHub" height="32" width="32" />
             GitHub
         </a>
-        &nbsp;&middot;&nbsp;
+        <span class="hide-narrow">&nbsp;&middot;&nbsp;
         <a href="https://bsky.app/profile/defusesec.bsky.social" title="Defuse Security on Bluesky">
             <img id="bskylogo" src="/images/bluesky.png" alt="Bluesky" height="25" width="29" />
             Bluesky
-        </a>
+        </a></span>
     </div>
 </div>
 
