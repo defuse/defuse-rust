@@ -146,6 +146,7 @@
         width: 280px;
         max-width: 85vw;
         height: 100%;
+        height: 100dvh;
         background: #000;
         transform: translateX(100%);
         transition: transform 0.3s;
@@ -213,6 +214,11 @@
         display: none;
     }
 
+    .mobile-nav > details > summary::marker {
+        display: none;
+        content: '';
+    }
+
     .mobile-nav > details > summary::after {
         content: '\25B6';
         float: right;
@@ -271,6 +277,11 @@
 
     .mobile-nav details details > summary::-webkit-details-marker {
         display: none;
+    }
+
+    .mobile-nav details details > summary::marker {
+        display: none;
+        content: '';
     }
 
     .mobile-nav details details > summary::after {
