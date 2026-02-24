@@ -185,6 +185,11 @@
     background-color: #1a1a1a !important;
 }
 
+/* ===== Code blocks (rounded pre with drop shadow) ===== */
+.night-mode .code {
+    box-shadow: 6px 6px 4px 2px #111;
+}
+
 /* ===== Fakelink ===== */
 .night-mode .fakelink {
     color: #6688ff;
