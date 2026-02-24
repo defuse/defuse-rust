@@ -120,7 +120,7 @@ padding-bottom: 20px;">
 
             /* Create the div to load the image, passing our object's index into
                 the global directory so that it can be retrieved. */
-            document.getElementById("testdiv").innerHTML = '<img src="http://' + ip + ':' + port + 
+            document.getElementById("testdiv").innerHTML = '<img src="https://' + ip + ':' + port +
                 '" alt="" onerror="error_handler(' + our_scanobj_index + ');" />';
 
             // XXX: What's the right way to do this in JS?
@@ -134,7 +134,7 @@ padding-bottom: 20px;">
                         thiss.on_stealthed();
                     }
                 },
-                10000
+                5000
             );
         }
     }
@@ -177,21 +177,23 @@ padding-bottom: 20px;">
 
         if (match[1] > 255 || match[2] > 255 || match[3] > 255 || match[4] > 255) {
             alert("That isn't a valid IPv4 address.");
+            return;
         }
 
         port = parseInt(port);
         if (isNaN(port) || port < 0 || port > 65535) {
             alert("Bad port number");
+            return;
         }
 
         document.getElementById("custom_button").disabled = true;
-        document.getElementById("custom_result").innerHTML = "Scanning... This will take up to 10 seconds.";
+        document.getElementById("custom_result").innerHTML = "Scanning... This will take up to 5 seconds.";
 
         var scanner = new PortScanner(ip, port);
 
         scanner.on_stealthed = function () {
             if (scanner.timed_out) {
-                document.getElementById("custom_result").innerHTML = "Case 2 (no response after 10s).";
+                document.getElementById("custom_result").innerHTML = "Case 2 (no response after 5s).";
             } else {
                 document.getElementById("custom_result").innerHTML = "Case 2 (" + this.total_time + " ms).";
             }
@@ -238,7 +240,7 @@ padding-bottom: 20px;">
         var res_div = document.getElementById("lan_results");
         res_div.innerHTML += "192.168.1." + current_octet + ": ";
         if (this.timed_out) {
-            res_div.innerHTML += "Case 2 (no response after 10 seconds). <br />";
+            res_div.innerHTML += "Case 2 (no response after 5 seconds). <br />";
         } else {
             res_div.innerHTML += "Case 2 (" + this.total_time + " ms). <br />";
         }
