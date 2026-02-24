@@ -8,6 +8,13 @@
     display: none;
 }
 
+/* Hide elements that crowd the desktop masthead at narrower widths */
+@media (max-width: 950px) {
+    .hide-narrow {
+        display: none;
+    }
+}
+
 @media (max-width: 850px) {
     /* ===== Hide desktop elements ===== */
     .menuminwidth0 {
@@ -23,25 +30,33 @@
     }
 
     /* ===== Mobile header bar ===== */
+    /* Original image is 591x100. background-size scales it to fit; height must match.
+       .mobile-nav-close must also use the same height/padding so the X button aligns
+       with the hamburger. If you change height here, update:
+         - background-size (maintain 591:100 ratio, e.g. 60px tall -> 355px wide)
+         - .mobile-nav-close height
+         - .mobile-nav-close padding */
     .mobile-header {
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        height: 50px;
+        height: 60px;                  /* must match background-size height */
         background: #000;
         background-image: url('/images/ossbox_header_background.png');
         background-repeat: no-repeat;
-        background-size: 296px 50px;
+        background-size: 355px 60px;   /* 591:100 ratio scaled; height must match above */
         background-position: left top;
-        padding: 0 12px;
+        padding: 0 12px;               /* must match .mobile-nav-close padding */
         position: relative;
         z-index: 2;
     }
 
     /* ===== Undergrad gradient below header ===== */
+    /* Height must match desktop #undergrad (10px in main.css) and the
+       undergrad.png image height (3x10px) */
     .mobile-undergrad {
         display: block;
-        height: 10px;
+        height: 10px;          /* must match undergrad.png height and desktop #undergrad */
         background-image: url('/images/undergrad.png');
         background-repeat: repeat-x;
         width: 100%;
@@ -49,60 +64,65 @@
         z-index: 2;
     }
 
-    /* ===== Mobile menu bar (matches desktop .menu style) ===== */
+    /* ===== Mobile menu bar (matches desktop .menu in mainmenu.css) ===== */
+    /* Height, gradient, borders, and font all mirror the desktop .menu bar.
+       If the desktop .menu styling changes in mainmenu.css, update these to match. */
     .mobile-menubar {
         display: block;
-        height: 30px;
-        background: linear-gradient(to bottom, #111 0%, #1a1a1a 30%, #000 50%);
-        border-top: 1px solid white;
-        border-bottom: 1px solid white;
+        height: 30px;          /* matches desktop .menu height in mainmenu.css */
+        background: linear-gradient(to bottom, #111 0%, #1a1a1a 30%, #000 50%); /* from mainmenu.css .menu */
+        border-top: 1px solid white;   /* from mainmenu.css .menu */
+        border-bottom: 1px solid white; /* from mainmenu.css .menu */
         position: relative;
         z-index: 2;
     }
 
     .mobile-menubar button {
         display: block;
-        height: 30px;
-        line-height: 30px;
+        height: 30px;          /* must match .mobile-menubar height */
+        line-height: 30px;     /* must match .mobile-menubar height */
         background: none;
         border: none;
         color: white;
-        font-family: "Courier New", Courier, monospace;
-        font-size: 14px;
+        font-family: "Courier New", Courier, monospace; /* from mainmenu.css .menu */
+        font-size: 14px;       /* from mainmenu.css .menu */
         cursor: pointer;
-        padding: 0 25px;
+        padding: 0 25px;       /* matches desktop .menu ul padding-left in mainmenu.css */
     }
 
     .mobile-menubar button:active {
-        color: #AAFFFF;
+        color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
     }
 
     /* ===== Hamburger button ===== */
+    /* Size (44px) must match .mobile-nav-close button so they overlap on screen */
     .hamburger {
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        width: 44px;
-        height: 44px;
+        width: 44px;           /* must match .mobile-nav-close button width */
+        height: 44px;          /* must match .mobile-nav-close button height */
         padding: 0;
         margin: 0;
         background: rgba(0, 0, 0, 0.6);
         border: none;
         border-radius: 6px;
         cursor: pointer;
-        gap: 5px;
+        gap: 5px;              /* spacing between the 3 lines */
     }
 
     .hamburger span {
         display: block;
         width: 24px;
-        height: 2px;
+        height: 2px;           /* line thickness; used in translateY calc below */
         background: #fff;
         transition: transform 0.3s, opacity 0.3s;
     }
 
-    /* Hamburger -> X animation */
+    /* Hamburger -> X animation
+       translateY value = gap (5px) + span height (2px) = 7px
+       This moves the top/bottom lines to the center so they cross into an X */
     body.mobile-nav-open .hamburger span:nth-child(1) {
         transform: translateY(7px) rotate(45deg);
     }
@@ -124,10 +144,13 @@
         right: 0;
         bottom: 0;
         background: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
+        z-index: 9999;         /* must be higher than .menuminwidth0 z-index:1000 (mainmenu.css)
+                                  and .mobile-header z-index:2 */
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
+        /* visibility delay (0.3s) must match opacity duration so it hides
+           after the fade-out finishes, not before */
         transition: opacity 0.3s, visibility 0s 0.3s;
     }
 
@@ -135,7 +158,7 @@
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
-        transition: opacity 0.3s, visibility 0s 0s;
+        transition: opacity 0.3s, visibility 0s 0s; /* no delay when opening */
     }
 
     /* ===== Nav panel (slides in from right) ===== */
@@ -149,7 +172,7 @@
         height: 100dvh;
         background: #000;
         transform: translateX(100%);
-        transition: transform 0.3s;
+        transition: transform 0.3s;    /* should match .mobile-nav-overlay opacity duration */
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         padding: 0 0 10px 0;
@@ -160,24 +183,26 @@
     }
 
     /* ===== Close button at top of nav ===== */
-    /* Matches mobile-header: 50px tall, flex center + end, 12px right padding */
+    /* Height and padding must match .mobile-header so the X button appears at
+       the exact same screen position as the hamburger button */
     .mobile-nav-close {
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        height: 50px;
-        padding: 0 12px;
+        height: 60px;         /* must match .mobile-header height */
+        padding: 0 12px;      /* must match .mobile-header padding */
         border-bottom: 1px solid #333;
         flex-shrink: 0;
     }
 
+    /* Size must match .hamburger so tap targets overlap */
     .mobile-nav-close button {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
+        width: 44px;           /* must match .hamburger width */
+        height: 44px;          /* must match .hamburger height */
         background: rgba(0, 0, 0, 0.6);
         border: none;
         border-radius: 6px;
@@ -254,7 +279,7 @@
 
     .mobile-nav > details > a:active {
         background: #0a1a1a;
-        color: #AAFFFF;
+        color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
     }
 
     /* ===== Nested details (3rd level: Deprecated, subcategories) ===== */
@@ -318,17 +343,17 @@
 
     .mobile-nav details details > a:active {
         background: #0a1a1a;
-        color: #AAFFFF;
+        color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
     }
 
     /* ===== Fluid content width ===== */
     #wrap {
-        min-width: 0;
+        min-width: 0;          /* overrides 900px in main.css */
     }
 
     #content {
-        width: auto;
-        max-width: 800px;
+        width: auto;           /* overrides fixed 800px in main.css */
+        max-width: 800px;      /* cap at desktop width so content matches when viewport is wide */
         padding-left: 15px;
         padding-right: 15px;
         box-sizing: border-box;
@@ -336,7 +361,7 @@
 
     /* ===== Footer ===== */
     #footerwrapper {
-        min-width: 0;
+        min-width: 0;          /* overrides 900px in main.css */
         position: relative;
         margin-top: 0;
         height: auto;
@@ -364,14 +389,14 @@
     }
 
     /* ===== Home page ===== */
+    /* Negative margins push the 3px borders (set in space-tear.css) just past
+       the screen edge so they don't visually crowd the content */
     #homespaceship {
         width: auto !important;
         padding-left: 15px !important;
         padding-right: 15px !important;
-    }
-
-    #contenthome {
-        margin-top: 0;
+        margin-left: -3px !important;  /* must match border-left width in space-tear.css */
+        margin-right: -3px !important; /* must match border-right width in space-tear.css */
     }
 
     /* Home page elements that might overflow */
