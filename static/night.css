@@ -3,23 +3,23 @@
 
 /* ===== Body & content area ===== */
 .night-mode body {
-    background-color: #1a1a1a;
+    background: linear-gradient(to bottom, #1a1a1a 0px, #000 1000px) no-repeat #000;
     color: #ccc;
 }
 
 .night-mode #content {
-    background-color: #1a1a1a;
+    background-color: transparent;
     color: #ccc;
 }
 
 /* ===== Links ===== */
 .night-mode a,
 .night-mode a:visited {
-    color: #ff6666;
+    color: #0ff;
 }
 
 .night-mode a:hover {
-    color: #ff9999;
+    color: #0ff;
 }
 
 /* ===== Headings ===== */
@@ -95,7 +95,7 @@
 }
 
 .night-mode .contact-table td:first-child {
-    color: #ff6666;
+    color: #0ff;
 }
 
 .night-mode .contact-table tr:hover {
@@ -186,8 +186,9 @@
 }
 
 /* ===== Code blocks (rounded pre with drop shadow) ===== */
-.night-mode .code {
-    box-shadow: 6px 6px 4px 2px #111;
+.night-mode .code,
+.night-mode #vimCodeElement {
+    box-shadow: none;
 }
 
 /* ===== Fakelink ===== */
