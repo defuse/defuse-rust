@@ -16,10 +16,33 @@
 <link rel="stylesheet" media="all" type="text/css" href="/mobile.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/night.css" />
 <script>
-var _night=localStorage.getItem('night')==='1';
-if(_night)document.documentElement.classList.add('night-mode');
-function nightToggle(){document.documentElement.classList.toggle('night-mode');var n=document.documentElement.classList.contains('night-mode');localStorage.setItem('night',n?'1':'0');var t=n?'Day Mode':'Night Mode';document.querySelectorAll('.night-toggle').forEach(function(e){e.textContent=t;});}
-if(_night)document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.night-toggle').forEach(function(e){e.textContent='Day Mode';});});
+    // Apply night mode before first paint to prevent flash of wrong theme
+    var nightEnabled = localStorage.getItem('night') === '1';
+    if (nightEnabled) {
+        document.documentElement.classList.add('night-mode');
+    }
+
+    function updateNightLabels(isNight) {
+        var label = isNight ? 'Day Mode' : 'Night Mode';
+        var toggles = document.querySelectorAll('.night-toggle');
+        for (var i = 0; i < toggles.length; i++) {
+            toggles[i].textContent = label;
+        }
+    }
+
+    function nightToggle() {
+        document.documentElement.classList.toggle('night-mode');
+        var isNight = document.documentElement.classList.contains('night-mode');
+        localStorage.setItem('night', isNight ? '1' : '0');
+        updateNightLabels(isNight);
+    }
+
+    // Update button labels once DOM is ready (HTML defaults to "Night Mode")
+    if (nightEnabled) {
+        document.addEventListener('DOMContentLoaded', function () {
+            updateNightLabels(true);
+        });
+    }
 </script>
 <!--[if !IE 7]>
 	<style type="text/css">

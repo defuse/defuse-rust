@@ -202,7 +202,7 @@
     line-height: 30px;
     padding: 0 15px;
     color: #888;
-    font-size: 12px;
+    font-size: 14px;       /* must match .menu font-size in mainmenu.css */
     cursor: pointer;
     background: none;
     border: none;
@@ -216,5 +216,5 @@
 }
 
 .night-mode .night-toggle {
-    color: #AAFFFF;
+    color: #888;
 }

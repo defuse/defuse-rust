@@ -84,7 +84,8 @@
         height: 30px;          /* must match .mobile-menubar height */
         line-height: 30px;     /* must match .mobile-menubar height */
         padding: 0 15px;
-        font-size: 16px;
+        font-size: 14px;       /* must match .mobile-menubar button font-size */
+        color: #888;           /* must match .night-toggle color in night.css */
     }
 
     .mobile-menubar button {
@@ -95,7 +96,7 @@
         border: none;
         color: white;
         font-family: "Courier New", Courier, monospace; /* from mainmenu.css .menu */
-        font-size: 14px;       /* from mainmenu.css .menu */
+        font-size: 14px;       /* from mainmenu.css .menu; must match .night-toggle font-size */
         cursor: pointer;
         padding: 0 25px;       /* matches desktop .menu ul padding-left in mainmenu.css */
     }
