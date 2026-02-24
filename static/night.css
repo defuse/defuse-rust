@@ -244,7 +244,7 @@
 
 /* ===== Home page spaceship section ===== */
 .night-mode #homespaceship {
-    background-color: rgba(26, 26, 26, 0.85) !important;
+    background: linear-gradient(to bottom, #1a1a1a 0px, rgba(26, 26, 26, 0.85) 700px) !important;
     border-image: linear-gradient(
         to bottom,
         #223344 0%,
@@ -260,8 +260,12 @@
         0 8px 30px rgba(50, 100, 130, 0.10);
 }
 
+.night-mode #homespaceship h1 {
+    color: #fff;
+}
+
 .night-mode #homespaceship h1 a {
-    color: #ddd !important;
+    color: #fff !important;
 }
 
 /* ===== Code blocks (rounded pre with drop shadow) ===== */
