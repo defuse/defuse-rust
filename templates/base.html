@@ -16,8 +16,10 @@
 <link rel="stylesheet" media="all" type="text/css" href="/mobile.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/night.css" />
 <script>
-if(localStorage.getItem('night')==='1')document.documentElement.classList.add('night-mode');
-function nightToggle(){document.documentElement.classList.toggle('night-mode');localStorage.setItem('night',document.documentElement.classList.contains('night-mode')?'1':'0');}
+var _night=localStorage.getItem('night')==='1';
+if(_night)document.documentElement.classList.add('night-mode');
+function nightToggle(){document.documentElement.classList.toggle('night-mode');var n=document.documentElement.classList.contains('night-mode');localStorage.setItem('night',n?'1':'0');var t=n?'Day Mode':'Night Mode';document.querySelectorAll('.night-toggle').forEach(function(e){e.textContent=t;});}
+if(_night)document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.night-toggle').forEach(function(e){e.textContent='Day Mode';});});
 </script>
 <!--[if !IE 7]>
 	<style type="text/css">
@@ -36,7 +38,7 @@ function nightToggle(){document.documentElement.classList.toggle('night-mode');l
 </div>
 <div class="mobile-menubar">
     <button onclick="document.body.classList.toggle('mobile-nav-open')">Menu</button>
-    <button class="night-toggle" onclick="nightToggle()" aria-label="Toggle night mode">&#9789;</button>
+    <button class="night-toggle" onclick="nightToggle()" aria-label="Toggle night mode">Night Mode</button>
 </div>
 <div class="mobile-undergrad"></div>
 <div class="mobile-nav-overlay" onclick="document.body.classList.remove('mobile-nav-open')">
@@ -405,7 +407,7 @@ function nightToggle(){document.documentElement.classList.toggle('night-mode');l
     </li>
 </ul>
 
-<div class="night-toggle" onclick="nightToggle()" title="Toggle night mode">&#9789;</div>
+<div class="night-toggle" onclick="nightToggle()" title="Toggle night mode">Night Mode</div>
 
 </div> <!-- close "menu" div -->
 <hr style="display:none" />

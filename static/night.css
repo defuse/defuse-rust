@@ -202,11 +202,11 @@
     line-height: 30px;
     padding: 0 15px;
     color: #888;
-    font-size: 18px;
+    font-size: 12px;
     cursor: pointer;
     background: none;
     border: none;
-    font-family: inherit;
+    font-family: "Courier New", Courier, monospace;
     user-select: none;
     -webkit-user-select: none;
 }
