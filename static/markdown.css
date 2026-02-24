@@ -3,17 +3,13 @@
 .markdown-content pre {
     padding: 10px;
     font-family: monospace;
-    font-size: 8pt;
-    color: #c0c0c0;
-    background-color: #000000;
-    border-radius: 15px;
-    box-shadow: 6px 6px 4px 2px #888;
-    background-image: url('/images/code-top.png');
-    background-repeat: repeat-x;
+    font-size: 9pt;
+    color: #333;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
     overflow-x: auto;
     white-space: pre-wrap;
     word-wrap: break-word;
-    width: 99%;
 }
 
 .markdown-content code {
