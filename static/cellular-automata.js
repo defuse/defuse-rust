@@ -16,7 +16,8 @@
 
     var CELL_PX   = 4;    // CSS pixels per cell
     var TPS       = 8;   // simulation ticks per second
-    var CELL_RGBA = [0, 0, 0, 11];  // [R, G, B, A] — faint gray
+    var CELL_RGBA_DAY   = [0, 0, 0, 11];
+    var CELL_RGBA_NIGHT = [255, 255, 255, 25];
 
     // Order in which modes are shown (cycles via cookie)
     var MODE_ORDER = ['edge_growth', 'glider_chaos', 'random_seed'];
@@ -203,15 +204,17 @@
     // ================================================================
 
     function draw() {
+        var rgba = document.documentElement.classList.contains('night-mode')
+            ? CELL_RGBA_NIGHT : CELL_RGBA_DAY;
         var d = imgData.data;
         d.fill(0);
         for (var i = 0; i < grid.length; i++) {
             if (grid[i]) {
                 var p = i << 2;
-                d[p]     = CELL_RGBA[0];
-                d[p + 1] = CELL_RGBA[1];
-                d[p + 2] = CELL_RGBA[2];
-                d[p + 3] = CELL_RGBA[3];
+                d[p]     = rgba[0];
+                d[p + 1] = rgba[1];
+                d[p + 2] = rgba[2];
+                d[p + 3] = rgba[3];
             }
         }
         ctx.putImageData(imgData, 0, 0);
@@ -221,8 +224,13 @@
     // Mode selection (cycles via cookie)
     // ================================================================
 
+    var night = document.documentElement.classList.contains('night-mode');
     var prev = document.cookie.replace(/(?:^|.*;\s*)ca_seq\s*=\s*(\d+).*$/, '$1');
     var seq  = /^\d+$/.test(prev) ? (parseInt(prev, 10) + 1) % MODE_ORDER.length : 0;
+    // edge_growth grows from the tear edge which is clipped in night mode
+    if (night && MODE_ORDER[seq] === 'edge_growth') {
+        seq = (seq + 1) % MODE_ORDER.length;
+    }
     document.cookie = 'ca_seq=' + seq + ';path=/;max-age=2592000;SameSite=Lax';
 
     var current = MODES[MODE_ORDER[seq]];
