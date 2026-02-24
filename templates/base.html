@@ -14,6 +14,11 @@
 <link rel="stylesheet" media="all" type="text/css" href="/markdown.css" />
 <link rel="stylesheet" media="print" type="text/css" href="/print.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/mobile.css" />
+<link rel="stylesheet" media="all" type="text/css" href="/night.css" />
+<script>
+if(localStorage.getItem('night')==='1')document.documentElement.classList.add('night-mode');
+function nightToggle(){document.documentElement.classList.toggle('night-mode');localStorage.setItem('night',document.documentElement.classList.contains('night-mode')?'1':'0');}
+</script>
 <!--[if !IE 7]>
 	<style type="text/css">
 		#wrap {display:table;height:100%}
@@ -31,6 +36,7 @@
 </div>
 <div class="mobile-menubar">
     <button onclick="document.body.classList.toggle('mobile-nav-open')">Menu</button>
+    <button class="night-toggle" onclick="nightToggle()" aria-label="Toggle night mode">&#9789;</button>
 </div>
 <div class="mobile-undergrad"></div>
 <div class="mobile-nav-overlay" onclick="document.body.classList.remove('mobile-nav-open')">
@@ -399,6 +405,7 @@
     </li>
 </ul>
 
+<div class="night-toggle" onclick="nightToggle()" title="Toggle night mode">&#9789;</div>
 
 </div> <!-- close "menu" div -->
 <hr style="display:none" />

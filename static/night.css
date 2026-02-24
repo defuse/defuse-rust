@@ -1,0 +1,215 @@
+/* Night mode overrides — toggled via .night-mode on <html> */
+/* Header/nav/footer are already dark and stay unchanged. */
+
+/* ===== Body & content area ===== */
+.night-mode body {
+    background-color: #1a1a1a;
+    color: #ccc;
+}
+
+.night-mode #content {
+    background-color: #1a1a1a;
+    color: #ccc;
+}
+
+/* ===== Links ===== */
+.night-mode a,
+.night-mode a:visited {
+    color: #ff6666;
+}
+
+.night-mode a:hover {
+    color: #ff9999;
+}
+
+/* ===== Headings ===== */
+.night-mode #content h1 {
+    color: #ddd;
+    border-bottom-color: #555;
+}
+
+.night-mode #content h2 {
+    color: #ddd;
+    border-bottom-color: #555;
+}
+
+.night-mode #content h3 {
+    color: #ddd;
+}
+
+.night-mode #content h4 {
+    color: #ddd;
+}
+
+/* ===== Special boxes ===== */
+.night-mode .linkblock {
+    background: #1a2a2a;
+    border-color: #336;
+}
+
+.night-mode .honestywarebox {
+    background-color: #1a2a3a;
+    border-color: #444;
+    color: #ccc;
+}
+
+.night-mode .readme-box {
+    background: #222;
+    border-color: #444;
+}
+
+.night-mode .readme-box-header {
+    color: #999;
+    border-bottom-color: #444;
+}
+
+/* ===== Markdown rendered content ===== */
+.night-mode .markdown-content pre {
+    background-color: #111;
+    color: #ccc;
+    border-color: #444;
+}
+
+.night-mode .markdown-content :not(pre) > code {
+    background-color: #222;
+    border-color: #444;
+    color: #ccc;
+}
+
+.night-mode .markdown-content td {
+    border-color: #444;
+    color: #ccc;
+}
+
+.night-mode .markdown-content tr:nth-child(even) {
+    background-color: #222;
+}
+
+/* ===== Tables ===== */
+.night-mode table {
+    color: #ccc;
+}
+
+.night-mode .contact-table td {
+    border-bottom-color: #444;
+}
+
+.night-mode .contact-table td:first-child {
+    color: #ff6666;
+}
+
+.night-mode .contact-table tr:hover {
+    background-color: #222;
+}
+
+/* ===== Password blocks ===== */
+.night-mode .blocksection {
+    background-color: #222;
+    border-color: #555;
+    color: #ccc;
+}
+
+.night-mode .blocksection h2 {
+    border-bottom-color: #555;
+}
+
+/* ===== Alternating row backgrounds ===== */
+.night-mode .div1 {
+    background-color: #2a2a2a;
+}
+
+.night-mode .alt {
+    background-color: #2a2a2a;
+}
+
+.night-mode .pphostbl th {
+    background-color: #111;
+}
+
+/* ===== Results table ===== */
+.night-mode .restable td {
+    border-color: #555;
+}
+
+.night-mode .res1 {
+    background-color: #2a4a2a;
+    color: #ccc;
+}
+
+.night-mode .res2 {
+    background-color: #3a3a1a;
+    color: #ccc;
+}
+
+.night-mode .res3 {
+    background-color: #4a2a3a;
+    color: #ccc;
+}
+
+/* ===== Forms ===== */
+.night-mode input[type="text"],
+.night-mode input[type="password"],
+.night-mode input[type="email"],
+.night-mode input[type="number"],
+.night-mode textarea,
+.night-mode select {
+    background-color: #222;
+    color: #ccc;
+    border: 1px solid #555;
+}
+
+/* ===== Reference targets ===== */
+.night-mode #references span:target {
+    background-color: #2a3355;
+}
+
+/* ===== Page date ===== */
+.night-mode .pagedate {
+    color: #777;
+}
+
+/* ===== Upvote count ===== */
+.night-mode .upvotecount {
+    color: #999;
+}
+
+/* ===== Code skill box (home page) ===== */
+.night-mode .codeskillbox {
+    background-color: #222;
+    color: #ccc;
+    border-color: #555;
+}
+
+/* ===== Home page spaceship section ===== */
+.night-mode #homespaceship {
+    background-color: #1a1a1a !important;
+}
+
+/* ===== Fakelink ===== */
+.night-mode .fakelink {
+    color: #6688ff;
+}
+
+/* ===== Desktop night toggle (inside .menu) ===== */
+.night-toggle {
+    float: right;
+    height: 30px;
+    line-height: 30px;
+    padding: 0 15px;
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.night-toggle:hover {
+    color: #AAFFFF;
+}
+
+.night-mode .night-toggle {
+    color: #AAFFFF;
+}

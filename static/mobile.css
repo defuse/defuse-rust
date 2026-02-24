@@ -68,13 +68,23 @@
     /* Height, gradient, borders, and font all mirror the desktop .menu bar.
        If the desktop .menu styling changes in mainmenu.css, update these to match. */
     .mobile-menubar {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         height: 30px;          /* matches desktop .menu height in mainmenu.css */
         background: linear-gradient(to bottom, #111 0%, #1a1a1a 30%, #000 50%); /* from mainmenu.css .menu */
         border-top: 1px solid white;   /* from mainmenu.css .menu */
         border-bottom: 1px solid white; /* from mainmenu.css .menu */
         position: relative;
         z-index: 2;
+    }
+
+    .mobile-menubar .night-toggle {
+        float: none;
+        height: 30px;          /* must match .mobile-menubar height */
+        line-height: 30px;     /* must match .mobile-menubar height */
+        padding: 0 15px;
+        font-size: 16px;
     }
 
     .mobile-menubar button {
