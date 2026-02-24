@@ -27,10 +27,12 @@
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        height: 100px;
+        height: 50px;
         background: #000;
         background-image: url('/images/ossbox_header_background.png');
         background-repeat: no-repeat;
+        background-size: 296px 50px;
+        background-position: left top;
         padding: 0 12px;
         position: relative;
         z-index: 2;
@@ -154,12 +156,12 @@
     }
 
     /* ===== Close button at top of nav ===== */
-    /* Matches mobile-header: 100px tall, flex center + end, 12px right padding */
+    /* Matches mobile-header: 50px tall, flex center + end, 12px right padding */
     .mobile-nav-close {
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        height: 100px;
+        height: 50px;
         padding: 0 12px;
         border-bottom: 1px solid #333;
         flex-shrink: 0;
