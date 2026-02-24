@@ -126,13 +126,16 @@
         background: rgba(0, 0, 0, 0.5);
         z-index: 9999;
         opacity: 0;
+        visibility: hidden;
         pointer-events: none;
-        transition: opacity 0.3s;
+        transition: opacity 0.3s, visibility 0s 0.3s;
     }
 
     body.mobile-nav-open .mobile-nav-overlay {
         opacity: 1;
+        visibility: visible;
         pointer-events: auto;
+        transition: opacity 0.3s, visibility 0s 0s;
     }
 
     /* ===== Nav panel (slides in from right) ===== */
