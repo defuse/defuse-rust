@@ -7,8 +7,6 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 KATEX_DIR="$PROJECT_DIR/static/katex"
 TMP_DIR=$(mktemp -d)
 
-trap 'rm -rf "$TMP_DIR"' EXIT
-
 # Get latest version from GitHub
 LATEST=$(curl -sI "https://github.com/KaTeX/KaTeX/releases/latest" | grep -i '^location:' | sed 's|.*/tag/||' | tr -d '\r')
 echo "Latest KaTeX version: $LATEST"
