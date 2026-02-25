@@ -103,6 +103,10 @@ pub struct PageInfo {
 
     /// Page features (banner, math rendering, etc.)
     pub features: Features,
+
+    /// Publication date for blog-style posts (e.g. "August 11, 2023").
+    /// Rendered by base.html before the content block.
+    pub date: Option<&'static str>,
 }
 
 // Manual Clone implementation - needed because of dyn trait object
@@ -119,6 +123,7 @@ impl Clone for PageInfo {
             no_cache: self.no_cache,
             upvote: self.upvote.clone(),
             features: self.features.clone(),
+            date: self.date,
         }
     }
 }
@@ -151,6 +156,7 @@ macro_rules! alias {
             no_cache: false,
             upvote: None,
             features: Features { banner: None, math: false },
+            date: None,
         }
     };
 }
@@ -182,6 +188,7 @@ macro_rules! page {
             no_cache: false,
             upvote: $upvote,
             features: Features { banner: None, math: false },
+            date: None,
         }
     };
     (
@@ -205,6 +212,7 @@ macro_rules! page {
             no_cache: $no_cache,
             upvote: $upvote,
             features: Features { banner: None, math: false },
+            date: None,
         }
     };
     (
@@ -228,6 +236,58 @@ macro_rules! page {
             no_cache: false,
             upvote: $upvote,
             features: $features,
+            date: None,
+        }
+    };
+    // Arm 4: date (no features override)
+    (
+        handler: $($handler:ident)::+,
+        slug: $slug:expr,
+        title: $title:expr,
+        description: $description:expr,
+        keywords: $keywords:expr,
+        legacy_hit_count_id: $legacy_hit_count_id:expr,
+        upvote: $upvote:expr,
+        date: $date:expr $(,)?
+    ) => {
+        PageInfo {
+            handler: Some(&crate::pages::$($handler)::+::Handler),
+            slug: $slug,
+            title: $title,
+            description: $description,
+            keywords: $keywords,
+            legacy_hit_count_id: $legacy_hit_count_id,
+            redirect: None,
+            no_cache: false,
+            upvote: $upvote,
+            features: Features { banner: None, math: false },
+            date: $date,
+        }
+    };
+    // Arm 5: date + features
+    (
+        handler: $($handler:ident)::+,
+        slug: $slug:expr,
+        title: $title:expr,
+        description: $description:expr,
+        keywords: $keywords:expr,
+        legacy_hit_count_id: $legacy_hit_count_id:expr,
+        upvote: $upvote:expr,
+        date: $date:expr,
+        features: $features:expr $(,)?
+    ) => {
+        PageInfo {
+            handler: Some(&crate::pages::$($handler)::+::Handler),
+            slug: $slug,
+            title: $title,
+            description: $description,
+            keywords: $keywords,
+            legacy_hit_count_id: $legacy_hit_count_id,
+            redirect: None,
+            no_cache: false,
+            upvote: $upvote,
+            features: $features,
+            date: $date,
         }
     };
 }
@@ -291,6 +351,7 @@ pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
     no_cache: false,
     upvote: None,
     features: Features { banner: None, math: false },
+    date: None,
 };
 
 /// Look up a page by name/slug (case-insensitive)

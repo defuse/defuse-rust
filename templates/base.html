@@ -505,7 +505,10 @@
         </div>
                 </div>
 {% endif -%}
-{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% if let Some(banner) = ctx.page_info.features.banner %}{{ banner|safe }}{% endif %}{% block content %}{% endblock %}
+{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% if let Some(banner) = ctx.page_info.features.banner %}{{ banner|safe }}{% endif %}{% if let Some(date) = ctx.page_info.date %}<div class="pagedate">
+{{ date }}
+</div>
+{% endif %}{% block content %}{% endblock %}
 </div>
 </div> <!-- Wrap -->
 {%- if !ctx.is_home() %}
