@@ -578,6 +578,20 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         },
         alias!("bh2016" => "side-channel-attacks-on-everyday-applications"),
         page! {
+            handler: research::security_engineering_safety_critical,
+            slug: "security-engineering-learning-from-safety-critical-disciplines",
+            title: "Security Engineering: Learning from Safety-Critical Disciplines",
+            description: "What the security industry can learn from safety-critical engineering disciplines.",
+            keywords: "security engineering, safety-critical, aviation, redundancy, incident investigation",
+            legacy_hit_count_id: "security-engineering-learning-from-safety-critical-disciplines",
+            upvote: Some(UpvoteConfig {
+                id: "security-engineering-learning-from-safety-critical-disciplines",
+                category: "defuse_research",
+                title: Some("Security Engineering from Safety-Critical Disciplines"),
+                description: Some("Useful concepts and methods from safety engineering, applied to computer security."),
+            }),
+        },
+        page! {
             handler: research::manual_random_number_generator,
             slug: "manual-random-number-generator",
             title: "Manually Generating Random Numbers",

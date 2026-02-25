@@ -23,6 +23,7 @@ pub mod password_policy_hall_of_shame;
 pub mod plausible_reason_p_noteq_np_is_hard_to_prove;
 pub mod race_conditions_in_web_applications;
 pub mod research;
+pub mod security_engineering_safety_critical;
 pub mod side_channel_attacks_on_everyday_applications;
 pub mod triangle_of_secure_code_delivery;
 pub mod truecrypt_plausible_deniability_useless_by_game_theory;
