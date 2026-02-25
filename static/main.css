@@ -717,6 +717,17 @@ ul {
     background: #f5f5f5;
 }
 
+.deprecated-banner {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #664d03;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+}
+
 .readme-box-header {
     font-family: "Courier New", Courier, monospace;
     font-weight: bold;

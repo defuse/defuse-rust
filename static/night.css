@@ -308,6 +308,12 @@
     -webkit-user-select: none;
 }
 
+.night-mode .deprecated-banner {
+    background: #3d3000;
+    border-color: #665200;
+    color: #ffc107;
+}
+
 .night-toggle:hover {
     color: #AAFFFF;
 }

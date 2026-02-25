@@ -101,9 +101,9 @@
             <a href="/passgen.htm">`passgenr` Password Generator</a>
             <details>
                 <summary>Deprecated</summary>
+                <a href="/backup-verify-script.htm">Ruby Backup Checker</a>
                 <a href="/helloworld-cms.htm">HelloWorld! Secure CMS</a>
                 <a href="/php-hash-cracker.htm">PHP Hash Cracker</a>
-                <a href="/backup-verify-script.htm">Ruby Backup Checker</a>
             </details>
         </details>
         <details>
@@ -281,9 +281,9 @@
             <li>
                 <a href="#"><span class="drop"><span>Deprecated</span>&raquo;</span><!--[if gt IE 6]><!--></a><!--<![endif]--><!--[if lt IE 7]><table border="0" cellpadding="0" cellspacing="0"><tr><td><![endif]-->
                 <ul>
+                    <li><a href="/backup-verify-script.htm">&nbsp;Ruby Backup Checker</a></li>
                     <li><a href="/helloworld-cms.htm">&nbsp;HelloWorld! Secure CMS</a></li>
                     <li><a href="/php-hash-cracker.htm">&nbsp;PHP Hash Cracker</a></li>
-                    <li><a href="/backup-verify-script.htm">&nbsp;Ruby Backup Checker</a></li>
                 </ul>
                 <!--[if lte IE 6]></td></tr></table></a><![endif]-->
             </li>
@@ -504,7 +504,7 @@
         </div>
                 </div>
 {% endif -%}
-{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% block content %}{% endblock %}
+{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% if let Some(banner) = ctx.page_info.banner %}{{ banner|safe }}{% endif %}{% block content %}{% endblock %}
 </div>
 </div> <!-- Wrap -->
 {%- if !ctx.is_home() %}

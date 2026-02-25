@@ -90,6 +90,10 @@ pub struct PageInfo {
 
     /// Upvote configuration - if Some, page shows vote arrows
     pub upvote: Option<UpvoteConfig>,
+
+    /// Optional banner HTML inserted before the page content (before the <h1>).
+    /// Used for deprecation notices, etc.
+    pub banner: Option<&'static str>,
 }
 
 // Manual Clone implementation - needed because of dyn trait object
@@ -105,6 +109,7 @@ impl Clone for PageInfo {
             redirect: self.redirect,
             no_cache: self.no_cache,
             upvote: self.upvote.clone(),
+            banner: self.banner,
         }
     }
 }
@@ -136,6 +141,7 @@ macro_rules! alias {
             redirect: Some($target),
             no_cache: false,
             upvote: None,
+            banner: None,
         }
     };
 }
@@ -166,6 +172,7 @@ macro_rules! page {
             redirect: None,
             no_cache: false,
             upvote: $upvote,
+            banner: None,
         }
     };
     (
@@ -188,6 +195,30 @@ macro_rules! page {
             redirect: None,
             no_cache: $no_cache,
             upvote: $upvote,
+            banner: None,
+        }
+    };
+    (
+        handler: $($handler:ident)::+,
+        slug: $slug:expr,
+        title: $title:expr,
+        description: $description:expr,
+        keywords: $keywords:expr,
+        legacy_hit_count_id: $legacy_hit_count_id:expr,
+        upvote: $upvote:expr,
+        banner: $banner:expr $(,)?
+    ) => {
+        PageInfo {
+            handler: Some(&crate::pages::$($handler)::+::Handler),
+            slug: $slug,
+            title: $title,
+            description: $description,
+            keywords: $keywords,
+            legacy_hit_count_id: $legacy_hit_count_id,
+            redirect: None,
+            no_cache: false,
+            upvote: $upvote,
+            banner: $banner,
         }
     };
 }
@@ -250,6 +281,7 @@ pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
     redirect: None,
     no_cache: false,
     upvote: None,
+    banner: None,
 };
 
 /// Look up a page by name/slug (case-insensitive)
