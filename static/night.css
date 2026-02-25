@@ -181,6 +181,18 @@
     background-color: #222;
 }
 
+/* Mobile menubar buttons should be transparent to show the bar's gradient */
+.night-mode .mobile-menubar button:not(.night-toggle) {
+    background: none;
+    border: none;
+    color: white;
+}
+
+.night-mode .mobile-menubar button:not(.night-toggle):active {
+    background: none;
+    color: #AAFFFF;
+}
+
 /* ===== Reference targets ===== */
 .night-mode #references span:target {
     background-color: #2a3355;
