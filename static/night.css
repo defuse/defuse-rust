@@ -3,7 +3,7 @@
 
 /* ===== Body & content area ===== */
 .night-mode body {
-    background: linear-gradient(to bottom, #1a1a1a 0px, #000 1000px) no-repeat #000;
+    background: linear-gradient(to bottom, #101014 0px, #000 1000px) no-repeat #000 !important;
     color: #ccc;
 }
 
@@ -151,6 +151,7 @@
 .night-mode input[type="password"],
 .night-mode input[type="email"],
 .night-mode input[type="number"],
+.night-mode input[type="file"],
 .night-mode textarea,
 .night-mode select {
     background-color: #222 !important;
@@ -160,7 +161,7 @@
 
 .night-mode input[type="submit"],
 .night-mode input[type="button"],
-.night-mode button:not(.night-toggle):not(.hamburger):not(.mobile-nav-close button) {
+.night-mode button:not(.night-toggle):not(.hamburger) {
     background-color: #333;
     color: #ccc;
     border: 1px solid #555;
@@ -169,14 +170,14 @@
 
 .night-mode input[type="submit"]:hover,
 .night-mode input[type="button"]:hover,
-.night-mode button:not(.night-toggle):not(.hamburger):not(.mobile-nav-close button):hover {
+.night-mode button:not(.night-toggle):not(.hamburger):hover {
     background-color: #444;
     color: #fff;
 }
 
 .night-mode input[type="submit"]:active,
 .night-mode input[type="button"]:active,
-.night-mode button:not(.night-toggle):not(.hamburger):not(.mobile-nav-close button):active {
+.night-mode button:not(.night-toggle):not(.hamburger):active {
     background-color: #222;
 }
 

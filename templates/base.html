@@ -16,8 +16,10 @@
 <link rel="stylesheet" media="all" type="text/css" href="/mobile.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/night.css" />
 <script>
-    // Apply night mode before first paint to prevent flash of wrong theme
-    var nightEnabled = localStorage.getItem('night') === '1';
+    // Apply night mode before first paint to prevent flash of wrong theme.
+    // localStorage may throw in restricted privacy modes; default to day mode.
+    var nightEnabled = false;
+    try { nightEnabled = localStorage.getItem('night') === '1'; } catch (e) {}
     if (nightEnabled) {
         document.documentElement.classList.add('night-mode');
     }
@@ -33,7 +35,7 @@
     function nightToggle() {
         document.documentElement.classList.toggle('night-mode');
         var isNight = document.documentElement.classList.contains('night-mode');
-        localStorage.setItem('night', isNight ? '1' : '0');
+        try { localStorage.setItem('night', isNight ? '1' : '0'); } catch (e) {}
         updateNightLabels(isNight);
     }
 
@@ -430,7 +432,7 @@
     </li>
 </ul>
 
-<div class="night-toggle" onclick="nightToggle()" title="Toggle night mode">Night Mode</div>
+<button class="night-toggle" onclick="nightToggle()" title="Toggle night mode" aria-label="Toggle night mode">Night Mode</button>
 
 </div> <!-- close "menu" div -->
 <hr style="display:none" />
