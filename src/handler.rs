@@ -109,7 +109,7 @@ macro_rules! markdown_page {
             fn get(&self, ctx: PageContext, _state: &AppState) -> BoxFuture {
                 Box::pin(async move {
                     let content_html = markdown::render_post(
-                        include_str!(concat!("../../static/markdown/", $md_path))
+                        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/static/markdown/", $md_path))
                     );
                     $template { ctx, content_html }.into_response()
                 })
