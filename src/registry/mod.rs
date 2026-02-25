@@ -44,7 +44,7 @@ pub struct UpvoteConfig {
     pub description: Option<&'static str>,
 }
 
-/// Optional page features beyond the standard metadata.
+/// Page features beyond the standard metadata.
 #[derive(Debug, Clone)]
 pub struct Features {
     /// HTML banner inserted before the page content (before the <h1>).
@@ -101,8 +101,8 @@ pub struct PageInfo {
     /// Upvote configuration - if Some, page shows vote arrows
     pub upvote: Option<UpvoteConfig>,
 
-    /// Optional page features (banner, math rendering, etc.)
-    pub features: Option<Features>,
+    /// Page features (banner, math rendering, etc.)
+    pub features: Features,
 }
 
 // Manual Clone implementation - needed because of dyn trait object
@@ -150,7 +150,7 @@ macro_rules! alias {
             redirect: Some($target),
             no_cache: false,
             upvote: None,
-            features: None,
+            features: Features { banner: None, math: false },
         }
     };
 }
@@ -181,7 +181,7 @@ macro_rules! page {
             redirect: None,
             no_cache: false,
             upvote: $upvote,
-            features: None,
+            features: Features { banner: None, math: false },
         }
     };
     (
@@ -204,7 +204,7 @@ macro_rules! page {
             redirect: None,
             no_cache: $no_cache,
             upvote: $upvote,
-            features: None,
+            features: Features { banner: None, math: false },
         }
     };
     (
@@ -234,16 +234,6 @@ macro_rules! page {
 pub(crate) use page;
 
 impl PageInfo {
-    /// Get the banner HTML, if any
-    pub fn banner(&self) -> Option<&'static str> {
-        self.features.as_ref().and_then(|f| f.banner)
-    }
-
-    /// Whether KaTeX math rendering is enabled
-    pub fn math(&self) -> bool {
-        self.features.as_ref().is_some_and(|f| f.math)
-    }
-
     /// Is this a directory-style URL? (no .htm extension)
     /// Derived from slug: empty string or ends with "/"
     pub fn is_directory(&self) -> bool {
@@ -300,7 +290,7 @@ pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
     redirect: None,
     no_cache: false,
     upvote: None,
-    features: None,
+    features: Features { banner: None, math: false },
 };
 
 /// Look up a page by name/slug (case-insensitive)
