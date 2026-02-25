@@ -153,9 +153,31 @@
 .night-mode input[type="number"],
 .night-mode textarea,
 .night-mode select {
-    background-color: #222;
+    background-color: #222 !important;
+    color: #ccc !important;
+    border: 1px solid #555 !important;
+}
+
+.night-mode input[type="submit"],
+.night-mode input[type="button"],
+.night-mode button:not(.night-toggle):not(.hamburger):not(.mobile-nav-close button) {
+    background-color: #333;
     color: #ccc;
     border: 1px solid #555;
+    cursor: pointer;
+}
+
+.night-mode input[type="submit"]:hover,
+.night-mode input[type="button"]:hover,
+.night-mode button:not(.night-toggle):not(.hamburger):not(.mobile-nav-close button):hover {
+    background-color: #444;
+    color: #fff;
+}
+
+.night-mode input[type="submit"]:active,
+.night-mode input[type="button"]:active,
+.night-mode button:not(.night-toggle):not(.hamburger):not(.mobile-nav-close button):active {
+    background-color: #222;
 }
 
 /* ===== Reference targets ===== */
