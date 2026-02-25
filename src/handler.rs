@@ -82,3 +82,45 @@ macro_rules! simple_page {
         }
     };
 }
+
+/// Macro for markdown-rendered blog post pages.
+///
+/// Renders a pre-processed markdown file to HTML using `render_post` and
+/// passes it to the shared zecsec post template.
+///
+/// Usage:
+/// ```ignore
+/// crate::markdown_page!(MilkSadPage, "zecsec/milk-sad.md");
+/// ```
+#[macro_export]
+macro_rules! markdown_page {
+    ($template:ident, $md_path:expr) => {
+        use askama::Template;
+        use axum::response::IntoResponse;
+
+        use $crate::context::PageContext;
+        use $crate::handler::{BoxFuture, PageHandler};
+        use $crate::app_state::AppState;
+        use $crate::libs::markdown;
+
+        pub struct Handler;
+
+        impl PageHandler for Handler {
+            fn get(&self, ctx: PageContext, _state: &AppState) -> BoxFuture {
+                Box::pin(async move {
+                    let content_html = markdown::render_post(
+                        include_str!(concat!("../../static/markdown/", $md_path))
+                    );
+                    $template { ctx, content_html }.into_response()
+                })
+            }
+        }
+
+        #[derive(Template)]
+        #[template(path = "pages/zecsec/post.html")]
+        struct $template {
+            ctx: PageContext,
+            content_html: String,
+        }
+    };
+}
