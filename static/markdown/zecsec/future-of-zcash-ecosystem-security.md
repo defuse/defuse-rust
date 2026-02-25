@@ -1,9 +1,4 @@
----
-title: "The Future of Zcash Ecosystem Security"
-date: 2023-09-24T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# The Future of Zcash Ecosystem Security
 
 Starting in October, I will be stepping away from my role as the Zcash
 community's resident security auditor and entering a sabbatical year to give
@@ -13,14 +8,13 @@ cryptocurrency world.
 I would like to extend thanks to the Zcash Community Grants committee and to the
 Zcash community for supporting my role over the past year. This has been an
 amazing opportunity to level up my bug-hunting skills, and together we've
-[eliminated some risky bugs from Zcash community projects]({{< ref "security-engineering.md" >}} ):
+[eliminated some risky bugs from Zcash community projects](/zecsec/security-engineering.htm ):
 
-![Distribution of Bugs Found](/images/bug-chart.png)
+![Distribution of Bugs Found](/zecsec/images/bug-chart.png)
 
 **How will this affect Zcash's security, going forward?**
 
-In my [talk on Security Engineering at Zcon4]({{<ref
-"security-engineering.md">}}), I surveyed the results of my work over the past
+In my [talk on Security Engineering at Zcon4](/zecsec/security-engineering.htm), I surveyed the results of my work over the past
 year: 81 bugs discovered, 41 of which I rated as "medium"-severity or higher.
 These results show that the Zcash community benefits from the kind of security
 support that I've been providing. 

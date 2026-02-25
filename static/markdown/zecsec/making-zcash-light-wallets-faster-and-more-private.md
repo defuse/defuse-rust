@@ -1,10 +1,4 @@
----
-title: "Making Zcash Light Wallets Faster and More Private"
-date: 2023-03-02T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
-katex: true
----
+# Making Zcash Light Wallets Faster and More Private
 
 In this post, I'm going to sketch changes to the Zcash protocol that would allow
 light wallets to be both *much faster* and *more private* than they currently

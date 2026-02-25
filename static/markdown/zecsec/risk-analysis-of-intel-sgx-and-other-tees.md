@@ -1,9 +1,4 @@
----
-title: "Risk Analysis of Intel's SGX and Other TEEs"
-date: 2023-03-10T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# Risk Analysis of Intel's SGX and Other TEEs
 
 Intel's [Software Guard eXtensions (SGX)](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html) is a Trusted Execution Environment (TEE) technology built into some Intel CPUs. It is a special mode of operation that the processor can be put into that intends to allow for integrity-protected and confidentiality-protected processing, even under the assumption that the machine is fully compromised (i.e. the attacker has root access). 
 

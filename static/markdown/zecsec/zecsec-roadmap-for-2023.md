@@ -1,9 +1,4 @@
----
-title: "ZecSec Roadmap for 2023"
-date: 2023-01-03T11:08:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# ZecSec Roadmap for 2023
 
 Happy New Year Zcash!
 
@@ -72,7 +67,7 @@ review. Time permitting, I would like to perform some shorter audits of projects
 like these alongside the longer audits listed above.
 
 If you don't see your project on this list, but you feel like you could benefit
-from an audit in 2023, please [reach out]({{<ref "contact.md">}}) and I will do
+from an audit in 2023, please [reach out](/zecsec.htm) and I will do
 my best to accommodate you!
 
 ## Security Side-Projects
@@ -142,8 +137,7 @@ assist the grant committee with writing up an RFP, if desired.
 
 ## What's Left Out?
 
-In my recently-published [Zcash Ecosystem Security Overview]({{<ref
-"overview.md">}}) page, I laid out a list of big picture security and privacy
+In my recently-published [Zcash Ecosystem Security Overview](/zecsec.htm) page, I laid out a list of big picture security and privacy
 challenges for Zcash. The roadmap above touches on some of them, however there
 are several that I *probably won't* have dedicated time for in 2023. They
 deserve to be highlighted anyway:
@@ -157,7 +151,7 @@ spendable quickly and efficiently?
 At present, Zcash uses "trial decryption", where the wallet must try to decrypt
 every transaction on the blockchain to find the ones that belong to it. There are many
 alternatives to this design with varying levels of privacy and scalability.
-I've surveyed them in my post, [Scalable Private Money Needs Scalable Anonymous Messaging]({{<ref "scalable-private-money-needs-scalable-private-messaging.md">}}).
+I've surveyed them in my post, [Scalable Private Money Needs Scalable Anonymous Messaging](/zecsec/scalable-private-money-needs-scalable-private-messaging.htm).
 
 ### Unintentional and/or Forced Use of Transparent Transactions
 

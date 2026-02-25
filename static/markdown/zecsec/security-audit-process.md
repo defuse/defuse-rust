@@ -1,9 +1,4 @@
----
-title: "Security Audit Process"
-date: 2022-12-29T07:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# Security Audit Process
 
 In this post, I'm going to shed light on the process I follow to find bugs in my
 audits of Zcash ecosystem software. Hopefully, this will be useful to you if you

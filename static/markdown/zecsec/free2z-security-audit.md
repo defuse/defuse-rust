@@ -1,9 +1,4 @@
----
-title: "Free2Z Security Audit Results"
-date: 2023-09-14T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# Free2Z Security Audit Results
 
 Below you will find a link to the results of my audit of
 [Free2Z](https://free2z.com/), which occurred in February, 2023.
@@ -19,4 +14,4 @@ The cross-site scripting bug has been fixed, the potential privacy leakage has
 been documented, and the tuzi token issues were fixed. All other bugs found were
 minor.
 
-[**Free2Z Audit Report (PDF)**](/audits/Free2Z%20Mini%20Audit-Final.pdf)
+[**Free2Z Audit Report (PDF)**](/zecsec/audits/Free2Z%20Mini%20Audit-Final.pdf)

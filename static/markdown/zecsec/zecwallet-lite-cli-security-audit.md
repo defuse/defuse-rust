@@ -1,9 +1,4 @@
----
-title: "Security Audit of zecwallet-lite-cli"
-date: 2023-09-23T01:01:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# Security Audit of zecwallet-lite-cli
 
 In November of 2022, I audited 
 [zecwallet-lite-cli](https://github.com/adityapk00/zecwallet-light-cli), which
@@ -27,4 +22,4 @@ since they will include a component that spends the user's transparent funds.
 Several other issues of low to moderate impact were also found. See the full
 report for details.
 
-[**Security Audit of zecwallet-lite-cli**](/audits/zecwallet-lite-cli-audit-report-v2.pdf)
+[**Security Audit of zecwallet-lite-cli**](/zecsec/audits/zecwallet-lite-cli-audit-report-v2.pdf)

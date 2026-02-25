@@ -1,9 +1,4 @@
----
-title: "October Update: Ywallet audited, and what's next?"
-date: 2022-10-28T08:13:14-07:00
-author: "Taylor Hornby"
-draft: false
----
+# October Update: Ywallet audited, and what's next?
 
 Hi Zcash fans! It's time for the first monthly update on the Zcash Ecosystem
 Security grant. This October, we saw the completion of a full security audit of

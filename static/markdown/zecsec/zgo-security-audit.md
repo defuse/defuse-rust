@@ -1,9 +1,4 @@
----
-title: "ZGo Security Audit Results"
-date: 2024-01-05T00:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# ZGo Security Audit Results
 
 In April of last year, I performed a security audit of [ZGo](https://zgo.cash/),
 a payment processing platform built on Zcash. The report is linked below.
@@ -23,4 +18,4 @@ difficulties of working with the `zcashd` API to build a payment processing
 platform. By making API improvements, perhaps some of these issues could be
 avoided.
 
-[**Security and Privacy Analysis of ZGo (PDF)**](/audits/ZGo-Security-Audit-v1.1.pdf)
+[**Security and Privacy Analysis of ZGo (PDF)**](/zecsec/audits/ZGo-Security-Audit-v1.1.pdf)

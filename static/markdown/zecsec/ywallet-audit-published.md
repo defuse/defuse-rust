@@ -1,9 +1,4 @@
----
-title: "YWallet Audit Results Published"
-date: 2023-01-03T07:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# YWallet Audit Results Published
 
 In October of last year, I reviewed [YWallet](https://ywallet.app/) for security
 and privacy issues. This was the first audit I performed for the Zcash Ecosystem
@@ -26,8 +21,8 @@ wallet. See the full report for details of the medium- and low-severity issues.
 
 The report highlights the general need for a memo signing standard as well as a
 more-comprehensive suite of tests for Zcash wallets. These are priorities in my
-[2023 roadmap]({{<ref "zecsec-roadmap-for-2023.md">}}).
+[2023 roadmap](/zecsec/zecsec-roadmap-for-2023.htm).
 
 Thanks to Ywallet's author hanh for quick feedback on the report and fast bug fixes.
 
-[**YWallet Security and Privacy Analysis Report (PDF)**](/audits/YWalletAuditReport-FINALv3.pdf)
+[**YWallet Security and Privacy Analysis Report (PDF)**](/zecsec/audits/YWalletAuditReport-FINALv3.pdf)

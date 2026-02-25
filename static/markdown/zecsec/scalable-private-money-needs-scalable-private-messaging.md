@@ -1,9 +1,4 @@
----
-title: "Scalable Private Money Needs Scalable Anonymous Messaging"
-date: 2022-11-15T19:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# Scalable Private Money Needs Scalable Anonymous Messaging
 
 In this post I’m going to argue that any scalable private Internet money system
 will need to rely on an equally-scalable and equally-private anonymous messaging

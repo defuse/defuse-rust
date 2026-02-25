@@ -1,9 +1,4 @@
----
-title: "Mitigating 51% Attack Risk on the Zcash Network"
-date: 2023-09-21T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# Mitigating 51% Attack Risk on the Zcash Network
 
 Recently, [Coinbase
 observed](https://www.coinbase.com/blog/security-psa-observed-risks-in-zcash-mining-pool-distribution)

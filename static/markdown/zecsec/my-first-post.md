@@ -1,9 +1,4 @@
----
-title: "Hello, World!"
-date: 2022-10-13T08:22:29-06:00
-author: "Taylor Hornby"
-draft: false
----
+# Hello, World!
 
 Hi!
 

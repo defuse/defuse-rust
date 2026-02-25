@@ -1,8 +1,4 @@
----
-title: "A Simple Threat Model for Zcash Shielded Hardware Wallets"
-date: 2023-04-15T00:00:00-07:00
-author: "Taylor Hornby"
----
+# A Simple Threat Model for Zcash Shielded Hardware Wallets
 
 In this post, we'll share a simple threat model for Zcash shielded hardware
 wallets. This is useful for informing users about which security and privacy

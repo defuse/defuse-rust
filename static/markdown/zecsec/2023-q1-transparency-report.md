@@ -1,9 +1,4 @@
----
-title: "ZecSec's Q1 2023 Transparency Report"
-date: 2023-04-18T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# ZecSec's Q1 2023 Transparency Report
 
 The ZecSec project publishes quarterly transparency reports in order to ensure
 accountability and to help the Zcash community understand how its funds are
@@ -28,14 +23,12 @@ of [ZGo](https://zgo.cash/) and did some research on secure messaging
 cryptography, thinking about how Zcash's memo field could be extended to better
 support messaging use cases.
 
-{{<table "table table-striped table-bordered">}}
 | Days      | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
 | 12        | Security audit of lightwalletd                                                                    |
 | 1         | Secure messaging cryptography research                                                            |
 | 2         | Quick security review of ZGo                                                                      |
 | 2         | Miscellaneous time including office hours, PR review, and preparing the last transparency report  |
-{{</table>}}
 
 Total days: 17, Total paid: $17,000.
 
@@ -49,7 +42,6 @@ technology to help solve Zcash's performance issues, which led me to writing a
 [risk analysis of SGX and other Trusted Execution
 Environments](https://zecsec.com/posts/risk-analysis-of-intel-sgx-and-other-tees/).
 
-{{<table "table table-striped table-bordered">}}
 | Days      | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
 | 2         | lightwalletd audit remediation coordination/assistance                                            |
@@ -57,7 +49,6 @@ Environments](https://zecsec.com/posts/risk-analysis-of-intel-sgx-and-other-tees
 | 6         | [Scalable transaction detection protocol design](https://zecsec.com/posts/making-zcash-light-wallets-faster-and-more-private/) |
 | 3         | Quick security audit of free2z                                                                    |
 | 3         | Helping investigate disclosed [memory exhaustion bugs](https://electriccoin.co/blog/new-releases-remediate-memory-exhaustion-vulnerability-in-zcash/) in zcashd |
-{{</table>}}
 
 Total days: 17, Total paid: $17,000.
 
@@ -69,14 +60,12 @@ code](https://github.com/Zondax/ledger-zcash). I also reviewed the ZIPs for
 missed [a
 bug](https://forum.zcashcommunity.com/t/grant-update-zcash-shielded-assets-monthly-updates/41153/42?u=earthrise)!).
 
-{{<table "table table-striped table-bordered">}}
 | Days      | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
 | 12        | Security audit of Zondax's shielded Zcash Ledger app code                                         |
 | 1         | Researching Identity-Based Encryption for scalable protocol designs                               |
 | 3         | ZSA ZIPs review                                                                                   |
 | 1         | Office hours and other miscellaneous items                                                        |
-{{</table>}}
 
 Total days: 17, Total paid: $17,000.
 

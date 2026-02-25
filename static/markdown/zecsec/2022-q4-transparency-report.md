@@ -1,9 +1,4 @@
----
-title: "ZecSec's Q4 2022 Transparency Report"
-date: 2023-01-27T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# ZecSec's Q4 2022 Transparency Report
 
 In order to ensure accountability and to help the Zcash community understand how
 its funds are being spent, the ZecSec project will be posting quarterly
@@ -23,10 +18,8 @@ allows me to bill $1000 USD per day, up to a maximum of $17,000 per month, up to
 In September and October my focus was on auditing Ywallet. Ywallet was a
 priority because it had not yet received any security review and it was one of
 the only wallets that functioned in the face of the high transaction load
-problem. The report from this audit is available [here]({{<ref
-"ywallet-audit-published.md">}}).
+problem. The report from this audit is available [here](/zecsec/ywallet-audit-published.htm).
 
-{{<table "table table-striped table-bordered">}}
 | Days      | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
 | 1         | Setting up build environments, skimming over grants/projects, staying up to date on the forums.   |
@@ -36,7 +29,6 @@ problem. The report from this audit is available [here]({{<ref
 | 1         | Delivering the Ywallet audit report and answering questions.                                      |
 | 0.5       | Setting up this website.                                                                          |
 | 0.5       | Reviewing ZIP 317 for security and privacy.                                                       |
-{{</table>}}
 
 Total days: 17, Total paid: $17,000.
 
@@ -47,15 +39,13 @@ used by ZecWallet-Lite. This paves the way for a future audit of ZecWallet-Lite
 itself. I also looked at the customizations that were made to the version of
 lightwalletd that ZecWallet-Lite uses.
 
-{{<table "table table-striped table-bordered">}}
 | Days      | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
 | 1         | Catching up on forums, planning, setting up Calendly for office hours.                            |
 | 8         | Auditing zecwallet-lite-cli.                                                                      |
 | 1         | Reviewing changes to lightwalletd in aditapk00/lightwalletd.                                      |
 | 1         | Helping debug zcashd v5.3.0 build issues and getting the Arch Linux package maintainer to update the package.    |
-| 0.5       | Writing [Scalable Private Money Needs Scalable Anonymous Messaging]({{<ref "scalable-private-money-needs-scalable-private-messaging.md">}}). |
-{{</table>}}
+| 0.5       | Writing [Scalable Private Money Needs Scalable Anonymous Messaging](/zecsec/scalable-private-money-needs-scalable-private-messaging.htm). |
 
 Total days: 11.5, Total paid: $11,500.
 
@@ -63,14 +53,12 @@ Total days: 11.5, Total paid: $11,500.
 
 In December, I focused on planning for the new year. I quickly surveyed every
 Zcash-related project that I could find and collected a list of past security
-audits, research, and notable bugs. I published the first edition of the [Zcash Ecosystem Security Overview]({{<ref "overview.md">}}) and a tentative [roadmap for 2023]({{<ref "zecsec-roadmap-for-2023.md">}}).
+audits, research, and notable bugs. I published the first edition of the [Zcash Ecosystem Security Overview](/zecsec.htm) and a tentative [roadmap for 2023](/zecsec/zecsec-roadmap-for-2023.htm).
 
-{{<table "table table-striped table-bordered">}}
 | Days      | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
 | 8         | Surveying all Zcash-related projects, preparing the ecosystem security overview and roadmap.      |
 | 2         | Checking the Ywallet bug fixes and publishing the Ywallet audit report.                           |
-{{</table>}}
 
 Total days: 10, Total paid: $10,000.
 

@@ -1,9 +1,4 @@
----
-title: "Results of Auditing Hanh's Shielded Zcash Ledger App"
-date: 2023-09-21T01:01:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# Results of Auditing Hanh's Shielded Zcash Ledger App
 
 In May and June of this year, I reviewed Hanh Huynh Huu's Ledger app supporting
 shielded Zcash. The full audit report is available at the link below.
@@ -83,4 +78,4 @@ addition formula. This issue has been reported separately.
 
 ## The Audit Report
 
-[**Shielded Zcash Ledger App Audit Report (PDF)**](/audits/zcash-ledger-audit-report-v2.pdf)
+[**Shielded Zcash Ledger App Audit Report (PDF)**](/zecsec/audits/zcash-ledger-audit-report-v2.pdf)

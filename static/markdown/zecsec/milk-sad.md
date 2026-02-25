@@ -1,9 +1,4 @@
----
-title: "If you used libbitcoin-explorer (bx) to generate your seed phrase, rotate it ASAP!"
-date: 2023-08-11T01:00:00-07:00
-author: "Taylor Hornby"
-draft: false
----
+# If you used libbitcoin-explorer (bx) to generate your seed phrase, rotate it ASAP!
 
 A critical vulnerability has been discovered in `libbitcoin-explorer`
 (command-line tool `bx`), known as ["milk sad"](https://milksad.info/).
