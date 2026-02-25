@@ -508,13 +508,6 @@ ul {
     width: auto;
 }
 
-.typefactory {
-    padding: 10px;
-    border-top: solid black 1px;
-    border-bottom: solid black 1px;
-    display: none;
-    background-color: #DDDDDD;
-}
 
 #customfactory {
     display:none;

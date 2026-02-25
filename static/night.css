@@ -1,0 +1,317 @@
+/* Night mode overrides — toggled via .night-mode on <html> */
+/* Header/nav/footer are already dark and stay unchanged. */
+
+/* ===== Body & content area ===== */
+.night-mode body {
+    background: linear-gradient(172deg, #101014 0px, #000 1000px) no-repeat #000 !important;
+    color: #ccc;
+}
+
+.night-mode #content {
+    background-color: transparent;
+    color: #ccc;
+}
+
+/* ===== Links ===== */
+.night-mode a,
+.night-mode a:visited {
+    color: #0ff;
+}
+
+.night-mode a:hover {
+    color: #0ff;
+}
+
+/* ===== Headings ===== */
+.night-mode #content h1 {
+    color: #ddd;
+    border-bottom-color: #555;
+}
+
+.night-mode #content h2 {
+    color: #ddd;
+    border-bottom-color: #555;
+}
+
+.night-mode #content h3 {
+    color: #ddd;
+}
+
+.night-mode #content h4 {
+    color: #ddd;
+}
+
+/* ===== Special boxes ===== */
+.night-mode .linkblock {
+    background: #1a2a2a;
+    border-color: #336;
+}
+
+.night-mode .honestywarebox {
+    background-color: #1a2a3a;
+    border-color: #444;
+    color: #ccc;
+}
+
+.night-mode .readme-box {
+    background: #222;
+    border-color: #444;
+}
+
+.night-mode .readme-box-header {
+    color: #999;
+    border-bottom-color: #444;
+}
+
+/* ===== Markdown rendered content ===== */
+.night-mode .markdown-content pre {
+    background-color: #111;
+    color: #ccc;
+    border-color: #444;
+}
+
+.night-mode .markdown-content :not(pre) > code {
+    background-color: #222;
+    border-color: #444;
+    color: #ccc;
+}
+
+.night-mode .markdown-content td {
+    border-color: #444;
+    color: #ccc;
+}
+
+.night-mode .markdown-content tr:nth-child(even) {
+    background-color: #222;
+}
+
+/* ===== Tables ===== */
+.night-mode table {
+    color: #ccc;
+}
+
+.night-mode .contact-table td {
+    border-bottom-color: #444;
+}
+
+.night-mode .contact-table td:first-child {
+    color: #0ff;
+}
+
+.night-mode .contact-table tr:hover {
+    background-color: #222;
+}
+
+/* ===== Password blocks ===== */
+.night-mode .blocksection {
+    background-color: #222;
+    border-color: #555;
+    color: #ccc;
+}
+
+.night-mode .blocksection h2 {
+    border-bottom-color: #555;
+}
+
+/* ===== Alternating row backgrounds ===== */
+.night-mode .div1 {
+    background-color: #2a2a2a;
+}
+
+.night-mode .alt {
+    background-color: #2a2a2a;
+}
+
+.night-mode .pphostbl th {
+    background-color: #111;
+}
+
+/* ===== Results table ===== */
+.night-mode .restable td {
+    border-color: #555;
+}
+
+.night-mode .res1 {
+    background-color: #2a4a2a;
+    color: #ccc;
+}
+
+.night-mode .res2 {
+    background-color: #3a3a1a;
+    color: #ccc;
+}
+
+.night-mode .res3 {
+    background-color: #4a2a3a;
+    color: #ccc;
+}
+
+/* ===== Forms ===== */
+.night-mode input[type="text"],
+.night-mode input[type="password"],
+.night-mode input[type="email"],
+.night-mode input[type="number"],
+.night-mode input[type="file"],
+.night-mode textarea,
+.night-mode select {
+    background-color: #222 !important;
+    color: #ccc !important;
+    border: 1px solid #555 !important;
+}
+
+.night-mode input[type="submit"],
+.night-mode input[type="button"],
+.night-mode button:not(.night-toggle):not(.hamburger) {
+    background-color: #333;
+    color: #ccc;
+    border: 1px solid #555;
+    cursor: pointer;
+}
+
+.night-mode input[type="submit"]:hover,
+.night-mode input[type="button"]:hover,
+.night-mode button:not(.night-toggle):not(.hamburger):hover {
+    background-color: #444;
+    color: #fff;
+}
+
+.night-mode input[type="submit"]:active,
+.night-mode input[type="button"]:active,
+.night-mode button:not(.night-toggle):not(.hamburger):active {
+    background-color: #222;
+}
+
+/* ===== Reference targets ===== */
+.night-mode #references span:target {
+    background-color: #2a3355;
+}
+
+/* ===== Page date ===== */
+.night-mode .pagedate {
+    color: #777;
+}
+
+/* ===== Upvote count ===== */
+.night-mode .upvotecount {
+    color: #999;
+}
+
+/* ===== Upvote list ===== */
+.night-mode .upvote_list_desc {
+    color: #ccc;
+}
+
+/* ===== Newest page box (home page) ===== */
+.night-mode #newest-page {
+    background: linear-gradient(135deg, #1a1a1a 0%, #222 50%, #1a1a1a 100%);
+    border: 2px solid #444;
+    border-image: linear-gradient(135deg, #333, #555, #333) 1;
+    box-shadow:
+        inset 0 0 15px rgba(0, 0, 0, 0.3),
+        0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+.night-mode .newest-page-label {
+    color: #ccc;
+}
+
+.night-mode .newest-page-link {
+    background: linear-gradient(135deg, #aaa, #ccc, #aaa);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.night-mode .newest-page-link:hover {
+    background: linear-gradient(135deg, #ccc, #eee, #ccc);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+/* ===== Home list (home page) ===== */
+.night-mode .homelist li {
+    border-left-color: #333;
+}
+
+.night-mode .homelist li:hover {
+    border-left-color: #0ff;
+    background-color: rgba(0, 255, 255, 0.03);
+}
+
+.night-mode .homelist li a strong {
+    color: #0ff;
+}
+
+.night-mode .homelist li a.highlight-service strong {
+    color: #0ff;
+}
+
+/* ===== Cellular automata canvas (home page) ===== */
+/* Canvas is 1200px tall (set in cellular-automata.js). Fade to transparent
+   by 1000px so the bottom 200px are fully invisible, matching the body gradient. */
+.night-mode #ca-canvas {
+    mask-image: linear-gradient(to bottom, white 0px, transparent 1000px);
+    -webkit-mask-image: linear-gradient(to bottom, white 0px, transparent 1000px);
+}
+
+/* ===== Paper background (home page) ===== */
+.night-mode .paper-bg {
+    background: transparent;
+}
+
+/* ===== Code skill box (home page) ===== */
+.night-mode .codeskillbox {
+    background-color: #222;
+    color: #ccc;
+    border-color: #555;
+}
+
+/* ===== Home page spaceship section ===== */
+.night-mode #homespaceship {
+    background: linear-gradient(to bottom, #1a1a1a 0px, rgba(26, 26, 26, 0.85) 700px) !important;
+    border-image: none;
+    border-color: #000;
+    box-shadow: none;
+}
+
+.night-mode #homespaceship h1 {
+    color: #fff;
+}
+
+.night-mode #homespaceship h1 a {
+    color: #fff !important;
+}
+
+/* ===== Code blocks (rounded pre with drop shadow) ===== */
+.night-mode .code,
+.night-mode #vimCodeElement {
+    box-shadow: none;
+}
+
+/* ===== Fakelink ===== */
+.night-mode .fakelink {
+    color: #6688ff;
+}
+
+/* ===== Desktop night toggle (inside .menu) ===== */
+.night-toggle {
+    float: right;
+    height: 30px;
+    line-height: 30px;
+    padding: 0 15px;
+    color: #888;
+    font-size: 14px;       /* must match .menu font-size in mainmenu.css */
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: "Courier New", Courier, monospace;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.night-toggle:hover {
+    color: #AAFFFF;
+}
+
+.night-mode .night-toggle {
+    color: #888;
+}

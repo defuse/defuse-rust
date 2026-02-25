@@ -14,6 +14,38 @@
 <link rel="stylesheet" media="all" type="text/css" href="/markdown.css" />
 <link rel="stylesheet" media="print" type="text/css" href="/print.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/mobile.css" />
+<link rel="stylesheet" media="all" type="text/css" href="/night.css" />
+<script>
+    // Apply night mode before first paint to prevent flash of wrong theme.
+    // localStorage may throw in restricted privacy modes; default to day mode.
+    var nightEnabled = false;
+    try { nightEnabled = localStorage.getItem('night') === '1'; } catch (e) {}
+    if (nightEnabled) {
+        document.documentElement.classList.add('night-mode');
+    }
+
+    function updateNightLabels(isNight) {
+        var label = isNight ? 'Day Mode' : 'Night Mode';
+        var toggles = document.querySelectorAll('.night-toggle');
+        for (var i = 0; i < toggles.length; i++) {
+            toggles[i].textContent = label;
+        }
+    }
+
+    function nightToggle() {
+        document.documentElement.classList.toggle('night-mode');
+        var isNight = document.documentElement.classList.contains('night-mode');
+        try { localStorage.setItem('night', isNight ? '1' : '0'); } catch (e) {}
+        updateNightLabels(isNight);
+    }
+
+    // Update button labels once DOM is ready (HTML defaults to "Night Mode")
+    if (nightEnabled) {
+        document.addEventListener('DOMContentLoaded', function () {
+            updateNightLabels(true);
+        });
+    }
+</script>
 <!--[if !IE 7]>
 	<style type="text/css">
 		#wrap {display:table;height:100%}
@@ -31,6 +63,7 @@
 </div>
 <div class="mobile-menubar">
     <button onclick="document.body.classList.toggle('mobile-nav-open')">Menu</button>
+    <button class="night-toggle" onclick="nightToggle()" aria-label="Toggle night mode">Night Mode</button>
 </div>
 <div class="mobile-undergrad"></div>
 <div class="mobile-nav-overlay" onclick="document.body.classList.remove('mobile-nav-open')">
@@ -212,11 +245,11 @@
             <li><a href="/about.htm">&nbsp;About Defuse</a></li>
             <li><a href="/contact.htm">&nbsp;Contact</a></li>
             <li><a href="/security-contact-vulnerability-disclosure.htm">&nbsp;Vulnerability Disclosure</a></li>
-            <li><a href="https://bqp.io/" >&nbsp;Old Blog 1</a></li>
-            <li><a href="https://defuse.ca/blog/" >&nbsp;Old Blog 2</a></li>
-            <li><a href="https://x.com/defusesec" >&nbsp;X/Twitter</a></li>
-            <li><a href="https://bsky.app/profile/defusesec.bsky.social">&nbsp;Bluesky</a></li>
-            <li><a href="https://github.com/defuse" >&nbsp;GitHub</a></li>
+            <li><a href="https://bqp.io/" target="_blank">&nbsp;Old Blog 1</a></li>
+            <li><a href="https://defuse.ca/blog/" target="_blank">&nbsp;Old Blog 2</a></li>
+            <li><a href="https://x.com/defusesec" target="_blank">&nbsp;X/Twitter</a></li>
+            <li><a href="https://bsky.app/profile/defusesec.bsky.social" target="_blank">&nbsp;Bluesky</a></li>
+            <li><a href="https://github.com/defuse" target="_blank">&nbsp;GitHub</a></li>
         </ul>
         <!--[if lte IE 6]></td></tr></table></a><![endif]-->
     </li>
@@ -399,6 +432,7 @@
     </li>
 </ul>
 
+<button class="night-toggle" onclick="nightToggle()" title="Toggle night mode" aria-label="Toggle night mode">Night Mode</button>
 
 </div> <!-- close "menu" div -->
 <hr style="display:none" />
