@@ -44,6 +44,16 @@ pub struct UpvoteConfig {
     pub description: Option<&'static str>,
 }
 
+/// Optional page features beyond the standard metadata.
+#[derive(Debug, Clone)]
+pub struct Features {
+    /// HTML banner inserted before the page content (before the <h1>).
+    /// Used for deprecation notices, etc.
+    pub banner: Option<&'static str>,
+    /// Enable KaTeX math rendering on this page.
+    pub math: bool,
+}
+
 /// Information about a single page
 ///
 /// NOTE: Every page must explicitly specify all fields including `upvote`.
@@ -91,9 +101,8 @@ pub struct PageInfo {
     /// Upvote configuration - if Some, page shows vote arrows
     pub upvote: Option<UpvoteConfig>,
 
-    /// Optional banner HTML inserted before the page content (before the <h1>).
-    /// Used for deprecation notices, etc.
-    pub banner: Option<&'static str>,
+    /// Optional page features (banner, math rendering, etc.)
+    pub features: Option<Features>,
 }
 
 // Manual Clone implementation - needed because of dyn trait object
@@ -109,7 +118,7 @@ impl Clone for PageInfo {
             redirect: self.redirect,
             no_cache: self.no_cache,
             upvote: self.upvote.clone(),
-            banner: self.banner,
+            features: self.features.clone(),
         }
     }
 }
@@ -141,7 +150,7 @@ macro_rules! alias {
             redirect: Some($target),
             no_cache: false,
             upvote: None,
-            banner: None,
+            features: None,
         }
     };
 }
@@ -149,7 +158,7 @@ pub(crate) use alias;
 
 /// Helper macro for defining regular pages WITH a handler implementation.
 /// Required: handler (first!), slug, title, description, keywords, legacy_hit_count_id, upvote
-/// Optional: no_cache (defaults to false)
+/// Optional: no_cache (defaults to false), features (defaults to None)
 ///
 /// The handler field takes a module path (e.g., `about` or `research::my_page`) which expands to `&pages::about::Handler`.
 macro_rules! page {
@@ -172,7 +181,7 @@ macro_rules! page {
             redirect: None,
             no_cache: false,
             upvote: $upvote,
-            banner: None,
+            features: None,
         }
     };
     (
@@ -195,7 +204,7 @@ macro_rules! page {
             redirect: None,
             no_cache: $no_cache,
             upvote: $upvote,
-            banner: None,
+            features: None,
         }
     };
     (
@@ -206,7 +215,7 @@ macro_rules! page {
         keywords: $keywords:expr,
         legacy_hit_count_id: $legacy_hit_count_id:expr,
         upvote: $upvote:expr,
-        banner: $banner:expr $(,)?
+        features: $features:expr $(,)?
     ) => {
         PageInfo {
             handler: Some(&crate::pages::$($handler)::+::Handler),
@@ -218,13 +227,23 @@ macro_rules! page {
             redirect: None,
             no_cache: false,
             upvote: $upvote,
-            banner: $banner,
+            features: $features,
         }
     };
 }
 pub(crate) use page;
 
 impl PageInfo {
+    /// Get the banner HTML, if any
+    pub fn banner(&self) -> Option<&'static str> {
+        self.features.as_ref().and_then(|f| f.banner)
+    }
+
+    /// Whether KaTeX math rendering is enabled
+    pub fn math(&self) -> bool {
+        self.features.as_ref().is_some_and(|f| f.math)
+    }
+
     /// Is this a directory-style URL? (no .htm extension)
     /// Derived from slug: empty string or ends with "/"
     pub fn is_directory(&self) -> bool {
@@ -281,7 +300,7 @@ pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
     redirect: None,
     no_cache: false,
     upvote: None,
-    banner: None,
+    features: None,
 };
 
 /// Look up a page by name/slug (case-insensitive)

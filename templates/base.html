@@ -8,7 +8,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script type="text/javascript" src="/js/upvote.js"></script>
-{% block head_extra %}{% endblock %}<link rel="stylesheet" media="all" type="text/css" href="/main.css" />
+{% block head_extra %}{% endblock %}{% if ctx.page_info.math() %}<link rel="stylesheet" type="text/css" href="/katex/katex.min.css" />
+{% endif %}<link rel="stylesheet" media="all" type="text/css" href="/main.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/mainmenu.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/vimhl.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/markdown.css" />
@@ -504,7 +505,7 @@
         </div>
                 </div>
 {% endif -%}
-{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% if let Some(banner) = ctx.page_info.banner %}{{ banner|safe }}{% endif %}{% block content %}{% endblock %}
+{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% if let Some(banner) = ctx.page_info.banner() %}{{ banner|safe }}{% endif %}{% block content %}{% endblock %}
 </div>
 </div> <!-- Wrap -->
 {%- if !ctx.is_home() %}
@@ -565,7 +566,10 @@
 <noscript><p><img src="https://defuse.ca/piwik/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
 -->
 <!-- End Piwik Code -->
-
+{% if ctx.page_info.math() %}
+<script defer src="/katex/katex.min.js"></script>
+<script defer src="/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+{% endif %}
 </body>
 </html>
 
