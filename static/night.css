@@ -245,19 +245,9 @@
 /* ===== Home page spaceship section ===== */
 .night-mode #homespaceship {
     background: linear-gradient(to bottom, #1a1a1a 0px, rgba(26, 26, 26, 0.85) 700px) !important;
-    border-image: linear-gradient(
-        to bottom,
-        #223344 0%,
-        #1a2a3a 15%,
-        #112233 40%,
-        #0a1520 100%
-    ) 1;
-    border-top-color: #112233;
-    box-shadow:
-        -4px 4px 12px rgba(40, 70, 100, 0.10),
-        4px 4px 12px rgba(40, 70, 100, 0.15),
-        0 6px 20px rgba(0, 0, 0, 0.5),
-        0 8px 30px rgba(50, 100, 130, 0.10);
+    border-image: none;
+    border-color: #000;
+    box-shadow: none;
 }
 
 .night-mode #homespaceship h1 {
