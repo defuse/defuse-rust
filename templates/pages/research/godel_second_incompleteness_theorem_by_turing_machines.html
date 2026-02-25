@@ -8,160 +8,165 @@ February 9, 2024
 
 <p>
 Gödel's second incompleteness theorem, in a nutshell, says that if a certain
-kind of mathematical theory can prove its own consistency (i.e. that it does not
-prove any contradictions), then that mathematical theory must actually be
-inconsistent.
+kind of mathematical theory can prove its own consistency, where consistency
+means that the theory does not prove any contradictions, then that mathematical
+theory must actually be inconsistent. The theory says, "If I can prove that I'm
+consistent, then I must actually be inconsistent."
 </p>
 
 <p>
-Gödel's original proof of the second theorem is quite complicated, and even
+Gödel's original proof of the second theorem is quite complicated. Even
 modern treatments of the full theorem involve hard-to-wrap-your-head-around
 concepts like Gödel numbering, <a
 href="https://en.wikipedia.org/wiki/%CE%A9-consistent_theory">ω-consistency</a>,
-and <a href="https://en.wikipedia.org/wiki/Rosser%27s_trick">Rosser's trick</a>. 
+and <a href="https://en.wikipedia.org/wiki/Rosser%27s_trick">Rosser's trick</a>.
 </p>
 
 <p>
-It turns out that all of this complexity can be avoided if you're willing to
-consider a version of the theorem that applies to mathematical theories strong
-enough to easily express strings and Turing machines. All of the Gödel-numbering
-complexity is necessary to make the theorem work in weaker systems like Peano
-arithmetic, but if you just want to prove it for theories like <a href="https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory">ZF(C)</a>, where most
-of modern mathematics operates, the proof is much easier, and we'll sketch that
-proof below.
+It turns out that you can avoid all of that complexity if you're only interested in
+proving the theorem for theories strong enough to talk
+about strings and Turing machines. The complicated Gödel-numbering stuff is
+necessary to prove the theorem in weaker systems like Peano arithmetic, because there you need crazy trickery to encode statements about proofs into statements about numbers, but if
+you just want to prove it for theories like <a
+href="https://en.wikipedia.org/wiki/Zermelo%E2%80%93Fraenkel_set_theory">ZFC set
+theory</a>, where most of modern mathematics operates, the proof is much easier.
 </p>
 
 <p>
-I claim that if you can understand the proof that the halting problem is
+<em>I claim that if you can understand the proof that the halting problem is
 undecidable, then you can understand the proof of Gödel's second incompleteness
-theorem for theories like ZF(C).
+theorem.</em>
 </p>
 
 <p>
-    Let's go!
+Let's go!
+</p>
+
+<h2>Proving the Second Theorem</h2>
+
+<p>
+Let $T$ be the mathematical theory we're working in. A theory is basically a
+list of axioms and an algorithm for checking that proofs are correct. For example,
+$T$ could be ZFC set theory, with all of its axioms and rules of inference.
 </p>
 
 <p>
-Let <em>T</em> be the mathematical theory we're working in. For example,
-<em>T</em> could be ZF(C) set theory. You should imagine that all of the
-arguments we're about to give are translated into the formal language of <em>T</em>.
+You should imagine that all of the arguments we're about to give are translated
+into the formal language of $T$. In other words, to make this proof rigorous, we
+would just need to translate all of the English below into the formal symbols
+and deduction rules that $T$ allows.
 </p>
 
 <p>
-We need to make some assumptions about <em>T</em>, namely that there's an
-algorithm for checking proofs in <em>T</em> that always halts and tells us
-whether a proof is correct or not, which we'll call <em>Prf<sub>T</sub></em>.
-The string <em>p</em> is a valid proof of the statement <em>x</em> within the
-theory T if and only if <em>Prf<sub>T</sub>(p, x) = true</em>. We also need to
+We need to make some assumptions about $T$, namely that there's an
+algorithm for checking proofs in $T$ that always halts and tells us
+whether a proof is correct or not, which we'll call $\text{Prf}_T$.
+The string $p$ is a valid proof of the statement $x$ within the
+theory $T$ if and only if $\text{Prf}_T(p, x) = \text{true}$. We also need to
 assume that some familiar rules of inference, like modus tollens, and others
-from first-order logic, are valid within T.
+from first-order logic, are valid within $T$.
 </p>
 
 <p>
-A statement <em>x</em> is provable in <em>T</em> if and only if there exists
-some string <em>p</em> (the proof) such that <em>Prf<sub>T</sub>(p, x) =
-true</em>.
+A statement $x$ is provable in $T$ if and only if there exists
+some string $p$ (the proof) such that $\text{Prf}_T(p, x) = \text{true}$.
 </p>
 
 <p>
-What it means for T to be consistent is that it cannot prove a contradiction,
-i.e. there is no string <em>A</em> such that <em>A</em> and <em>¬A</em> are both
-provable in T.
+What it means for $T$ to be consistent is that it cannot prove a contradiction,
+i.e. there is no string $A$ such that $A$ and $\lnot A$ are both
+provable in $T$.
 </p>
 
 <p>
-Gödel's second theorem says that if <em>T</em> can prove its own consistency,
-i.e. that there is no <em>A</em> such that both <em>A</em> and
-<em>¬A</em> are provable within <em>T</em>, then <em>T</em> has to be
+Gödel's second theorem says that if $T$ can prove its own consistency,
+i.e. that there is no $A$ such that both $A$ and
+$\lnot A$ are provable within $T$, then $T$ has to be
 inconsistent.
 </p>
 
 <p>
-To prove this, we'll start by defining a Turing machine <em>M</em> that does the following:
+To prove this, we'll start by defining a Turing machine $M$ that does the following:
 </p>
 
 <p>
-On input <em>X</em>:
+On input $X$:
 </p>
 
 <ol>
-    <li>For all strings <em>p</em> in lexicographical order: if <em>Prf<sub>T</sub>(p, &quot;X(X) never halts&quot;)</em>, halt.</li>
+    <li>For all strings $p$ in lexicographical order: if $\text{Prf}_T(p, \text{``}X(X) \text{ never halts''})$, halt.</li>
 </ol>
 
 <p>
-If we run <em>M</em> on a description of itself, <em>M(M)</em>, then what it
+If we run $M$ on a description of itself, $M(M)$, then what it
 will do is start enumerating all possible strings, looking for a valid proof in
-<em>T</em> that <em>M</em> never halts when it's run on a description of itself,
-and it will halt only when it finds one. Crucially, <em>Prf<sub>T</sub></em>,
-the proof-checking algorithm, always halts, so <em>M(M)</em> halts if and only
-if there exists a proof within <em>T</em> that <em>M(M)</em> never halts.
+$T$ that $M$ never halts when it's run on a description of itself,
+and it will halt only when it finds one. Crucially, $\text{Prf}_T$,
+the proof-checking algorithm, always halts, <em>so $M(M)$ halts if and only
+if there exists a proof within $T$ that $M(M)$ never halts</em>.
 </p>
 
 <p>
-Note that if <em>M(M)</em> halts, then <em>T</em> has to be inconsistent. Since
-<em>M(M)</em> halted, it found a proof that <em>M(M)</em> doesn't halt. But
-since <em>M(M)</em> halted, there's also a proof that <em>M(M)</em> halts, which
-can be made by executing <em>M(M)</em> one step at a time inside a <em>T</em> proof until
-it halts. With a proof that <em>M(M)</em> halts and a proof that <em>M(M)</em>
-doesn't halt, we have a proof of a contradiction in <em>T</em>.
+Note that if $M(M)$ halts, then $T$ has to be inconsistent. Since
+$M(M)$ halted, it found a proof that $M(M)$ doesn't halt. But
+since $M(M)$ halted, there's also a proof that $M(M)$ halts, which
+can be made by executing $M(M)$ one step at a time inside a $T$ proof until
+it halts. With a proof that $M(M)$ halts and a proof that $M(M)$
+doesn't halt, we have a proof of a contradiction in $T$.
 </p>
 
 <p>
 In other words, we've proven...
 </p>
 
+$$M(M) \text{ halts} \rightarrow \lnot\text{Con}(T)$$
+
 <p>
-<em>M(M) halts → ¬Con(T)</em>
+...where $\text{Con}(T)$ means that $T$ is consistent.
 </p>
 
 <p>
-...where <em>Con(T)</em> means that <em>T</em> is consistent.
+Now suppose our theory $T$ can prove its own consistency, i.e. there's a proof of $\text{Con}(T)$ within $T$ itself.
 </p>
 
 <p>
-Now suppose our theory <em>T</em> can prove its own consistency, i.e. there's a proof of <em>Con(T)</em> within <em>T</em> itself. 
-</p>
-
-<p>
-Using this, we can prove that <em>M(M)</em> never halts:
+Using this, we can prove that $M(M)$ never halts:
 </p>
 
 <ol>
-    <li><em>Con(T)</em> (by the proof we suppose exists)</li>
-    <li><em>M(M) halts → ¬Con(T)</em> (as above)</li>
-    <li>Therefore, <em>¬(M(M) halts)</em>.
+    <li>$\text{Con}(T)$ (by the proof we suppose exists)</li>
+    <li>$M(M) \text{ halts} \rightarrow \lnot\text{Con}(T)$ (as above)</li>
+    <li>Therefore, $\lnot(M(M) \text{ halts})$.</li>
 </ol>
 
 <p>
-But this argument can be turned into a valid proof in <em>T</em>, and so
-<em>M(M)</em> will eventually find it, and once it does, it will halt. This
+But this argument can be turned into a valid proof in $T$, and so
+$M(M)$ will eventually find it, and once it does, it will halt. This
 means that:
 </p>
 
-<p>
-<em>Con(T) is provable in T → M(M) halts</em>.
-</p>
+$$\text{Con}(T) \text{ is provable in } T \rightarrow M(M) \text{ halts}$$
 
 <p>
 We can now complete the argument:
 </p>
 
 <ol>
-    <li><em>Con(T) is provable in T → M(M) halts</em></li>
-    <li><em>M(M) halts → ¬Con(T)</em></li>
-    <li>Therefore, <em>Con(T) is provable in T → ¬Con(T)</em>.</li>
+    <li>$\text{Con}(T) \text{ is provable in } T \rightarrow M(M) \text{ halts}$</li>
+    <li>$M(M) \text{ halts} \rightarrow \lnot\text{Con}(T)$</li>
+    <li>Therefore, $\text{Con}(T) \text{ is provable in } T \rightarrow \lnot\text{Con}(T)$.</li>
 </ol>
 
 <p>
-Summarizing, in English: if <em>T</em> can prove its own consistency, then
-there's a proof that <em>M(M)</em> never halts. But since <em>M(M)</em> will
-find that proof, <em>M(M)</em> will actually halt, and since <em>M(M)</em>
-halts, <em>T</em> is inconsistent. We've established Gödel's second
-incompleteness theorem for <em>T</em>.
-<p>
+Summarizing, in English: if $T$ can prove its own consistency, then
+there's a proof that $M(M)$ never halts. But since $M(M)$ will
+find that proof, $M(M)$ will actually halt, and since $M(M)$
+halts, $T$ is inconsistent. We've established Gödel's second
+incompleteness theorem for $T$.
+</p>
 
 <p>
-The only requirement for this argument to work is that <em>T</em> is powerful
+The only requirement for this argument to work is that $T$ is powerful
 enough to express strings and Turing machines, and to formalize all of the
 arguments given above.
 </p>
@@ -174,6 +179,6 @@ to understand than the proof that the halting problem is undecidable!
 <p>
 If you're interested in Turing-machine-based proofs of Gödel's theorems, check
 out <a href="https://scottaaronson.blog/?p=710">Scott Aaronson's blog post</a> and a
-<a href="https://www.ams.org/notices/201011/rtx101101454p.pdf">prior proof of the second theorem using Kolmogrov complexity</a>.
+<a href="https://www.ams.org/notices/201011/rtx101101454p.pdf">prior proof of the second theorem using Kolmogorov complexity</a>.
 </p>
 {% endblock %}

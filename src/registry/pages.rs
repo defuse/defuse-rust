@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use super::{alias, page, PageInfo, UpvoteConfig};
+use super::{alias, page, Features, PageInfo, UpvoteConfig};
 
 const DEPRECATED_BANNER: &str = "<div class=\"deprecated-banner\">This page has been deprecated. The code/information below may no longer be maintained.</div>";
 
@@ -432,6 +432,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines"),
                 description: Some("Proving Gödel's second incompleteness theorem in a way that should be understandable to anyone who understands the proof that the halting problem is undecidable."),
             }),
+            features: Features {
+                banner: None,
+                math: true,
+            },
         },
         page! {
             handler: research::how_do_we_model_this_robot,
@@ -866,7 +870,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Bochs Disk Images"),
                 description: Some("Disk images for the Bochs x86 emulator."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: projects::email_spoofing_in_ruby,
@@ -881,7 +888,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Email Spoofing in Ruby"),
                 description: Some("A Ruby script for spoofing email to SMTP servers."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: projects::force_print_background,
@@ -910,7 +920,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Generating Random Passwords in PHP"),
                 description: Some("How to generate unbiased passwords in PHP (plus some common mistakes)."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: projects::gnutls_psk_client_server_example,
@@ -925,7 +938,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("GnuTLS Pre-Shared Key Client-Server Example"),
                 description: Some("How to establish an SSL/TLS connection with GnuTLS and PSK authentication."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: projects::online_free_computer_science_education,
@@ -954,7 +970,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("\"Privacy Aware\" Unique Hit Counter for PHP"),
                 description: Some("A simple hit counter that stores only a hash of your visitor's IP address."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: projects::php_pbkdf2,
@@ -969,7 +988,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("PBKDF2 for PHP"),
                 description: Some("A fast implementation of the PBKDF2 key stretching function in PHP."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: projects::projects,
@@ -1007,7 +1029,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Using the Vim Editor for Syntax Highlighting in PHP"),
                 description: Some("Generate syntax-highlighted code automatically in PHP with Vim."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: projects::web_browser_negative_feedback,
@@ -1066,7 +1091,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Backup Verifier Script (Ruby)"),
                 description: Some("A Ruby script that compares two directories and reports the differences."),
             }),
-            banner: Some("<div class=\"deprecated-banner\">This page has been deprecated. The code/information below may no longer be maintained.<br />There&#039;s a new, better version of this tool: <a href=\"/vfy-backup-tester.htm\"><span class=\"monowb\">$ vfy</span> Directory Comparison Tool</a>.</div>"),
+            features: Features {
+                banner: Some("<div class=\"deprecated-banner\">This page has been deprecated. The code/information below may no longer be maintained.<br />There&#039;s a new, better version of this tool: <a href=\"/vfy-backup-tester.htm\"><span class=\"monowb\">$ vfy</span> Directory Comparison Tool</a>.</div>"),
+                math: false,
+            },
         },
         page! {
             handler: software::vfy_backup_tester,
@@ -1095,7 +1123,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("HelloWorld! - A Light & Secure CDS for PHP"),
                 description: Some("A lightweight, ultra-secure, CMS/CDS for PHP"),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: software::software,
@@ -1119,7 +1150,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Salted Hash Cracking PHP Script"),
                 description: Some("A script for cracking hashes when all you have is PHP."),
             }),
-            banner: Some(DEPRECATED_BANNER),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: software::sockstress,
