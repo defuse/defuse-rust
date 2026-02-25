@@ -3,7 +3,7 @@
 
 /* ===== Body & content area ===== */
 .night-mode body {
-    background: linear-gradient(to bottom, #101014 0px, #000 1000px) no-repeat #000 !important;
+    background: linear-gradient(172deg, #101014 0px, #000 1000px) no-repeat #000 !important;
     color: #ccc;
 }
 
