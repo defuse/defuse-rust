@@ -8,7 +8,7 @@ cryptocurrency world.
 I would like to extend thanks to the Zcash Community Grants committee and to the
 Zcash community for supporting my role over the past year. This has been an
 amazing opportunity to level up my bug-hunting skills, and together we've
-[eliminated some risky bugs from Zcash community projects](/zecsec/security-engineering.htm ):
+[eliminated some risky bugs from Zcash community projects](/zecsec/security-engineering.htm):
 
 ![Distribution of Bugs Found](/zecsec/images/bug-chart.png)
 
