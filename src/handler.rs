@@ -85,8 +85,8 @@ macro_rules! simple_page {
 
 /// Macro for markdown-rendered blog post pages.
 ///
-/// Renders a pre-processed markdown file to HTML using `render_post` and
-/// passes it to the shared zecsec post template.
+/// Reads the markdown file from disk at runtime and renders it to HTML using
+/// `render_post`. This allows editing .md files without recompiling.
 ///
 /// Usage:
 /// ```ignore
@@ -106,11 +106,18 @@ macro_rules! markdown_page {
         pub struct Handler;
 
         impl PageHandler for Handler {
-            fn get(&self, ctx: PageContext, _state: &AppState) -> BoxFuture {
+            fn get(&self, ctx: PageContext, state: &AppState) -> BoxFuture {
+                let static_dir = state.static_dir.clone();
                 Box::pin(async move {
-                    let content_html = markdown::render_post(
-                        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/static/markdown/", $md_path))
-                    );
+                    let path = static_dir.join("markdown").join($md_path);
+                    let md = match std::fs::read_to_string(&path) {
+                        Ok(md) => md,
+                        Err(e) => {
+                            tracing::error!("Failed to read markdown file {}: {}", path.display(), e);
+                            return axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                        }
+                    };
+                    let content_html = markdown::render_post(&md);
                     $template { ctx, content_html }.into_response()
                 })
             }

@@ -1,1 +1,1 @@
-crate::simple_page!(ZecsecIndexPage, "pages/zecsec/index.html");
+crate::markdown_page!(ZecsecIndexPage, "zecsec/index.md");
