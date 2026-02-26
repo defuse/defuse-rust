@@ -13,7 +13,7 @@ The current
 allows me to bill $1000 USD per day, up to a maximum of $17,000 per month, up to
 12 total months. The sections below break down and explain my invoices for Q1
 2023. The previous transparency report, for Q4 2022, can be found
-[here](https://zecsec.com/posts/2022-q4-transparency-report/).
+[here](/zecsec/2022-q4-transparency-report.htm).
 
 ## January
 
@@ -36,17 +36,17 @@ Total days: 17, Total paid: $17,000.
 
 In February, the main item I spent time on was thinking about how we could
 [change the Zcash protocol to make transaction syncing more performant and
-scalable](https://zecsec.com/posts/making-zcash-light-wallets-faster-and-more-private/).
+scalable](/zecsec/making-zcash-light-wallets-faster-and-more-private.htm).
 I was also put in touch with some SGX/ORAM researchers interested in using the
 technology to help solve Zcash's performance issues, which led me to writing a
 [risk analysis of SGX and other Trusted Execution
-Environments](https://zecsec.com/posts/risk-analysis-of-intel-sgx-and-other-tees/).
+Environments](/zecsec/risk-analysis-of-intel-sgx-and-other-tees.htm).
 
 | Days      | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
 | 2         | lightwalletd audit remediation coordination/assistance                                            |
-| 3         | SGX / TEE / ORAM research leading to the [risk analysis blog post](https://zecsec.com/posts/risk-analysis-of-intel-sgx-and-other-tees/) |
-| 6         | [Scalable transaction detection protocol design](https://zecsec.com/posts/making-zcash-light-wallets-faster-and-more-private/) |
+| 3         | SGX / TEE / ORAM research leading to the [risk analysis blog post](/zecsec/risk-analysis-of-intel-sgx-and-other-tees.htm) |
+| 6         | [Scalable transaction detection protocol design](/zecsec/making-zcash-light-wallets-faster-and-more-private.htm) |
 | 3         | Quick security audit of free2z                                                                    |
 | 3         | Helping investigate disclosed [memory exhaustion bugs](https://electriccoin.co/blog/new-releases-remediate-memory-exhaustion-vulnerability-in-zcash/) in zcashd |
 
