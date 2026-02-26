@@ -106,10 +106,9 @@ macro_rules! markdown_page {
         pub struct Handler;
 
         impl PageHandler for Handler {
-            fn get(&self, ctx: PageContext, state: &AppState) -> BoxFuture {
-                let static_dir = state.static_dir.clone();
+            fn get(&self, ctx: PageContext, _state: &AppState) -> BoxFuture {
                 Box::pin(async move {
-                    let path = static_dir.join("markdown").join($md_path);
+                    let path = std::path::Path::new("static/markdown").join($md_path);
                     let md = match std::fs::read_to_string(&path) {
                         Ok(md) => md,
                         Err(e) => {
