@@ -488,7 +488,7 @@ Zcash software, including a wallet. Their notable GitHub repos are:
 
 - [zingolib](https://github.com/zingolabs/zingolib) -- a library and command-line interface
 - [zingo-mobile](https://github.com/zingolabs/zingo-mobile) -- the mobile apps themselves.
-- [zingo](https://zingolabs/zingo) -- a fork of zecwallet-lite
+- [zingo](https://github.com/zingolabs/zingo) -- a fork of zecwallet-lite
 
 #### Approved Grants
 
