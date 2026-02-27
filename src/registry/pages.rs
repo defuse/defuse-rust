@@ -1481,6 +1481,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             date: datetime("2023-04-18T01:00:00-07:00"),
         },
         alias!("zecsec/security-engineering" => "security-engineering-learning-from-safety-critical-disciplines"),
+        alias!("zecsec/deep-dive-into-sgx-attacks" => "zecsec/risk-analysis-of-intel-sgx-and-other-tees"),
         page! {
             handler: zecsec::milk_sad,
             slug: "zecsec/milk-sad",
