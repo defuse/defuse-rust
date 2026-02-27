@@ -178,11 +178,11 @@ ciphertext \\(C^L\\) that uses a fresh random ephemeral key[^3].
 transaction creator knows witnesses \\(G_r, esk\\) such that \\(T\\) was
 calculated as above and \\(epk = [esk]G_r\\), i.e. \\(epk\\) uses the same base
 as was used in the calculation of \\(T\\).
-5. Construct the tag ciphertext \\(C^T = Enc(S_r, T\|\|\pi, "tct" \|\| e, G_r, esk, epk)\\).
+5. Construct the tag ciphertext \\(C^T = Enc(S_r, T\|\|\pi, \texttt{"tct"} \|\| e, G_r, esk, epk)\\).
 6. Construct the epoch detection public key \\(D^* = D + [PRF^D(K_{TT}, e)]G_2\\).
-7. Construct the detection ciphertext \\(C^D = Enc(D^*, "true", "dct" \|\| e)\\)
+7. Construct the detection ciphertext \\(C^D = Enc(D^*, \texttt{"true"}, \texttt{"dct"} \|\| e)\\)
 8. Construct the post-mix ciphertext \\(C^{PoM} = (C^T, C^D, C^L)\\).
-9. Construct the pre-mix ciphertexts \\(C^{PrM}_i = Enc(M_i, C^{PoM}, "mix" \|\| e)\\).
+9. Construct the pre-mix ciphertexts \\(C^{PrM}_i = Enc(M_i, C^{PoM}, \texttt{"mix"} \|\| e)\\).
 
 The new note ciphertext is \\( (C, \\{C_i^{PrM}\\}) \\). All of the other
 transaction components are constructed as usual.
@@ -207,7 +207,7 @@ of shielded outputs.
 
 The deduplication is necessary to prevent attackers from "tagging" ciphertexts
 through the mixing process by repeating them a unique number of times. The
-\\("mix"\|\|e\\) additional data is necessary to prevent attackers from
+\\(\texttt{"mix"}\|\|e\\) additional data is necessary to prevent attackers from
 replaying honestly-created pre-mix ciphertexts across epochs to circumvent the
 mixing. The sorting needs to happen in constant time, otherwise the running time
 of the sorting algorithm could leak information about connections between
