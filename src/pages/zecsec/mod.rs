@@ -10,7 +10,6 @@ pub mod making_zcash_light_wallets_faster_and_more_private;
 pub mod risk_analysis_of_intel_sgx_and_other_tees;
 pub mod threat_model_for_zcash_hardware_wallets;
 pub mod transparency_report_2023_q1;
-pub mod security_engineering;
 pub mod milk_sad;
 pub mod free2z_security_audit;
 pub mod zcash_51_percent_attack;

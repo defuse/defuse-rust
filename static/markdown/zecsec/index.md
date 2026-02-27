@@ -15,7 +15,7 @@ can think of this page as "a security auditor's guide to Zcash."
 - September 21, 2023 &ndash; [Mitigating 51% Attack Risk on the Zcash Network](/zecsec/zcash-51-percent-attack.htm)
 - September 14, 2023 &ndash; [Free2Z Security Audit Results](/zecsec/free2z-security-audit.htm)
 - August 11, 2023 &ndash; [If you used libbitcoin-explorer (bx) to generate your seed phrase, rotate it ASAP!](/zecsec/milk-sad.htm)
-- July 30, 2023 &ndash; [Security Engineering: Learning from Safety-Critical Disciplines](/zecsec/security-engineering.htm)
+- July 30, 2023 &ndash; [Security Engineering: Learning from Safety-Critical Disciplines](/security-engineering-learning-from-safety-critical-disciplines.htm)
 - April 18, 2023 &ndash; [ZecSec's Q1 2023 Transparency Report](/zecsec/2023-q1-transparency-report.htm)
 - April 15, 2023 &ndash; [A Simple Threat Model for Zcash Shielded Hardware Wallets](/zecsec/threat-model-for-zcash-hardware-wallets.htm)
 - March 10, 2023 &ndash; [Risk Analysis of Intel's SGX and Other TEEs](/zecsec/risk-analysis-of-intel-sgx-and-other-tees.htm)

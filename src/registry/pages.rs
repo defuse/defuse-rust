@@ -1480,21 +1480,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             }),
             date: datetime("2023-04-18T01:00:00-07:00"),
         },
-        page! {
-            handler: zecsec::security_engineering,
-            slug: "zecsec/security-engineering",
-            title: "Security Engineering: Learning from Safety-Critical Disciplines - ZecSec",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "zecsec/security-engineering",
-            upvote: Some(UpvoteConfig {
-                id: "zecsecSecurityEngineering",
-                category: "zecsec",
-                title: None,
-                description: None,
-            }),
-            date: datetime("2023-07-30T01:00:00-07:00"),
-        },
+        alias!("zecsec/security-engineering" => "security-engineering-learning-from-safety-critical-disciplines"),
         page! {
             handler: zecsec::milk_sad,
             slug: "zecsec/milk-sad",

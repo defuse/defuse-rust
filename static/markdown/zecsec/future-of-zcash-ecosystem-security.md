@@ -8,13 +8,13 @@ cryptocurrency world.
 I would like to extend thanks to the Zcash Community Grants committee and to the
 Zcash community for supporting my role over the past year. This has been an
 amazing opportunity to level up my bug-hunting skills, and together we've
-[eliminated some risky bugs from Zcash community projects](/zecsec/security-engineering.htm):
+[eliminated some risky bugs from Zcash community projects](/security-engineering-learning-from-safety-critical-disciplines.htm):
 
 ![Distribution of Bugs Found](/zecsec/images/bug-chart.png)
 
 **How will this affect Zcash's security, going forward?**
 
-In my [talk on Security Engineering at Zcon4](/zecsec/security-engineering.htm), I surveyed the results of my work over the past
+In my [talk on Security Engineering at Zcon4](/security-engineering-learning-from-safety-critical-disciplines.htm), I surveyed the results of my work over the past
 year: 81 bugs discovered, 41 of which I rated as "medium"-severity or higher.
 These results show that the Zcash community benefits from the kind of security
 support that I've been providing. 
