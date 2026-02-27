@@ -67,7 +67,7 @@ review. Time permitting, I would like to perform some shorter audits of projects
 like these alongside the longer audits listed above.
 
 If you don't see your project on this list, but you feel like you could benefit
-from an audit in 2023, please [reach out](/zecsec.htm) and I will do
+from an audit in 2023, please [reach out](mailto:zecsec@defuse.ca) and I will do
 my best to accommodate you!
 
 ## Security Side-Projects

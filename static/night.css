@@ -76,6 +76,11 @@
     color: #ccc;
 }
 
+.night-mode .markdown-content th {
+    background-color: #1a1a1a;
+    border-color: #555;
+}
+
 .night-mode .markdown-content td {
     border-color: #444;
     color: #ccc;
