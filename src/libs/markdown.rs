@@ -47,6 +47,7 @@ pub fn render_post(md: &str) -> String {
     options.extension.strikethrough = true;
     options.extension.autolink = true;
     options.extension.tasklist = true;
+    options.extension.footnotes = true;
     options.render.unsafe_ = true;
     markdown_to_html(md, &options)
 }

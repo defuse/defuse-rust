@@ -556,7 +556,7 @@
         </div>
                 </div>
 {% endif -%}
-{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% if let Some(banner) = ctx.page_info.features.banner %}{{ banner|safe }}{% endif %}{% if let Some(date) = ctx.page_info.date %}<div class="pagedate">
+{%- if ctx.page_info.upvote.is_some() %}        {% endif %}{% if let Some(banner) = ctx.page_info.features.banner %}{{ banner|safe }}{% endif %}{% if let Some(date) = ctx.page_info.formatted_date() %}<div class="pagedate">
 {{ date }}
 </div>
 {% endif %}{% block content %}{% endblock %}
@@ -622,7 +622,7 @@
 <!-- End Piwik Code -->
 {% if ctx.page_info.features.math %}
 <script defer src="/katex/katex.min.js"></script>
-<script defer src="/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<script defer src="/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});"></script>
 {% endif %}
 </body>
 </html>

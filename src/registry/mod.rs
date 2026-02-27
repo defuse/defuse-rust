@@ -14,6 +14,8 @@ pub use pages::PAGE_REGISTRY;
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
+use chrono::{DateTime, FixedOffset};
+
 use crate::handler::PageHandler;
 
 /// Set of valid upvote permanent IDs, built from PAGE_REGISTRY on first access.
@@ -104,9 +106,10 @@ pub struct PageInfo {
     /// Page features (banner, math rendering, etc.)
     pub features: Features,
 
-    /// Publication date for blog-style posts (e.g. "August 11, 2023").
-    /// Rendered by base.html before the content block.
-    pub date: Option<&'static str>,
+    /// Publication date/time for blog-style posts.
+    /// Rendered by base.html before the content block as "Month Day, Year".
+    /// Includes full timestamp for sorting posts on the same day.
+    pub date: Option<DateTime<FixedOffset>>,
 }
 
 // Manual Clone implementation - needed because of dyn trait object
@@ -293,7 +296,19 @@ macro_rules! page {
 }
 pub(crate) use page;
 
+/// Parse an ISO 8601 / RFC 3339 datetime string for use in page registry date fields.
+/// Panics at registry init time if the string is invalid.
+pub fn datetime(s: &str) -> Option<DateTime<FixedOffset>> {
+    Some(DateTime::parse_from_rfc3339(s).expect("invalid datetime in page registry"))
+}
+
 impl PageInfo {
+    /// Format the date for display (e.g. "August 11, 2023").
+    /// Displays in the original timezone of the stored datetime.
+    pub fn formatted_date(&self) -> Option<String> {
+        self.date.map(|d| d.format("%B %-d, %Y").to_string())
+    }
+
     /// Is this a directory-style URL? (no .htm extension)
     /// Derived from slug: empty string or ends with "/"
     pub fn is_directory(&self) -> bool {

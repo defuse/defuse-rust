@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use super::{alias, page, Features, PageInfo, UpvoteConfig};
+use super::{alias, datetime, page, Features, PageInfo, UpvoteConfig};
 
 const DEPRECATED_BANNER: &str = "<div class=\"deprecated-banner\">This page has been deprecated. The code/information below may no longer be maintained.</div>";
 
@@ -1327,7 +1327,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("October 13, 2022"),
+            date: datetime("2022-10-13T08:22:29-06:00"),
         },
         page! {
             handler: zecsec::october_update,
@@ -1342,7 +1342,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("October 28, 2022"),
+            date: datetime("2022-10-28T08:13:14-07:00"),
         },
         page! {
             handler: zecsec::scalable_private_money_needs_scalable_private_messaging,
@@ -1357,7 +1357,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("November 15, 2022"),
+            date: datetime("2022-11-15T19:00:00-07:00"),
         },
         page! {
             handler: zecsec::security_audit_process,
@@ -1372,7 +1372,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("December 29, 2022"),
+            date: datetime("2022-12-29T07:00:00-07:00"),
         },
         page! {
             handler: zecsec::ywallet_audit_published,
@@ -1387,7 +1387,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("January 3, 2023"),
+            date: datetime("2023-01-03T07:00:00-07:00"),
         },
         page! {
             handler: zecsec::zecsec_roadmap_for_2023,
@@ -1402,7 +1402,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("January 3, 2023"),
+            date: datetime("2023-01-03T11:08:00-07:00"),
         },
         page! {
             handler: zecsec::transparency_report_2022_q4,
@@ -1417,7 +1417,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("January 27, 2023"),
+            date: datetime("2023-01-27T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::making_zcash_light_wallets_faster_and_more_private,
@@ -1432,7 +1432,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("March 2, 2023"),
+            date: datetime("2023-03-02T01:00:00-07:00"),
             features: Features { banner: None, math: true },
         },
         page! {
@@ -1448,7 +1448,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("March 10, 2023"),
+            date: datetime("2023-03-10T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::threat_model_for_zcash_hardware_wallets,
@@ -1463,7 +1463,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("April 15, 2023"),
+            date: datetime("2023-04-15T00:00:00-07:00"),
         },
         page! {
             handler: zecsec::transparency_report_2023_q1,
@@ -1478,7 +1478,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("April 18, 2023"),
+            date: datetime("2023-04-18T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::security_engineering,
@@ -1493,7 +1493,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("July 30, 2023"),
+            date: datetime("2023-07-30T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::milk_sad,
@@ -1508,7 +1508,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("August 11, 2023"),
+            date: datetime("2023-08-11T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::free2z_security_audit,
@@ -1523,7 +1523,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("September 14, 2023"),
+            date: datetime("2023-09-14T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::zcash_51_percent_attack,
@@ -1538,7 +1538,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("September 21, 2023"),
+            date: datetime("2023-09-21T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::security_audit_of_hanhs_ledger_app,
@@ -1553,7 +1553,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("September 21, 2023"),
+            date: datetime("2023-09-21T01:01:00-07:00"),
         },
         page! {
             handler: zecsec::zecwallet_lite_cli_security_audit,
@@ -1568,7 +1568,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("September 23, 2023"),
+            date: datetime("2023-09-23T01:01:00-07:00"),
         },
         page! {
             handler: zecsec::future_of_zcash_ecosystem_security,
@@ -1583,7 +1583,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("September 24, 2023"),
+            date: datetime("2023-09-24T01:00:00-07:00"),
         },
         page! {
             handler: zecsec::zgo_security_audit,
@@ -1598,7 +1598,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: None,
                 description: None,
             }),
-            date: Some("January 5, 2024"),
+            date: datetime("2024-01-05T00:00:00-07:00"),
         },
 
         // ===== Test pages =====
