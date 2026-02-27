@@ -89,6 +89,11 @@
     border-top-color: #444;
 }
 
+.night-mode .markdown-content section.footnotes li:target {
+    background-color: #3a3a00;
+    box-shadow: -1.5em 0 0 #3a3a00;
+}
+
 /* ===== Tables ===== */
 .night-mode table {
     color: #ccc;
