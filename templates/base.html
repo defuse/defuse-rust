@@ -650,6 +650,7 @@
 <script>
 (function(){
     var DAY=864e5,now=Date.now();
+    localStorage.removeItem('flyout-more...');
     document.querySelectorAll('.mobile-nav details:not(.mobile-nav-recent-more)').forEach(function(d){
         var k='flyout-'+d.querySelector('summary').textContent.trim();
         var v=localStorage.getItem(k);
