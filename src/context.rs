@@ -21,6 +21,8 @@ pub struct PageContext {
     pub query_string: Option<String>,
     /// URL prefix for building absolute URLs (e.g., "https://defuse.ca" or "http://localhost:3000")
     pub url_prefix: String,
+    /// The 10 most recent pages by date (for the flyout menu)
+    pub recent_pages: &'static [&'static PageInfo],
 }
 
 impl PageContext {

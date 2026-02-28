@@ -26,6 +26,18 @@ static VALID_UPVOTE_IDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         .collect()
 });
 
+/// The 10 most recent pages by date, sorted newest first.
+/// Pages without a date are excluded.
+pub static RECENT_PAGES: LazyLock<Vec<&'static PageInfo>> = LazyLock::new(|| {
+    let mut pages: Vec<&PageInfo> = PAGE_REGISTRY
+        .values()
+        .filter(|p| p.date.is_some())
+        .collect();
+    pages.sort_by(|a, b| b.date.cmp(&a.date));
+    pages.truncate(10);
+    pages
+});
+
 /// Check if an upvote permanent_id is registered in the page registry.
 pub fn is_valid_upvote_id(id: &str) -> bool {
     VALID_UPVOTE_IDS.contains(id)

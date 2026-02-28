@@ -234,6 +234,17 @@
                 <a href="/truecrypt-7.1a-hashes.htm">TrueCrypt Hashes</a>
             </details>
         </details>
+        <div class="mobile-nav-recent">
+            <div class="mobile-nav-recent-heading">Recent</div>
+            {% for page in ctx.recent_pages %}
+            <a href="{{ page.relative_url() }}">
+                <span class="mobile-nav-recent-title">{{ page.title_or_default() }}</span>
+                {% if let Some(date) = page.formatted_date() %}
+                <span class="mobile-nav-recent-date">{{ date }}</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
     </nav>
 </div>
 <!-- End mobile navigation -->

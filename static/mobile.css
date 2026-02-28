@@ -254,6 +254,59 @@ body.mobile-nav-open .mobile-nav {
     color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
 }
 
+/* ===== Recent pages list (below nav categories) ===== */
+.mobile-nav-recent {
+    border-top: 1px solid #333;
+    padding-top: 6px;
+}
+
+.mobile-nav-recent-heading {
+    padding: 10px 18px 6px;
+    color: #888;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mobile-nav-recent a {
+    position: relative;
+    display: block;
+    padding: 8px 18px 8px 18px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 14px;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.mobile-nav-recent a:active {
+    background: #0a1a1a;
+    color: #AAFFFF;
+}
+
+.mobile-nav-recent-title::before {
+    content: '\25A0';
+    font-size: 6px;
+    position: absolute;
+    left: 8px;
+    margin-top: 5px;
+    color: #666;
+}
+
+
+.mobile-nav-recent-title {
+    display: block;
+    font-size: 13px;
+}
+
+.mobile-nav-recent-date {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+}
+
 
 /*=============================================================================
   Wide layout (> 850px): hamburger overlays the desktop masthead
