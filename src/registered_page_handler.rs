@@ -24,7 +24,7 @@ use crate::handler::{FormField, PostBody};
 use crate::libs::{phpcount::HitCounts, upvotes::VoteState, util::client_ip};
 use crate::middleware::url_canonicalization::is_dev_host;
 use crate::pages::not_found::NotFoundPage;
-use crate::registry::{resolve_path, PageInfo, PathLookupResult, NOT_FOUND_PAGE_INFO};
+use crate::registry::{resolve_path, PageInfo, PathLookupResult, NOT_FOUND_PAGE_INFO, RECENT_PAGES};
 
 /// Main registered page handler. This is set as a fallback in main.rs so that
 /// it runs whenever the request is not matched by another handler (e.g. static
@@ -169,6 +169,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         captcha_bypass_header,
         query_string,
         url_prefix,
+        recent_pages: &RECENT_PAGES,
     };
 
     // Dispatch based on HTTP method
@@ -304,6 +305,7 @@ fn render_not_found(client_ip: String, dnt_enabled: bool) -> Response {
         captcha_bypass_header: None,
         query_string: None,
         url_prefix: "https://defuse.ca".to_string(),
+        recent_pages: &RECENT_PAGES,
     };
 
     (StatusCode::NOT_FOUND, NotFoundPage { ctx }).into_response()

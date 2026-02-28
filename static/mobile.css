@@ -1,11 +1,367 @@
-/* Mobile navigation and responsive styles */
+/* Flyout navigation and responsive styles */
 
-/* Default state: hide mobile elements on all screen sizes */
+/* ===== Mobile-only elements: hidden at wide widths ===== */
 .mobile-header,
 .mobile-menubar,
-.mobile-nav-overlay,
 .mobile-undergrad {
     display: none;
+}
+
+/* ===== Hamburger button (visible at all widths) ===== */
+.hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 44px;           /* must match .mobile-nav-close button width */
+    height: 44px;          /* must match .mobile-nav-close button height */
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    gap: 5px;              /* spacing between the 3 lines */
+    background: rgba(0, 0, 0, 0.6);
+    position: absolute;
+    right: 12px;
+    z-index: 1001;         /* above .menuminwidth0 z-index:1000 so it's clickable */
+}
+
+.hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;           /* line thickness; used in translateY calc below */
+    background: #fff;
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+/* Hamburger -> X animation
+   translateY value = gap (5px) + span height (2px) = 7px
+   This moves the top/bottom lines to the center so they cross into an X */
+body.mobile-nav-open .hamburger span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+body.mobile-nav-open .hamburger span:nth-child(2) {
+    opacity: 0;
+}
+
+body.mobile-nav-open .hamburger span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ===== Nav overlay (backdrop, all widths) ===== */
+.mobile-nav-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;         /* must be higher than .menuminwidth0 z-index:1000 */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    /* visibility delay (0.3s) must match opacity duration so it hides
+       after the fade-out finishes, not before */
+    transition: opacity 0.3s, visibility 0s 0.3s;
+}
+
+body.mobile-nav-open .mobile-nav-overlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.3s, visibility 0s 0s; /* no delay when opening */
+}
+
+/* ===== Nav panel (slides in from right, all widths) ===== */
+.mobile-nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100%;
+    height: 100dvh;
+    background: #000;
+    transform: translateX(100%);
+    transition: transform 0.3s;    /* should match .mobile-nav-overlay opacity duration */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 0 10px 0;
+}
+
+body.mobile-nav-open .mobile-nav {
+    transform: translateX(0);
+}
+
+/* ===== Close button at top of nav ===== */
+.mobile-nav-close {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 12px;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+
+/* Size must match .hamburger so tap targets overlap */
+.mobile-nav-close button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;           /* must match .hamburger width */
+    height: 44px;          /* must match .hamburger height */
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    padding: 0;
+}
+
+.mobile-nav-close button:active {
+    background: #333;
+}
+
+/* ===== Top-level details/summary (categories) ===== */
+.mobile-nav > details {
+    border-bottom: 1px solid #333;
+}
+
+.mobile-nav > details > summary {
+    display: block;
+    padding: 14px 18px;
+    color: #fff;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.mobile-nav > details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.mobile-nav > details > summary::marker {
+    display: none;
+    content: '';
+}
+
+.mobile-nav > details > summary::after {
+    content: '\25B6';
+    float: right;
+    font-size: 10px;
+    line-height: 21px;
+    color: #888;
+    transition: transform 0.2s;
+}
+
+.mobile-nav > details[open] > summary::after {
+    transform: rotate(90deg);
+}
+
+/* ===== Links inside categories ===== */
+.mobile-nav > details > a {
+    display: block;
+    padding: 12px 18px 12px 32px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 14px;
+    font-family: Helvetica, Arial, sans-serif;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.mobile-nav > details > a:nth-child(odd) {
+    background: #111;
+}
+
+.mobile-nav > details > a:nth-child(even) {
+    background: #1c1c1c;
+}
+
+.mobile-nav > details > a:active {
+    background: #0a1a1a;
+    color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
+}
+
+/* ===== Nested details (3rd level: Deprecated, subcategories) ===== */
+.mobile-nav details details {
+    border-bottom: none;
+}
+
+.mobile-nav details details > summary {
+    display: block;
+    padding: 12px 18px 12px 32px;
+    color: #aaa;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    -webkit-user-select: none;
+    background: #111;
+}
+
+.mobile-nav details details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.mobile-nav details details > summary::marker {
+    display: none;
+    content: '';
+}
+
+.mobile-nav details details > summary::after {
+    content: '\25B6';
+    float: right;
+    font-size: 9px;
+    line-height: 19px;
+    color: #666;
+    transition: transform 0.2s;
+}
+
+.mobile-nav details details[open] > summary::after {
+    transform: rotate(90deg);
+}
+
+.mobile-nav details details > a {
+    display: block;
+    padding: 12px 18px 12px 48px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 14px;
+    font-family: Helvetica, Arial, sans-serif;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.mobile-nav details details > a:nth-child(odd) {
+    background: #181818;
+}
+
+.mobile-nav details details > a:nth-child(even) {
+    background: #222;
+}
+
+.mobile-nav details details > a:active {
+    background: #0a1a1a;
+    color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
+}
+
+/* ===== Recent pages list (below nav categories) ===== */
+.mobile-nav-recent {
+    border-top: 1px solid #333;
+    padding-top: 6px;
+}
+
+.mobile-nav-recent-heading {
+    padding: 10px 18px 6px;
+    color: #888;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mobile-nav .mobile-nav-recent a,
+.mobile-nav .mobile-nav-recent a:visited,
+.mobile-nav .mobile-nav-recent a:hover {
+    position: relative;
+    display: block;
+    padding: 8px 18px 8px 18px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 14px;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.mobile-nav .mobile-nav-recent a:active {
+    background: #0a1a1a;
+    color: #AAFFFF;
+}
+
+.mobile-nav-recent-title::before {
+    content: '\25A0';
+    font-size: 6px;
+    position: absolute;
+    left: 8px;
+    margin-top: 5px;
+    color: #666;
+}
+
+
+.mobile-nav-recent-title {
+    display: block;
+    font-size: 13px;
+}
+
+.mobile-nav-recent-date {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.mobile-nav-recent-more > summary {
+    display: block;
+    padding: 8px 18px;
+    color: #666;
+    font-size: 16px;
+    font-family: Helvetica, Arial, sans-serif;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.mobile-nav-recent-more > summary::-webkit-details-marker {
+    display: none;
+}
+
+.mobile-nav-recent-more > summary::marker {
+    display: none;
+    content: '';
+}
+
+.mobile-nav-recent-more > summary:active {
+    color: #AAFFFF;
+}
+
+.mobile-nav-recent-more[open] > summary {
+    display: none;
+}
+
+
+/*=============================================================================
+  Wide layout (> 850px): hamburger overlays the desktop masthead
+  NOTE: These are NOT inside a media query. They rely on the narrow-layout
+  @media (max-width: 850px) block below to override them. Do not reorder
+  these sections.
+=============================================================================*/
+
+/* Hamburger top position for the tall desktop masthead */
+.hamburger {
+    top: 10px;             /* above #sm which starts at top:62px */
+}
+
+/* Close button area: must match #masthead height (100px) so the border aligns
+   with the menu bar's top border. box-sizing includes padding + border in height.
+   padding-top positions the × button to match the hamburger's top:10px. */
+.mobile-nav-close {
+    height: 100px;        /* must match #masthead height in mainmenu.css */
+    box-sizing: border-box;
+    align-items: flex-start;
+    padding-top: 10px;    /* must match .hamburger top */
 }
 
 /* Hide elements that crowd the desktop masthead at narrower widths */
@@ -14,6 +370,11 @@
         display: none;
     }
 }
+
+
+/*=============================================================================
+  Narrow layout (<= 850px): full mobile chrome replaces desktop
+=============================================================================*/
 
 @media (max-width: 850px) {
     /* ===== Hide desktop elements ===== */
@@ -34,8 +395,7 @@
        .mobile-nav-close must also use the same height/padding so the X button aligns
        with the hamburger. If you change height here, update:
          - background-size (maintain 591:100 ratio, e.g. 60px tall -> 355px wide)
-         - .mobile-nav-close height
-         - .mobile-nav-close padding */
+         - .mobile-nav-close height */
     .mobile-header {
         display: flex;
         align-items: center;
@@ -46,7 +406,7 @@
         background-repeat: no-repeat;
         background-size: 355px 60px;   /* 591:100 ratio scaled; height must match above */
         background-position: left top;
-        padding: 0 12px;               /* must match .mobile-nav-close padding */
+        padding: 0 12px;
         position: relative;
         z-index: 2;
     }
@@ -105,256 +465,16 @@
         color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
     }
 
-    /* ===== Hamburger button ===== */
-    /* Size (44px) must match .mobile-nav-close button so they overlap on screen */
+    /* ===== Hamburger: reposition over the mobile header ===== */
     .hamburger {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 44px;           /* must match .mobile-nav-close button width */
-        height: 44px;          /* must match .mobile-nav-close button height */
-        padding: 0;
-        margin: 0;
-        background: rgba(0, 0, 0, 0.6);
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        gap: 5px;              /* spacing between the 3 lines */
+        top: 8px;              /* vertically center in 60px header: (60 - 44) / 2 */
     }
 
-    .hamburger span {
-        display: block;
-        width: 24px;
-        height: 2px;           /* line thickness; used in translateY calc below */
-        background: #fff;
-        transition: transform 0.3s, opacity 0.3s;
-    }
-
-    /* Hamburger -> X animation
-       translateY value = gap (5px) + span height (2px) = 7px
-       This moves the top/bottom lines to the center so they cross into an X */
-    body.mobile-nav-open .hamburger span:nth-child(1) {
-        transform: translateY(7px) rotate(45deg);
-    }
-
-    body.mobile-nav-open .hamburger span:nth-child(2) {
-        opacity: 0;
-    }
-
-    body.mobile-nav-open .hamburger span:nth-child(3) {
-        transform: translateY(-7px) rotate(-45deg);
-    }
-
-    /* ===== Nav overlay (backdrop) ===== */
-    .mobile-nav-overlay {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 9999;         /* must be higher than .menuminwidth0 z-index:1000 (mainmenu.css)
-                                  and .mobile-header z-index:2 */
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        /* visibility delay (0.3s) must match opacity duration so it hides
-           after the fade-out finishes, not before */
-        transition: opacity 0.3s, visibility 0s 0.3s;
-    }
-
-    body.mobile-nav-open .mobile-nav-overlay {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-        transition: opacity 0.3s, visibility 0s 0s; /* no delay when opening */
-    }
-
-    /* ===== Nav panel (slides in from right) ===== */
-    .mobile-nav {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 280px;
-        max-width: 85vw;
-        height: 100%;
-        height: 100dvh;
-        background: #000;
-        transform: translateX(100%);
-        transition: transform 0.3s;    /* should match .mobile-nav-overlay opacity duration */
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 0 0 10px 0;
-    }
-
-    body.mobile-nav-open .mobile-nav {
-        transform: translateX(0);
-    }
-
-    /* ===== Close button at top of nav ===== */
-    /* Height and padding must match .mobile-header so the X button appears at
-       the exact same screen position as the hamburger button */
+    /* ===== Close button: shorter to match mobile header, centered ===== */
     .mobile-nav-close {
-        display: flex;
+        height: 60px;          /* must match .mobile-header height */
         align-items: center;
-        justify-content: flex-end;
-        height: 60px;         /* must match .mobile-header height */
-        padding: 0 12px;      /* must match .mobile-header padding */
-        border-bottom: 1px solid #333;
-        flex-shrink: 0;
-    }
-
-    /* Size must match .hamburger so tap targets overlap */
-    .mobile-nav-close button {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 44px;           /* must match .hamburger width */
-        height: 44px;          /* must match .hamburger height */
-        background: rgba(0, 0, 0, 0.6);
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        color: #fff;
-        font-size: 26px;
-        line-height: 1;
-        padding: 0;
-    }
-
-    .mobile-nav-close button:active {
-        background: #333;
-    }
-
-    /* ===== Top-level details/summary (categories) ===== */
-    .mobile-nav > details {
-        border-bottom: 1px solid #333;
-    }
-
-    .mobile-nav > details > summary {
-        display: block;
-        padding: 14px 18px;
-        color: #fff;
-        font-family: "Courier New", Courier, monospace;
-        font-size: 15px;
-        font-weight: bold;
-        cursor: pointer;
-        list-style: none;
-        user-select: none;
-        -webkit-user-select: none;
-    }
-
-    .mobile-nav > details > summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .mobile-nav > details > summary::marker {
-        display: none;
-        content: '';
-    }
-
-    .mobile-nav > details > summary::after {
-        content: '\25B6';
-        float: right;
-        font-size: 10px;
-        line-height: 21px;
-        color: #888;
-        transition: transform 0.2s;
-    }
-
-    .mobile-nav > details[open] > summary::after {
-        transform: rotate(90deg);
-    }
-
-    /* ===== Links inside categories ===== */
-    .mobile-nav > details > a {
-        display: block;
-        padding: 12px 18px 12px 32px;
-        color: #ccc;
-        text-decoration: none;
-        font-size: 14px;
-        font-family: Helvetica, Arial, sans-serif;
-        min-height: 44px;
-        box-sizing: border-box;
-    }
-
-    .mobile-nav > details > a:nth-child(odd) {
-        background: #111;
-    }
-
-    .mobile-nav > details > a:nth-child(even) {
-        background: #1c1c1c;
-    }
-
-    .mobile-nav > details > a:active {
-        background: #0a1a1a;
-        color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
-    }
-
-    /* ===== Nested details (3rd level: Deprecated, subcategories) ===== */
-    .mobile-nav details details {
-        border-bottom: none;
-    }
-
-    .mobile-nav details details > summary {
-        display: block;
-        padding: 12px 18px 12px 32px;
-        color: #aaa;
-        font-family: "Courier New", Courier, monospace;
-        font-size: 14px;
-        cursor: pointer;
-        list-style: none;
-        user-select: none;
-        -webkit-user-select: none;
-        background: #111;
-    }
-
-    .mobile-nav details details > summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .mobile-nav details details > summary::marker {
-        display: none;
-        content: '';
-    }
-
-    .mobile-nav details details > summary::after {
-        content: '\25B6';
-        float: right;
-        font-size: 9px;
-        line-height: 19px;
-        color: #666;
-        transition: transform 0.2s;
-    }
-
-    .mobile-nav details details[open] > summary::after {
-        transform: rotate(90deg);
-    }
-
-    .mobile-nav details details > a {
-        display: block;
-        padding: 12px 18px 12px 48px;
-        color: #ccc;
-        text-decoration: none;
-        font-size: 14px;
-        font-family: Helvetica, Arial, sans-serif;
-        min-height: 44px;
-        box-sizing: border-box;
-    }
-
-    .mobile-nav details details > a:nth-child(odd) {
-        background: #181818;
-    }
-
-    .mobile-nav details details > a:nth-child(even) {
-        background: #222;
-    }
-
-    .mobile-nav details details > a:active {
-        background: #0a1a1a;
-        color: #AAFFFF;        /* matches desktop .menu hover color in mainmenu.css */
+        padding-top: 0;
     }
 
     /* ===== Fluid content width ===== */
@@ -450,5 +570,11 @@
     /* Contact table responsive */
     .contact-table td:first-child {
         white-space: normal;
+    }
+}
+
+@media print {
+    .hamburger {
+        display: none;
     }
 }

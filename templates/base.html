@@ -56,12 +56,13 @@
 <body {% if ctx.is_home() %}style="background:white;" {% endif %} >
 <div id="wrap">
 
-<!-- Mobile navigation (hidden on desktop via mobile.css media query) -->
-<div class="mobile-header">
-    <button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('mobile-nav-open')">
-        <span></span><span></span><span></span>
-    </button>
-</div>
+<!-- Hamburger button (visible at all widths; positioned differently via CSS) -->
+<button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('mobile-nav-open')">
+    <span></span><span></span><span></span>
+</button>
+
+<!-- Mobile-only header bar (replaces desktop masthead at narrow widths) -->
+<div class="mobile-header"></div>
 <div class="mobile-menubar">
     <button onclick="document.body.classList.toggle('mobile-nav-open')">Menu</button>
     <button class="night-toggle" onclick="nightToggle()" aria-label="Toggle night mode">Night Mode</button>
@@ -233,6 +234,34 @@
                 <a href="/truecrypt-7.1a-hashes.htm">TrueCrypt Hashes</a>
             </details>
         </details>
+        <div class="mobile-nav-recent">
+            <div class="mobile-nav-recent-heading">Recent</div>
+            {% for page in ctx.recent_pages %}
+            {% if loop.index0 < 6 %}
+            <a href="{{ page.relative_url() }}">
+                <span class="mobile-nav-recent-title">{{ page.title_or_default() }}</span>
+                {% if let Some(date) = page.formatted_date() %}
+                <span class="mobile-nav-recent-date">{{ date }}</span>
+                {% endif %}
+            </a>
+            {% endif %}
+            {% if loop.index0 == 6 %}
+            <details class="mobile-nav-recent-more">
+            <summary>more...</summary>
+            {% endif %}
+            {% if loop.index0 >= 6 %}
+            <a href="{{ page.relative_url() }}">
+                <span class="mobile-nav-recent-title">{{ page.title_or_default() }}</span>
+                {% if let Some(date) = page.formatted_date() %}
+                <span class="mobile-nav-recent-date">{{ date }}</span>
+                {% endif %}
+            </a>
+            {% endif %}
+            {% endfor %}
+            {% if ctx.recent_pages.len() > 6 %}
+            </details>
+            {% endif %}
+        </div>
     </nav>
 </div>
 <!-- End mobile navigation -->

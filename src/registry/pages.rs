@@ -292,6 +292,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Centralization is Killing Bitcoin"),
                 description: Some("An article on Bitcoin, centralization, and DDoS attacks."),
             }),
+            date: datetime("2011-06-22T12:00:00-07:00"),
         },
         page! {
             handler: research::blind_birthday_attack,
@@ -306,6 +307,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Blind Birthday Attack"),
                 description: Some("A birthday attack without knowing what the collision actually is."),
             }),
+            date: datetime("2014-07-13T12:00:00-07:00"),
         },
         page! {
             handler: research::bochs_hacking_guide,
@@ -320,6 +322,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Bochs Hacking Guide"),
                 description: Some("Hacking the Bochs x86 CPU emulator."),
             }),
+            date: datetime("2014-01-02T12:00:00-07:00"),
         },
         page! {
             handler: research::cbcmodeiv,
@@ -334,6 +337,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Encryption - CBC Mode IV: Secret or Not?"),
                 description: Some("Should the IV in CBC mode be kept secret?"),
             }),
+            date: datetime("2013-09-08T12:00:00-07:00"),
         },
         page! {
             handler: research::concentration_bounds_from_parallel_repetition_theorems,
@@ -348,6 +352,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Concentration Bounds from Parallel Repetition Theorems"),
                 description: Some("My master's thesis, showing how concentration bounds can be derived from parallel repetition theorems for nonlocal games and interactive proofs."),
             }),
+            date: datetime("2018-08-23T12:00:00-07:00"),
         },
         page! {
             handler: research::cracking_synergy_bad_cryptography,
@@ -362,6 +367,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Cracking Synergy's Bad Cryptography"),
                 description: Some("A tool to crack Synergy's homebrew cryptography."),
             }),
+            date: datetime("2013-07-20T12:00:00-07:00"),
         },
         page! {
             handler: research::exploiting_cpp_vtables,
@@ -376,6 +382,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Exploiting C++ VTABLES: Instance Replacement"),
                 description: Some("Use a memory corruption vulnerability to change an instance of class A into an instance of class B."),
             }),
+            date: datetime("2013-05-11T12:00:00-07:00"),
         },
         page! {
             handler: research::in_browser_port_scanning,
@@ -390,6 +397,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Timing Side Channel Port Scanner in the Browser"),
                 description: Some("How web pages can use a timing side channel to \"scan\" your local network."),
             }),
+            date: datetime("2015-04-12T12:00:00-07:00"),
         },
         page! {
             handler: research::filesystem_events_ntfs_permissions,
@@ -404,6 +412,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("File System Events Leak Folder Contents"),
                 description: Some("An information disclosure vulnerability in Windows shared folders that lets you see what's in folers you can't access."),
             }),
+            date: datetime("2011-06-12T12:00:00-07:00"),
         },
         page! {
             handler: research::flush_reload_side_channel,
@@ -418,6 +427,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("FLUSH+RELOAD: Multi-User Systems are Doomed"),
                 description: Some("The FLUSH+RELOAD side-channel attack breaks the security of multi-user systems."),
             }),
+            date: datetime("2013-09-15T12:00:00-07:00"),
         },
         page! {
             handler: research::godel_second_incompleteness_theorem_by_turing_machines,
@@ -432,6 +442,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("A Simple Proof of Gödel's Second Incompleteness Theorem Using Turing Machines"),
                 description: Some("Proving Gödel's second incompleteness theorem in a way that should be understandable to anyone who understands the proof that the halting problem is undecidable."),
             }),
+            date: datetime("2024-02-09T12:00:00-07:00"),
             features: Features {
                 banner: None,
                 math: true,
@@ -450,6 +461,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("How do we model this robot?"),
                 description: Some("The difference between Computational Ability and Informational Ability"),
             }),
+            date: datetime("2015-03-25T12:00:00-07:00"),
         },
         page! {
             handler: research::instruction_filters,
@@ -478,6 +490,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Is Security Local?"),
                 description: Some("Is security a locally-verifiable property of computation?"),
             }),
+            date: datetime("2015-05-27T12:00:00-07:00"),
         },
         page! {
             handler: research::onedetection,
@@ -492,6 +505,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("The PUP Confusion Technique"),
                 description: Some("Undetecting malware by making it look like a Potentially Unwanted Program (PUP)."),
             }),
+            date: datetime("2011-06-12T12:00:00-07:00"),
         },
         page! {
             handler: research::password_hashing_after_phc,
@@ -506,6 +520,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Password Hashing After the PHC"),
                 description: Some("Giving authenticators an advantage over password crackers with cache."),
             }),
+            date: datetime("2013-07-26T12:00:00-07:00"),
         },
         page! {
             handler: research::plausible_reason_p_noteq_np_is_hard_to_prove,
@@ -520,6 +535,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("A Plausible Reason It's So Hard To Prove P!=NP"),
                 description: Some("Attempting to show why P!=NP is hard to prove using hash functions."),
             }),
+            date: datetime("2022-01-05T12:00:00-07:00"),
         },
         page! {
             handler: research::password_policy_hall_of_shame,
@@ -544,6 +560,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Practical Race Condition Vulnerabilities in Web Applications"),
                 description: Some("An example of a web application (PHP) vulnerable to a race condition, and how to fix it."),
             }),
+            date: datetime("2011-12-21T12:00:00-07:00"),
         },
         page! {
             handler: research::research,
@@ -567,6 +584,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Mitigating BREACH in PHP"),
                 description: Some("PHP code for mitigating the BREACH attack."),
             }),
+            date: datetime("2013-08-09T12:00:00-07:00"),
         },
         page! {
             handler: research::side_channel_attacks_on_everyday_applications,
@@ -581,6 +599,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Side-Channel Attacks on Everyday Applications"),
                 description: Some("My Black Hat USA 2016 talk about the Flush+Reload side channel."),
             }),
+            date: datetime("2016-08-03T12:00:00-07:00"),
         },
         alias!("bh2016" => "side-channel-attacks-on-everyday-applications"),
         page! {
@@ -596,6 +615,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Security Engineering from Safety-Critical Disciplines"),
                 description: Some("Useful concepts and methods from safety engineering, applied to computer security."),
             }),
+            date: datetime("2023-07-31T12:00:00-07:00"),
         },
         page! {
             handler: research::manual_random_number_generator,
@@ -610,6 +630,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("A Manual Random Number Generator"),
                 description: Some("Generating random numbers with paper coins."),
             }),
+            date: datetime("2014-01-04T12:00:00-07:00"),
         },
         page! {
             handler: research::microsoft_reads_your_skype_messages,
@@ -624,6 +645,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Confirmed: Microsoft Visits Links You Send In Skype"),
                 description: Some("I sent a link through Skype and Microsoft visted it, confirming The H's claims."),
             }),
+            date: datetime("2013-05-16T12:00:00-07:00"),
         },
         page! {
             handler: research::eotp,
@@ -652,6 +674,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Triangle of Secure Code Delivery"),
                 description: Some("Three properties necessary and sufficient for delivering code safely."),
             }),
+            date: datetime("2014-07-24T12:00:00-07:00"),
         },
         page! {
             handler: research::truecrypt_plausible_deniability_useless_by_game_theory,
@@ -666,6 +689,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("TrueCrypt's Plausible Deniability is Theoretically Useless"),
                 description: Some("Why you really ought to have a hidden volume, even if you don't need one."),
             }),
+            date: datetime("2013-03-02T12:00:00-07:00"),
         },
         page! {
             handler: research::web_application_security,
@@ -680,6 +704,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Data Flow in Web Applications"),
                 description: Some("A look at the flow of data in web applications and how it can be tamed for security."),
             }),
+            date: datetime("2011-06-12T12:00:00-07:00"),
         },
         page! {
             handler: research::web_browser_javascript_cryptography,
@@ -694,6 +719,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Web Browser Cryptography is a Good Thing"),
                 description: Some("Why we should support the development of browser-based crypto applications."),
             }),
+            date: datetime("2013-01-23T12:00:00-07:00"),
         },
 
         // ===== Miscellaneous =====
@@ -710,6 +736,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Advice to Aspiring Computer Security Engineers/Scientists"),
                 description: Some("Some advice for new computer science students based on my experience."),
             }),
+            date: datetime("2015-02-16T12:00:00-07:00"),
         },
         page! {
             handler: misc::centripetal_acceleration,
@@ -752,6 +779,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Fractal Zoom"),
                 description: Some("A psychedelic short story."),
             }),
+            date: datetime("2024-11-15T12:00:00-07:00"),
         },
         page! {
             handler: misc::new_york_times_algebra,
@@ -766,6 +794,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("The New York Times and Algebra"),
                 description: Some("The New York Times does not (necessarily) fail at algebra."),
             }),
+            date: datetime("2015-01-04T12:00:00-07:00"),
         },
         page! {
             handler: misc::pocorgtfo,
@@ -826,6 +855,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Hashes of TrueCrypt Version 7.1a Files"),
                 description: Some("Hashes of all files from the last version of TrueCrypt"),
             }),
+            date: datetime("2014-05-31T12:00:00-07:00"),
         },
         page! {
             handler: misc::x_plane_combat,
@@ -870,6 +900,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Bochs Disk Images"),
                 description: Some("Disk images for the Bochs x86 emulator."),
             }),
+            date: datetime("2013-12-06T12:00:00-07:00"),
             features: Features {
                 banner: Some(DEPRECATED_BANNER),
                 math: false,
@@ -1109,6 +1140,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("`vfy` Directory Comparer"),
                 description: Some("A directory comparison tool for checking if backups have been completed or restored successfully."),
             }),
+            date: datetime("2026-02-07T12:00:00-07:00"),
         },
         page! {
             handler: software::helloworld_cms,
@@ -1216,6 +1248,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("EncFS Security Audit"),
                 description: Some("The results of an EncFS security audit."),
             }),
+            date: datetime("2014-01-15T12:00:00-07:00"),
         },
         page! {
             handler: audits::encfs_old,
@@ -1225,6 +1258,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "encfs, security audit, cryptography",
             legacy_hit_count_id: "pages/audits/encfs-old.php",
             upvote: None,
+            date: datetime("2014-01-15T12:00:00-07:00"),
         },
         page! {
             handler: audits::ecryptfs,
@@ -1239,6 +1273,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("eCryptfs Security Audit"),
                 description: Some("The results of an eCryptfs security audit."),
             }),
+            date: datetime("2014-01-22T12:00:00-07:00"),
         },
         page! {
             handler: audits::pefs,
@@ -1253,6 +1288,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("PEFS Security Audit"),
                 description: Some("Security audit of the Private Encrypted File System (PEFS)."),
             }),
+            date: datetime("2014-02-14T12:00:00-07:00"),
         },
         page! {
             handler: audits::zerobin,
@@ -1267,6 +1303,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("ZeroBin Security Audit"),
                 description: Some("A security audit of the ZeroBin pastebin."),
             }),
+            date: datetime("2014-02-02T12:00:00-07:00"),
         },
         page! {
             handler: audits::gocryptfs,
@@ -1281,6 +1318,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Gocryptfs Security Audit"),
                 description: Some("A security audit of the gocryptfs encrypted filesystem."),
             }),
+            date: datetime("2017-03-03T12:00:00-07:00"),
         },
         page! {
             handler: audits::hash0,
@@ -1295,6 +1333,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Hash0 Security Audit"),
                 description: Some("A security audit of the Hash0 pastebin."),
             }),
+            date: datetime("2014-04-13T12:00:00-07:00"),
         },
 
         // ===== ZecSec posts =====
