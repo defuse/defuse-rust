@@ -662,7 +662,7 @@
     });
     tops.forEach(function(d){
         d.addEventListener('toggle',function(){
-            if(d.open)tops.forEach(function(o){if(o!==d)o.open=false;});
+            if(d.open)tops.forEach(function(o){if(o!==d){o.open=false;o.querySelectorAll('details').forEach(function(n){n.open=false;});}});
         });
     });
 })();
