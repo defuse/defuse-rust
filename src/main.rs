@@ -51,8 +51,9 @@ async fn async_main() {
     // Limit pest parser recursion depth to prevent stack overflow crashes.
     // Stack overflows bypass CatchPanicLayer (they abort, not unwind), so a
     // deeply-nested expression like (1+(1+(1+...))) would kill the process.
-    // Each nesting level uses ~9 rule calls, so 10,000 allows ~1,000 levels.
-    pest::set_call_limit(std::num::NonZeroUsize::new(10_000));
+    // Each nesting level uses ~150 rule calls (many precedence levels in the
+    // grammar), so 100,000 allows ~666 levels of nesting.
+    pest::set_call_limit(std::num::NonZeroUsize::new(100_000));
 
     // Initialize logging
     // Default to info level; set RUST_LOG=defuse=debug for verbose output
