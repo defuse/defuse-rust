@@ -270,7 +270,9 @@ body.mobile-nav-open .mobile-nav {
     letter-spacing: 0.05em;
 }
 
-.mobile-nav-recent a {
+.mobile-nav .mobile-nav-recent a,
+.mobile-nav .mobile-nav-recent a:visited,
+.mobile-nav .mobile-nav-recent a:hover {
     position: relative;
     display: block;
     padding: 8px 18px 8px 18px;
@@ -280,7 +282,7 @@ body.mobile-nav-open .mobile-nav {
     font-family: Helvetica, Arial, sans-serif;
 }
 
-.mobile-nav-recent a:active {
+.mobile-nav .mobile-nav-recent a:active {
     background: #0a1a1a;
     color: #AAFFFF;
 }
@@ -305,6 +307,35 @@ body.mobile-nav-open .mobile-nav {
     font-size: 11px;
     color: #666;
     margin-top: 2px;
+}
+
+.mobile-nav-recent-more > summary {
+    display: block;
+    padding: 8px 18px;
+    color: #666;
+    font-size: 16px;
+    font-family: Helvetica, Arial, sans-serif;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.mobile-nav-recent-more > summary::-webkit-details-marker {
+    display: none;
+}
+
+.mobile-nav-recent-more > summary::marker {
+    display: none;
+    content: '';
+}
+
+.mobile-nav-recent-more > summary:active {
+    color: #AAFFFF;
+}
+
+.mobile-nav-recent-more[open] > summary {
+    display: none;
 }
 
 

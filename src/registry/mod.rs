@@ -34,7 +34,7 @@ pub static RECENT_PAGES: LazyLock<Vec<&'static PageInfo>> = LazyLock::new(|| {
         .filter(|p| p.date.is_some())
         .collect();
     pages.sort_by(|a, b| b.date.cmp(&a.date));
-    pages.truncate(10);
+    // No truncation — template shows first 6 with a "..." expander for the rest
     pages
 });
 

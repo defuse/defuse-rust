@@ -237,13 +237,30 @@
         <div class="mobile-nav-recent">
             <div class="mobile-nav-recent-heading">Recent</div>
             {% for page in ctx.recent_pages %}
+            {% if loop.index0 < 6 %}
             <a href="{{ page.relative_url() }}">
                 <span class="mobile-nav-recent-title">{{ page.title_or_default() }}</span>
                 {% if let Some(date) = page.formatted_date() %}
                 <span class="mobile-nav-recent-date">{{ date }}</span>
                 {% endif %}
             </a>
+            {% endif %}
+            {% if loop.index0 == 6 %}
+            <details class="mobile-nav-recent-more">
+            <summary>more...</summary>
+            {% endif %}
+            {% if loop.index0 >= 6 %}
+            <a href="{{ page.relative_url() }}">
+                <span class="mobile-nav-recent-title">{{ page.title_or_default() }}</span>
+                {% if let Some(date) = page.formatted_date() %}
+                <span class="mobile-nav-recent-date">{{ date }}</span>
+                {% endif %}
+            </a>
+            {% endif %}
             {% endfor %}
+            {% if ctx.recent_pages.len() > 6 %}
+            </details>
+            {% endif %}
         </div>
     </nav>
 </div>
