@@ -169,7 +169,9 @@ body.mobile-nav-open .mobile-nav {
 }
 
 /* ===== Links inside categories ===== */
-.mobile-nav > details > a {
+.mobile-nav > details > a,
+.mobile-nav > details > a:visited,
+.mobile-nav > details > a:hover {
     display: block;
     padding: 12px 18px 12px 32px;
     color: #ccc;
@@ -233,7 +235,9 @@ body.mobile-nav-open .mobile-nav {
     transform: rotate(90deg);
 }
 
-.mobile-nav details details > a {
+.mobile-nav details details > a,
+.mobile-nav details details > a:visited,
+.mobile-nav details details > a:hover {
     display: block;
     padding: 12px 18px 12px 48px;
     color: #ccc;
