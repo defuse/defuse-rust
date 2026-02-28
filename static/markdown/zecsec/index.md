@@ -6,6 +6,8 @@ under the scope of the [ZecSec project](https://forum.zcashcommunity.com/t/zcash
 security bugs, and open security/privacy challenges in the Zcash ecosystem. You
 can think of this page as "a security auditor's guide to Zcash."
 
+(These pages have been moved here from `zecsec.com`.)
+
 ## Posts
 
 - January 5, 2024 &ndash; [ZGo Security Audit Results](/zecsec/zgo-security-audit.htm)
