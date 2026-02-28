@@ -1322,7 +1322,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/my-first-post",
             upvote: Some(UpvoteConfig {
-                id: "zecsecMyFirstPost",
+                id: "zecsecmyfirstpost",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1337,7 +1337,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/october-update",
             upvote: Some(UpvoteConfig {
-                id: "zecsecOctoberUpdate",
+                id: "zecsecoctoberupdate",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1352,7 +1352,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/scalable-private-money-needs-scalable-private-messaging",
             upvote: Some(UpvoteConfig {
-                id: "zecsecScalablePrivateMoney",
+                id: "zecsecscalableprivatemoney",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1367,7 +1367,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/security-audit-process",
             upvote: Some(UpvoteConfig {
-                id: "zecsecSecurityAuditProcess",
+                id: "zecsecsecurityauditprocess",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1382,7 +1382,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/ywallet-audit-published",
             upvote: Some(UpvoteConfig {
-                id: "zecsecYwalletAudit",
+                id: "zecsecywalletaudit",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1397,7 +1397,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/zecsec-roadmap-for-2023",
             upvote: Some(UpvoteConfig {
-                id: "zecsecRoadmap2023",
+                id: "zecsecroadmap2023",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1412,7 +1412,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/2022-q4-transparency-report",
             upvote: Some(UpvoteConfig {
-                id: "zecsecQ42022Report",
+                id: "zecsecq42022report",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1427,7 +1427,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/making-zcash-light-wallets-faster-and-more-private",
             upvote: Some(UpvoteConfig {
-                id: "zecsecLightWallets",
+                id: "zecseclightwallets",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1443,7 +1443,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/risk-analysis-of-intel-sgx-and-other-tees",
             upvote: Some(UpvoteConfig {
-                id: "zecsecSgxTees",
+                id: "zecsecsgxtees",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1458,7 +1458,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/threat-model-for-zcash-hardware-wallets",
             upvote: Some(UpvoteConfig {
-                id: "zecsecThreatModelHw",
+                id: "zecsecthreatmodelhw",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1473,7 +1473,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/2023-q1-transparency-report",
             upvote: Some(UpvoteConfig {
-                id: "zecsecQ12023Report",
+                id: "zecsecq12023report",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1490,7 +1490,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/milk-sad",
             upvote: Some(UpvoteConfig {
-                id: "zecsecMilkSad",
+                id: "zecsecmilksad",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1505,7 +1505,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/free2z-security-audit",
             upvote: Some(UpvoteConfig {
-                id: "zecsecFree2zAudit",
+                id: "zecsecfree2zaudit",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1520,7 +1520,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/zcash-51-percent-attack",
             upvote: Some(UpvoteConfig {
-                id: "zecsec51PercentAttack",
+                id: "zecsec51percentattack",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1535,7 +1535,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/security-audit-of-hanhs-ledger-app",
             upvote: Some(UpvoteConfig {
-                id: "zecsecLedgerAppAudit",
+                id: "zecsecledgerappaudit",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1550,7 +1550,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/zecwallet-lite-cli-security-audit",
             upvote: Some(UpvoteConfig {
-                id: "zecsecZecwalletAudit",
+                id: "zecseczecwalletaudit",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1565,7 +1565,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/future-of-zcash-ecosystem-security",
             upvote: Some(UpvoteConfig {
-                id: "zecsecFutureOfSecurity",
+                id: "zecsecfutureofsecurity",
                 category: "zecsec",
                 title: None,
                 description: None,
@@ -1580,7 +1580,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "",
             legacy_hit_count_id: "zecsec/zgo-security-audit",
             upvote: Some(UpvoteConfig {
-                id: "zecsecZgoAudit",
+                id: "zecseczgoaudit",
                 category: "zecsec",
                 title: None,
                 description: None,
