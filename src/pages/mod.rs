@@ -16,3 +16,4 @@ pub mod services;
 pub mod software;
 pub mod test_directory;
 pub mod vimrc;
+pub mod zecsec;

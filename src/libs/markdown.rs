@@ -32,6 +32,26 @@ pub fn render_readme(md: &str) -> String {
     demote_headings(&html)
 }
 
+/// Render a blog post markdown string to HTML.
+///
+/// Unlike `render_readme`, this does NOT strip the leading `# heading`,
+/// does NOT strip badge lines, and does NOT demote headings.
+/// The `# Title` in the markdown becomes the page's `<h1>`.
+///
+/// # Safety
+///
+/// Raw HTML passthrough is enabled, so this must only be used with trusted input.
+pub fn render_post(md: &str) -> String {
+    let mut options = Options::default();
+    options.extension.table = true;
+    options.extension.strikethrough = true;
+    options.extension.autolink = true;
+    options.extension.tasklist = true;
+    options.extension.footnotes = true;
+    options.render.unsafe_ = true;
+    markdown_to_html(md, &options)
+}
+
 /// Shift all HTML heading levels down by one (h1->h2, ..., h5->h6, h6 stays h6).
 fn demote_headings(html: &str) -> String {
     // Replace from h5->h6 down to h1->h2 to avoid double-replacing

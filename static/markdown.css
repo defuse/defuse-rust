@@ -50,3 +50,24 @@
 .markdown-content img {
     max-width: 100%;
 }
+
+.markdown-content section.footnotes {
+    margin-top: 2em;
+    padding-top: 1em;
+    border-top: 1px solid #ccc;
+    font-size: 0.8em;
+}
+
+.markdown-content section.footnotes ol {
+    padding-left: 1.5em;
+}
+
+.markdown-content section.footnotes li {
+    padding-left: 0.4em;
+}
+
+.markdown-content section.footnotes li:target {
+    background-color: #ffffcc;
+    box-shadow: -1.5em 0 0 #ffffcc;
+}
+

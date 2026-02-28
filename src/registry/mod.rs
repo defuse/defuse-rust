@@ -14,6 +14,8 @@ pub use pages::PAGE_REGISTRY;
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
+use chrono::{DateTime, FixedOffset};
+
 use crate::handler::PageHandler;
 
 /// Set of valid upvote permanent IDs, built from PAGE_REGISTRY on first access.
@@ -72,7 +74,7 @@ pub struct PageInfo {
     /// Page title (empty = use DEFAULT_TITLE)
     pub title: &'static str,
 
-    /// Meta description (empty = use DEFAULT_META_DESCRIPTION)
+    /// Meta description (empty = fall back to title, then DEFAULT_META_DESCRIPTION)
     pub description: &'static str,
 
     /// Meta keywords (empty = use DEFAULT_META_KEYWORDS)
@@ -103,6 +105,11 @@ pub struct PageInfo {
 
     /// Page features (banner, math rendering, etc.)
     pub features: Features,
+
+    /// Publication date/time for blog-style posts.
+    /// Rendered by base.html before the content block as "Month Day, Year".
+    /// Includes full timestamp for sorting posts on the same day.
+    pub date: Option<DateTime<FixedOffset>>,
 }
 
 // Manual Clone implementation - needed because of dyn trait object
@@ -119,6 +126,7 @@ impl Clone for PageInfo {
             no_cache: self.no_cache,
             upvote: self.upvote.clone(),
             features: self.features.clone(),
+            date: self.date,
         }
     }
 }
@@ -151,6 +159,7 @@ macro_rules! alias {
             no_cache: false,
             upvote: None,
             features: Features { banner: None, math: false },
+            date: None,
         }
     };
 }
@@ -182,6 +191,7 @@ macro_rules! page {
             no_cache: false,
             upvote: $upvote,
             features: Features { banner: None, math: false },
+            date: None,
         }
     };
     (
@@ -205,6 +215,7 @@ macro_rules! page {
             no_cache: $no_cache,
             upvote: $upvote,
             features: Features { banner: None, math: false },
+            date: None,
         }
     };
     (
@@ -228,12 +239,76 @@ macro_rules! page {
             no_cache: false,
             upvote: $upvote,
             features: $features,
+            date: None,
+        }
+    };
+    // Arm 4: date (no features override)
+    (
+        handler: $($handler:ident)::+,
+        slug: $slug:expr,
+        title: $title:expr,
+        description: $description:expr,
+        keywords: $keywords:expr,
+        legacy_hit_count_id: $legacy_hit_count_id:expr,
+        upvote: $upvote:expr,
+        date: $date:expr $(,)?
+    ) => {
+        PageInfo {
+            handler: Some(&crate::pages::$($handler)::+::Handler),
+            slug: $slug,
+            title: $title,
+            description: $description,
+            keywords: $keywords,
+            legacy_hit_count_id: $legacy_hit_count_id,
+            redirect: None,
+            no_cache: false,
+            upvote: $upvote,
+            features: Features { banner: None, math: false },
+            date: $date,
+        }
+    };
+    // Arm 5: date + features
+    (
+        handler: $($handler:ident)::+,
+        slug: $slug:expr,
+        title: $title:expr,
+        description: $description:expr,
+        keywords: $keywords:expr,
+        legacy_hit_count_id: $legacy_hit_count_id:expr,
+        upvote: $upvote:expr,
+        date: $date:expr,
+        features: $features:expr $(,)?
+    ) => {
+        PageInfo {
+            handler: Some(&crate::pages::$($handler)::+::Handler),
+            slug: $slug,
+            title: $title,
+            description: $description,
+            keywords: $keywords,
+            legacy_hit_count_id: $legacy_hit_count_id,
+            redirect: None,
+            no_cache: false,
+            upvote: $upvote,
+            features: $features,
+            date: $date,
         }
     };
 }
 pub(crate) use page;
 
+/// Parse an ISO 8601 / RFC 3339 datetime string for use in page registry date fields.
+/// Panics at registry init time if the string is invalid.
+pub fn datetime(s: &str) -> Option<DateTime<FixedOffset>> {
+    Some(DateTime::parse_from_rfc3339(s).expect("invalid datetime in page registry"))
+}
+
 impl PageInfo {
+    /// Format the date for display (e.g. "August 11, 2023").
+    /// Displays in the original timezone of the stored datetime.
+    pub fn formatted_date(&self) -> Option<String> {
+        self.date.map(|d| d.format("%B %-d, %Y").to_string())
+    }
+
     /// Is this a directory-style URL? (no .htm extension)
     /// Derived from slug: empty string or ends with "/"
     pub fn is_directory(&self) -> bool {
@@ -263,9 +338,15 @@ impl PageInfo {
         if self.title.is_empty() { DEFAULT_TITLE } else { self.title }
     }
 
-    /// Get description, falling back to default if empty
+    /// Get description, falling back to title then site default if empty
     pub fn description_or_default(&self) -> &'static str {
-        if self.description.is_empty() { DEFAULT_META_DESCRIPTION } else { self.description }
+        if !self.description.is_empty() {
+            self.description
+        } else if !self.title.is_empty() {
+            self.title
+        } else {
+            DEFAULT_META_DESCRIPTION
+        }
     }
 
     /// Get keywords, falling back to default if empty
@@ -291,6 +372,7 @@ pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
     no_cache: false,
     upvote: None,
     features: Features { banner: None, math: false },
+    date: None,
 };
 
 /// Look up a page by name/slug (case-insensitive)

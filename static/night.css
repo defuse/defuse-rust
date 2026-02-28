@@ -76,6 +76,11 @@
     color: #ccc;
 }
 
+.night-mode .markdown-content th {
+    background-color: #1a1a1a;
+    border-color: #555;
+}
+
 .night-mode .markdown-content td {
     border-color: #444;
     color: #ccc;
@@ -83,6 +88,15 @@
 
 .night-mode .markdown-content tr:nth-child(even) {
     background-color: #222;
+}
+
+.night-mode .markdown-content section.footnotes {
+    border-top-color: #444;
+}
+
+.night-mode .markdown-content section.footnotes li:target {
+    background-color: #3a3a00;
+    box-shadow: -1.5em 0 0 #3a3a00;
 }
 
 /* ===== Tables ===== */

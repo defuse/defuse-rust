@@ -82,3 +82,51 @@ macro_rules! simple_page {
         }
     };
 }
+
+/// Macro for markdown-rendered blog post pages.
+///
+/// Reads the markdown file from disk at runtime and renders it to HTML using
+/// `render_post`. This allows editing .md files without recompiling.
+///
+/// Usage:
+/// ```ignore
+/// crate::markdown_page!(MilkSadPage, "zecsec/milk-sad.md");
+/// ```
+#[macro_export]
+macro_rules! markdown_page {
+    ($template:ident, $md_path:expr) => {
+        use askama::Template;
+        use axum::response::IntoResponse;
+
+        use $crate::context::PageContext;
+        use $crate::handler::{BoxFuture, PageHandler};
+        use $crate::app_state::AppState;
+        use $crate::libs::markdown;
+
+        pub struct Handler;
+
+        impl PageHandler for Handler {
+            fn get(&self, ctx: PageContext, _state: &AppState) -> BoxFuture {
+                Box::pin(async move {
+                    let path = std::path::Path::new("static/markdown").join($md_path);
+                    let md = match std::fs::read_to_string(&path) {
+                        Ok(md) => md,
+                        Err(e) => {
+                            tracing::error!("Failed to read markdown file {}: {}", path.display(), e);
+                            return axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                        }
+                    };
+                    let content_html = markdown::render_post(&md);
+                    $template { ctx, content_html }.into_response()
+                })
+            }
+        }
+
+        #[derive(Template)]
+        #[template(path = "pages/zecsec/post.html")]
+        struct $template {
+            ctx: PageContext,
+            content_html: String,
+        }
+    };
+}
