@@ -56,12 +56,13 @@
 <body {% if ctx.is_home() %}style="background:white;" {% endif %} >
 <div id="wrap">
 
-<!-- Mobile navigation (hidden on desktop via mobile.css media query) -->
-<div class="mobile-header">
-    <button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('mobile-nav-open')">
-        <span></span><span></span><span></span>
-    </button>
-</div>
+<!-- Hamburger button (visible at all widths; positioned differently via CSS) -->
+<button class="hamburger" aria-label="Menu" onclick="document.body.classList.toggle('mobile-nav-open')">
+    <span></span><span></span><span></span>
+</button>
+
+<!-- Mobile-only header bar (replaces desktop masthead at narrow widths) -->
+<div class="mobile-header"></div>
 <div class="mobile-menubar">
     <button onclick="document.body.classList.toggle('mobile-nav-open')">Menu</button>
     <button class="night-toggle" onclick="nightToggle()" aria-label="Toggle night mode">Night Mode</button>
