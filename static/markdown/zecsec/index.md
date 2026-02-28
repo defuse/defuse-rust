@@ -26,7 +26,6 @@ can think of this page as "a security auditor's guide to Zcash."
 - December 29, 2022 &ndash; [Security Audit Process](/zecsec/security-audit-process.htm)
 - November 15, 2022 &ndash; [Scalable Private Money Needs Scalable Anonymous Messaging](/zecsec/scalable-private-money-needs-scalable-private-messaging.htm)
 - October 28, 2022 &ndash; [October Update: Ywallet audited, and what's next?](/zecsec/october-update.htm)
-- October 13, 2022 &ndash; [Hello, World!](/zecsec/my-first-post.htm)
 
 ## Audit Reports
 
