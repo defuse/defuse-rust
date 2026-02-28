@@ -655,7 +655,7 @@
         var v=localStorage.getItem(k);
         if(v&&now-parseInt(v,10)<DAY)d.open=true;
         d.addEventListener('toggle',function(){
-            if(d.open)localStorage.setItem(k,''+now);
+            if(d.open)localStorage.setItem(k,''+Date.now());
             else localStorage.removeItem(k);
         });
     });
