@@ -22,6 +22,8 @@
     cursor: pointer;
     gap: 5px;              /* spacing between the 3 lines */
     background: rgba(0, 0, 0, 0.6);
+    position: absolute;
+    right: 12px;
     z-index: 1001;         /* above .menuminwidth0 z-index:1000 so it's clickable */
 }
 
@@ -342,24 +344,24 @@ body.mobile-nav-open .mobile-nav {
 
 /*=============================================================================
   Wide layout (> 850px): hamburger overlays the desktop masthead
+  NOTE: These are NOT inside a media query. They rely on the narrow-layout
+  @media (max-width: 850px) block below to override them. Do not reorder
+  these sections.
 =============================================================================*/
-@media (min-width: 851px) {
-    /* Hamburger: positioned at top-right of the masthead (above social links) */
-    .hamburger {
-        position: absolute;
-        top: 10px;             /* above #sm which starts at top:62px */
-        right: 12px;
-    }
 
-    /* Close button area: must match #masthead height (100px) so the border aligns
-       with the menu bar's top border. box-sizing includes padding + border in height.
-       padding-top positions the × button to match the hamburger's top:10px. */
-    .mobile-nav-close {
-        height: 100px;        /* must match #masthead height in mainmenu.css */
-        box-sizing: border-box;
-        align-items: flex-start;
-        padding-top: 10px;    /* must match .hamburger top */
-    }
+/* Hamburger top position for the tall desktop masthead */
+.hamburger {
+    top: 10px;             /* above #sm which starts at top:62px */
+}
+
+/* Close button area: must match #masthead height (100px) so the border aligns
+   with the menu bar's top border. box-sizing includes padding + border in height.
+   padding-top positions the × button to match the hamburger's top:10px. */
+.mobile-nav-close {
+    height: 100px;        /* must match #masthead height in mainmenu.css */
+    box-sizing: border-box;
+    align-items: flex-start;
+    padding-top: 10px;    /* must match .hamburger top */
 }
 
 /* Hide elements that crowd the desktop masthead at narrower widths */
