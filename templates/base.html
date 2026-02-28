@@ -650,6 +650,7 @@
 <script>
 (function(){
     var TTL=6e5,now=Date.now();
+    var tops=document.querySelectorAll('.mobile-nav > details');
     document.querySelectorAll('.mobile-nav details:not(.mobile-nav-recent-more)').forEach(function(d){
         var k='flyout-'+d.querySelector('summary').textContent.trim();
         var v=localStorage.getItem(k);
@@ -657,6 +658,11 @@
         d.addEventListener('toggle',function(){
             if(d.open)localStorage.setItem(k,''+Date.now());
             else localStorage.removeItem(k);
+        });
+    });
+    tops.forEach(function(d){
+        d.addEventListener('toggle',function(){
+            if(d.open)tops.forEach(function(o){if(o!==d)o.open=false;});
         });
     });
 })();
