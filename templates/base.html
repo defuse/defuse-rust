@@ -649,11 +649,11 @@
 <!-- End Piwik Code -->
 <script>
 (function(){
-    var DAY=864e5,now=Date.now();
+    var TTL=6e5,now=Date.now();
     document.querySelectorAll('.mobile-nav details:not(.mobile-nav-recent-more)').forEach(function(d){
         var k='flyout-'+d.querySelector('summary').textContent.trim();
         var v=localStorage.getItem(k);
-        if(v&&now-parseInt(v,10)<DAY)d.open=true;
+        if(v&&now-parseInt(v,10)<TTL)d.open=true;
         d.addEventListener('toggle',function(){
             if(d.open)localStorage.setItem(k,''+Date.now());
             else localStorage.removeItem(k);
