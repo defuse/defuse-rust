@@ -26,8 +26,8 @@ static VALID_UPVOTE_IDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         .collect()
 });
 
-/// The 10 most recent pages by date, sorted newest first.
-/// Pages without a date are excluded.
+/// All pages with dates, sorted newest first.
+/// The flyout template shows the first 6 inline with a "more..." expander for the rest.
 pub static RECENT_PAGES: LazyLock<Vec<&'static PageInfo>> = LazyLock::new(|| {
     let mut pages: Vec<&PageInfo> = PAGE_REGISTRY
         .values()
