@@ -647,6 +647,20 @@
 <noscript><p><img src="https://defuse.ca/piwik/piwik.php?idsite=1" style="border:0;" alt="" /></p></noscript>
 -->
 <!-- End Piwik Code -->
+<script>
+(function(){
+    var DAY=864e5,now=Date.now();
+    document.querySelectorAll('.mobile-nav details').forEach(function(d){
+        var k='flyout-'+d.querySelector('summary').textContent.trim();
+        var v=localStorage.getItem(k);
+        if(v&&now-parseInt(v,10)<DAY)d.open=true;
+        d.addEventListener('toggle',function(){
+            if(d.open)localStorage.setItem(k,''+now);
+            else localStorage.removeItem(k);
+        });
+    });
+})();
+</script>
 {% if ctx.page_info.features.math %}
 <script defer src="/katex/katex.min.js"></script>
 <script defer src="/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});"></script>
