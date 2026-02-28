@@ -37,9 +37,9 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         page! {
             handler: home,
             slug: "",
-            title: "",
-            description: "",
-            keywords: "",
+            title: "Defuse Security Research and Development",
+            description: "Defuse Security. Home of PIE Bin, TRENT, and more...",
+            keywords: "defuse security, encryption, privacy, programming, code, research",
             legacy_hit_count_id: "pages/home.html",
             upvote: None,
         },

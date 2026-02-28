@@ -74,7 +74,7 @@ pub struct PageInfo {
     /// Page title (empty = use DEFAULT_TITLE)
     pub title: &'static str,
 
-    /// Meta description (empty = use DEFAULT_META_DESCRIPTION)
+    /// Meta description (empty = fall back to title, then DEFAULT_META_DESCRIPTION)
     pub description: &'static str,
 
     /// Meta keywords (empty = use DEFAULT_META_KEYWORDS)
@@ -338,9 +338,15 @@ impl PageInfo {
         if self.title.is_empty() { DEFAULT_TITLE } else { self.title }
     }
 
-    /// Get description, falling back to default if empty
+    /// Get description, falling back to title then site default if empty
     pub fn description_or_default(&self) -> &'static str {
-        if self.description.is_empty() { DEFAULT_META_DESCRIPTION } else { self.description }
+        if !self.description.is_empty() {
+            self.description
+        } else if !self.title.is_empty() {
+            self.title
+        } else {
+            DEFAULT_META_DESCRIPTION
+        }
     }
 
     /// Get keywords, falling back to default if empty
