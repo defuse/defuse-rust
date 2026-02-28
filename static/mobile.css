@@ -21,6 +21,7 @@
     border-radius: 6px;
     cursor: pointer;
     gap: 5px;              /* spacing between the 3 lines */
+    background: rgba(0, 0, 0, 0.6);
     z-index: 1001;         /* above .menuminwidth0 z-index:1000 so it's clickable */
 }
 
@@ -342,23 +343,23 @@ body.mobile-nav-open .mobile-nav {
 /*=============================================================================
   Wide layout (> 850px): hamburger overlays the desktop masthead
 =============================================================================*/
+@media (min-width: 851px) {
+    /* Hamburger: positioned at top-right of the masthead (above social links) */
+    .hamburger {
+        position: absolute;
+        top: 10px;             /* above #sm which starts at top:62px */
+        right: 12px;
+    }
 
-/* Hamburger: positioned at top-right of the masthead (above social links) */
-.hamburger {
-    position: absolute;
-    top: 10px;             /* above #sm which starts at top:62px */
-    right: 12px;
-    background: rgba(0, 0, 0, 0.6);
-}
-
-/* Close button area: must match #masthead height (100px) so the border aligns
-   with the menu bar's top border. box-sizing includes padding + border in height.
-   padding-top positions the × button to match the hamburger's top:10px. */
-.mobile-nav-close {
-    height: 100px;        /* must match #masthead height in mainmenu.css */
-    box-sizing: border-box;
-    align-items: flex-start;
-    padding-top: 10px;    /* must match .hamburger top */
+    /* Close button area: must match #masthead height (100px) so the border aligns
+       with the menu bar's top border. box-sizing includes padding + border in height.
+       padding-top positions the × button to match the hamburger's top:10px. */
+    .mobile-nav-close {
+        height: 100px;        /* must match #masthead height in mainmenu.css */
+        box-sizing: border-box;
+        align-items: flex-start;
+        padding-top: 10px;    /* must match .hamburger top */
+    }
 }
 
 /* Hide elements that crowd the desktop masthead at narrower widths */
@@ -465,22 +466,13 @@ body.mobile-nav-open .mobile-nav {
     /* ===== Hamburger: reposition over the mobile header ===== */
     .hamburger {
         top: 8px;              /* vertically center in 60px header: (60 - 44) / 2 */
-        background: rgba(0, 0, 0, 0.6);
-    }
-
-    .hamburger span {
-        background: #fff;
-    }
-
-    .hamburger:hover span {
-        background: #fff;
     }
 
     /* ===== Close button: shorter to match mobile header, centered ===== */
     .mobile-nav-close {
         height: 60px;          /* must match .mobile-header height */
-        align-items: center;   /* override wide-mode flex-start */
-        padding-top: 0;        /* override wide-mode padding */
+        align-items: center;
+        padding-top: 0;
     }
 
     /* ===== Fluid content width ===== */
