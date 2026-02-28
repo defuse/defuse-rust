@@ -1140,6 +1140,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("`vfy` Directory Comparer"),
                 description: Some("A directory comparison tool for checking if backups have been completed or restored successfully."),
             }),
+            date: datetime("2026-02-07T12:00:00-07:00"),
         },
         page! {
             handler: software::helloworld_cms,
