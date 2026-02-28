@@ -39,7 +39,7 @@ echo ""
 # ---------------------------------------------------------------------------
 echo "--- Posts (bare slug) ---"
 check_redirect "https://zecsec.com/posts/my-first-post" \
-               "https://defuse.ca/zecsec/my-first-post.htm"
+               "https://defuse.ca/zecsec.htm"
 check_redirect "https://zecsec.com/posts/october-update" \
                "https://defuse.ca/zecsec/october-update.htm"
 check_redirect "https://zecsec.com/posts/scalable-private-money-needs-scalable-private-messaging" \
@@ -64,7 +64,7 @@ echo ""
 # ---------------------------------------------------------------------------
 echo "--- Posts (trailing slash) ---"
 check_redirect "https://zecsec.com/posts/my-first-post/" \
-               "https://defuse.ca/zecsec/my-first-post.htm"
+               "https://defuse.ca/zecsec.htm"
 check_redirect "https://zecsec.com/posts/october-update/" \
                "https://defuse.ca/zecsec/october-update.htm"
 check_redirect "https://zecsec.com/posts/scalable-private-money-needs-scalable-private-messaging/" \
@@ -89,7 +89,7 @@ echo ""
 # ---------------------------------------------------------------------------
 echo "--- Posts (/index.html suffix) ---"
 check_redirect "https://zecsec.com/posts/my-first-post/index.html" \
-               "https://defuse.ca/zecsec/my-first-post.htm"
+               "https://defuse.ca/zecsec.htm"
 check_redirect "https://zecsec.com/posts/october-update/index.html" \
                "https://defuse.ca/zecsec/october-update.htm"
 check_redirect "https://zecsec.com/posts/scalable-private-money-needs-scalable-private-messaging/index.html" \
@@ -169,7 +169,7 @@ echo "--- www.zecsec.com (spot check) ---"
 check_redirect "https://www.zecsec.com/" \
                "https://defuse.ca/zecsec.htm"
 check_redirect "https://www.zecsec.com/posts/my-first-post" \
-               "https://defuse.ca/zecsec/my-first-post.htm"
+               "https://defuse.ca/zecsec.htm"
 check_redirect "https://www.zecsec.com/audits/ZGo-Security-Audit-v1.1.pdf" \
                "https://defuse.ca/zecsec/audits/ZGo-Security-Audit-v1.1.pdf"
 

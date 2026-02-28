@@ -1315,21 +1315,6 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         },
         // Posts (chronological by date)
         page! {
-            handler: zecsec::my_first_post,
-            slug: "zecsec/my-first-post",
-            title: "Hello, World! - ZecSec",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "zecsec/my-first-post",
-            upvote: Some(UpvoteConfig {
-                id: "zecsecmyfirstpost",
-                category: "zecsec",
-                title: None,
-                description: None,
-            }),
-            date: datetime("2022-10-13T08:22:29-06:00"),
-        },
-        page! {
             handler: zecsec::october_update,
             slug: "zecsec/october-update",
             title: "October Update: Ywallet audited, and what's next? - ZecSec",
