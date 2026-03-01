@@ -4,7 +4,7 @@ A Rust rewrite of defuse.ca, ported from [the old PHP code](https://github.com/d
 
 Copyright 2026, Taylor Hornby. All rights reserved.
 
-Code is licensed under AGPL. Content is licensed under [CC-BY-SA](https://creativecommons.org/licenses/by-sa/3.0/deed.en).
+Code is licensed under [AGPL](/LICENSE). Content is licensed under [CC-BY-SA](https://creativecommons.org/licenses/by-sa/3.0/deed.en).
 
 ### Dependencies
 
