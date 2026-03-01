@@ -47,7 +47,7 @@ fn base_options() -> Options<'static> {
     options.extension.autolink = true;
     options.extension.tasklist = true;
     options.parse.smart = true;
-    options.extension.header_ids = Some(String::new());
+    options.extension.header_ids = Some("sec-".to_string());
     options.extension.description_lists = true;
     options.render.unsafe_ = true;
     options
