@@ -21,14 +21,7 @@ pub fn render_readme(md: &str) -> String {
         .collect::<Vec<_>>()
         .join("\n");
 
-    let mut options = Options::default();
-    options.extension.table = true;
-    options.extension.strikethrough = true;
-    options.extension.autolink = true;
-    options.extension.tasklist = true;
-    options.render.unsafe_ = true;
-
-    let html = markdown_to_html(&body, &options);
+    let html = markdown_to_html(&body, &base_options());
     demote_headings(&html)
 }
 
@@ -42,14 +35,22 @@ pub fn render_readme(md: &str) -> String {
 ///
 /// Raw HTML passthrough is enabled, so this must only be used with trusted input.
 pub fn render_post(md: &str) -> String {
+    let mut options = base_options();
+    options.extension.footnotes = true;
+    markdown_to_html(md, &options)
+}
+
+fn base_options() -> Options<'static> {
     let mut options = Options::default();
     options.extension.table = true;
     options.extension.strikethrough = true;
     options.extension.autolink = true;
     options.extension.tasklist = true;
-    options.extension.footnotes = true;
+    options.parse.smart = true;
+    options.extension.header_ids = Some(String::new());
+    options.extension.description_lists = true;
     options.render.unsafe_ = true;
-    markdown_to_html(md, &options)
+    options
 }
 
 /// Shift all HTML heading levels down by one (h1->h2, ..., h5->h6, h6 stays h6).
