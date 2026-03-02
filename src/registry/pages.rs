@@ -896,6 +896,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Claude Code Status Line"),
                 description: Some("A custom status line for Claude Code showing context usage, costs, and git branch."),
             }),
+            date: datetime("2026-02-22T15:13:51-07:00"),
         },
 
         // ===== Projects =====
