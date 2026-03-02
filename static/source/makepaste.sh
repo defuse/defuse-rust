@@ -15,5 +15,5 @@ URL=$(                                                                      \
         https://defuse.ca/bin/add.php -D - |                                \
         grep -i location | cut -d " " -f 2 | tr -d '\r\n'                      \
 )
-echo "wget $URL?raw=true -q -O - | gpg -d -q --batch --pinentry-mode loopback --passphrase \"$PASSWORD\""
+echo "wget https://defuse.ca$URL?raw=true -q -O - | gpg -d -q --batch --pinentry-mode loopback --passphrase \"$PASSWORD\""
 
