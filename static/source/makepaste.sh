@@ -8,12 +8,12 @@
 # https://defuse.ca/pastebin.htm
 
 PASSWORD=$(gpg --gen-random 2 16 | base64)
-URL=$(                                                                      \
-        gpg --batch --pinentry-mode loopback --passphrase "$PASSWORD" -c -a | \
-        curl -s -d "jscrypt=no" -d "lifetime=864000"                        \
-        -d "shorturl=yes" --data-urlencode "paste@-"                        \
-        https://defuse.ca/bin/add.php -D - |                                \
-        grep -i location | cut -d " " -f 2 | tr -d '\r\n'                      \
+URL=$(                                                                  \
+        gpg --batch --passphrase-fd 3 -c -a 3<<<"$PASSWORD" |          \
+        curl -s -d "jscrypt=no" -d "lifetime=864000"                    \
+        -d "shorturl=yes" --data-urlencode "paste@-"                    \
+        https://defuse.ca/bin/add.php -D - |                            \
+        grep -i location | cut -d " " -f 2 | tr -d '\r\n'              \
 )
-echo "wget https://defuse.ca$URL?raw=true -q -O - | gpg -d -q --batch --pinentry-mode loopback --passphrase \"$PASSWORD\""
+echo "P='$PASSWORD'; gpg -d -q --batch --passphrase-fd 0 <(wget https://defuse.ca$URL?raw=true -q -O -) < <(printf '%s\n' \"\$P\")"
 
