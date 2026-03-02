@@ -660,6 +660,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Encrypting One Time Passwords (EOTP)"),
                 description: Some("EOTP is a cryptographic One Time Password (OTP) protocol designed to provide a static encryption key across login sessions."),
             }),
+            features: Features {
+                banner: Some(DEPRECATED_BANNER),
+                math: false,
+            },
         },
         page! {
             handler: research::triangle_of_secure_code_delivery,
