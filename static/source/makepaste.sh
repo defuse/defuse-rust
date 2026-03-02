@@ -16,5 +16,9 @@ URL=$(                                                                  \
         grep -i location | cut -d " " -f 2 | tr -d '\r\n'              \
 )
 echo "Download command:"
-echo "P='$PASSWORD'; gpg -d -q --batch --passphrase-fd 0 <(wget https://defuse.ca$URL?raw=true -q -O -) < <(printf '%s\n' \"\$P\"); unset P"
+echo "P='$PASSWORD'; \\
+  gpg -d -q --batch --passphrase-fd 0 \\
+    <(wget https://defuse.ca$URL?raw=true -q -O -) \\
+    < <(printf '%s\n' \"\$P\"); \\
+  unset P"
 
