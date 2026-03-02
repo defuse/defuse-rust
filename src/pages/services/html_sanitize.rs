@@ -22,6 +22,7 @@ impl PageHandler for Handler {
     fn get(&self, ctx: PageContext, _state: &AppState) -> BoxFuture {
         Box::pin(async move {
             let source_html = get_source_html();
+            let source_html_rust = get_rust_source_html();
 
             HtmlSanitizePage {
                 ctx,
@@ -30,6 +31,7 @@ impl PageHandler for Handler {
                 br_checked: true,
                 submitted: false,
                 source_html,
+                source_html_rust,
             }
             .into_response()
         })
@@ -43,6 +45,7 @@ impl PageHandler for Handler {
                         serde_urlencoded::from_bytes(&bytes).unwrap_or_default();
 
                     let source_html = get_source_html();
+                    let source_html_rust = get_rust_source_html();
 
                     // Parse tab width
                     let tab_width: i32 = form.tw.parse().unwrap_or(0);
@@ -58,6 +61,7 @@ impl PageHandler for Handler {
                             br_checked: form.br.is_some(),
                             submitted: form.sanitize.is_some(),
                             source_html,
+                            source_html_rust,
                         }
                         .into_response();
                     }
@@ -74,12 +78,14 @@ impl PageHandler for Handler {
                         br_checked: br_tags,
                         submitted: form.sanitize.is_some(),
                         source_html,
+                        source_html_rust,
                     }
                     .into_response()
                 }
                 // There are no file uploads, just show the page.
                 PostBody::Multipart { .. } => {
                     let source_html = get_source_html();
+                    let source_html_rust = get_rust_source_html();
 
                     HtmlSanitizePage {
                         ctx,
@@ -88,6 +94,7 @@ impl PageHandler for Handler {
                         br_checked: true,
                         submitted: false,
                         source_html,
+                        source_html_rust,
                     }
                     .into_response()
                 }
@@ -104,6 +111,13 @@ fn get_source_html() -> String {
     })
 }
 
+fn get_rust_source_html() -> String {
+    let source_path = Path::new("src/libs/html_escape.rs");
+    vim_highlight::highlight_file(source_path, true).unwrap_or_else(|e| {
+        format!("<pre>Error loading source: {}</pre>", escape_html(&e.to_string()))
+    })
+}
+
 #[derive(Template)]
 #[template(path = "pages/services/html_sanitize.html")]
 struct HtmlSanitizePage {
@@ -113,6 +127,7 @@ struct HtmlSanitizePage {
     br_checked: bool,
     submitted: bool,
     source_html: String,
+    source_html_rust: String,
 }
 
 #[derive(Deserialize, Default)]
