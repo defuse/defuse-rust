@@ -293,6 +293,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("An article on Bitcoin, centralization, and DDoS attacks."),
             }),
             date: datetime("2011-06-22T12:00:00-07:00"),
+            features: Features {
+                banner: Some("<div class=\"deprecated-banner\">This article is outdated.</div>"),
+                math: false,
+            },
         },
         page! {
             handler: research::blind_birthday_attack,
@@ -1090,6 +1094,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Negative Feedback for Insecure Connections"),
                 description: Some("Should web browser interfaces provide negative feedback when the connection is insecure?"),
             }),
+            features: Features {
+                banner: Some("<div class=\"deprecated-banner\">This article is outdated.</div>"),
+                math: false,
+            },
         },
         page! {
             handler: projects::dawr,
