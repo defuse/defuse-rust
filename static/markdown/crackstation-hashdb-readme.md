@@ -1,4 +1,4 @@
-[CrackStation.net](http://crackstation.net/)'s Lookup Tables
+[CrackStation.net](https://crackstation.net/)'s Lookup Tables
 ============================================================
 
 Introduction
