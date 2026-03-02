@@ -19,6 +19,5 @@ echo "Download command:"
 echo "P='$PASSWORD'; \\
   gpg -d -q --batch --passphrase-fd 0 \\
     <(wget https://defuse.ca$URL?raw=true -q -O -) \\
-    < <(printf '%s\n' \"\$P\"); \\
-  unset P"
+    < <(printf '%s\n' \"\$P\")"
 
