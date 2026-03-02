@@ -882,6 +882,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Combat in X-Plane 10"),
                 description: Some("How to configure X-Plane 10 for combat."),
             }),
+            features: Features {
+                banner: Some("<div class=\"deprecated-banner\">This page is outdated.</div>"),
+                math: false,
+            },
         },
         page! {
             handler: misc::claude_statusline,
