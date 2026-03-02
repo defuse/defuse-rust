@@ -724,6 +724,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("Why we should support the development of browser-based crypto applications."),
             }),
             date: datetime("2013-01-23T12:00:00-07:00"),
+            features: Features {
+                banner: Some("<div class=\"deprecated-banner\">Update: A modern approach to solving this problem would be to use <a href=\"https://web.dev/articles/signed-exchanges\">Signed Exchanges</a> or <a href=\"https://github.com/freedomofpress/webcat\">WEBCAT</a>.</div>"),
+                math: false,
+            },
         },
 
         // ===== Miscellaneous =====
