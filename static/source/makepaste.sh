@@ -11,7 +11,7 @@ PASSWORD=$(gpg --gen-random 2 16 | base64)
 URL=$(                                                                  \
         gpg --batch --passphrase-fd 3 -c -a 3<<<"$PASSWORD" |          \
         curl -s -d "jscrypt=no" -d "lifetime=864000"                    \
-        -d "shorturl=yes" --data-urlencode "paste@-"                    \
+        --data-urlencode "paste@-"                    \
         https://defuse.ca/bin/add.php -D - |                            \
         grep -i location | cut -d " " -f 2 | tr -d '\r\n'              \
 )
