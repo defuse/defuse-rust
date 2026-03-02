@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}<h1>Online Text &amp; File Checksum Calculator</h1>
-<p>This page lets you hash ASCII text or a file with many different hash algorithms. Checksums are commonly used to verify the integrety of data. The most common use is to verify that a file has been downloaded without error. The data you enter here is 100% private, neither the data nor hash values are ever recorded.</p>
+<p>This page lets you hash ASCII text or a file with many different hash algorithms. Checksums are commonly used to verify the integrity of data. The most common use is to verify that a file has been downloaded without error. The data you enter here is 100% private, neither the data nor hash values are ever recorded.</p>
 <p><strong>Enter some ASCII or UNICODE text...</strong></p>
 <form action="checksums.htm#checksums" method="post">
     <textarea name="data" rows="15" cols="40" style="width:100%;" >{{ input }}</textarea>
@@ -16,7 +16,7 @@
 <p style="color: red; font-weight: bold;">{{ err }}</p>
 {%- endif %}
 {%- if !results.is_empty() %}
-<a name="checksums"></a><h2>Checkums</h2>
+<a name="checksums"></a><h2>Checksums</h2>
 <table border="0" cellpadding="10" style="font-family:monospace;">
 {% for result in results %}
     <tr><th>{{ result.algorithm }}</th><td>{{ result.hash }}</td></tr>
