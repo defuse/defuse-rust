@@ -1050,6 +1050,10 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("How to Encrypt Data in PHP"),
                 description: Some("The right way to encrypt data in PHP."),
             }),
+            features: Features {
+                banner: Some("<div class=\"deprecated-banner\">While the PHP encryption library linked below is still maintained, you probably want to use <a href=\"https://github.com/paragonie/halite\">Halite</a> instead.</div>"),
+                math: false,
+            },
         },
         page! {
             handler: projects::syntax_highlighting_in_php_with_vim,
