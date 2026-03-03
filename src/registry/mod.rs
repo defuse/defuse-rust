@@ -58,16 +58,6 @@ pub struct UpvoteConfig {
     pub description: Option<&'static str>,
 }
 
-/// Page features beyond the standard metadata.
-#[derive(Debug, Clone)]
-pub struct Features {
-    /// HTML banner inserted before the page content (before the <h1>).
-    /// Used for deprecation notices, etc.
-    pub banner: Option<&'static str>,
-    /// Enable KaTeX math rendering on this page.
-    pub math: bool,
-}
-
 /// Information about a single page
 ///
 /// NOTE: Every page must explicitly specify all fields including `upvote`.
@@ -115,8 +105,12 @@ pub struct PageInfo {
     /// Upvote configuration - if Some, page shows vote arrows
     pub upvote: Option<UpvoteConfig>,
 
-    /// Page features (banner, math rendering, etc.)
-    pub features: Features,
+    /// HTML banner inserted before the page content (before the <h1>).
+    /// Used for deprecation notices, etc.
+    pub banner: Option<&'static str>,
+
+    /// Enable KaTeX math rendering on this page.
+    pub math: bool,
 
     /// Publication date/time for blog-style posts.
     /// Rendered by base.html before the content block as "Month Day, Year".
@@ -137,7 +131,8 @@ impl Clone for PageInfo {
             redirect: self.redirect,
             no_cache: self.no_cache,
             upvote: self.upvote.clone(),
-            features: self.features.clone(),
+            banner: self.banner,
+            math: self.math,
             date: self.date,
         }
     }
@@ -220,7 +215,8 @@ impl PageInfo {
         redirect: None,
         no_cache: false,
         upvote: None,
-        features: Features { banner: None, math: false },
+        banner: None,
+        math: false,
         date: None,
     };
 
