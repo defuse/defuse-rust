@@ -8,3 +8,4 @@ Disallow: /r&d/
 Disallow: /301/
 Disallow: /tor-mirror/
 Disallow: /files2/poc/
+Disallow: /files2/poc-GTFO/
