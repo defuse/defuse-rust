@@ -58,16 +58,6 @@ pub struct UpvoteConfig {
     pub description: Option<&'static str>,
 }
 
-/// Page features beyond the standard metadata.
-#[derive(Debug, Clone)]
-pub struct Features {
-    /// HTML banner inserted before the page content (before the <h1>).
-    /// Used for deprecation notices, etc.
-    pub banner: Option<&'static str>,
-    /// Enable KaTeX math rendering on this page.
-    pub math: bool,
-}
-
 /// Information about a single page
 ///
 /// NOTE: Every page must explicitly specify all fields including `upvote`.
@@ -115,8 +105,12 @@ pub struct PageInfo {
     /// Upvote configuration - if Some, page shows vote arrows
     pub upvote: Option<UpvoteConfig>,
 
-    /// Page features (banner, math rendering, etc.)
-    pub features: Features,
+    /// HTML banner inserted before the page content (before the <h1>).
+    /// Used for deprecation notices, etc.
+    pub banner: Option<&'static str>,
+
+    /// Enable KaTeX math rendering on this page.
+    pub math: bool,
 
     /// Publication date/time for blog-style posts.
     /// Rendered by base.html before the content block as "Month Day, Year".
@@ -137,7 +131,8 @@ impl Clone for PageInfo {
             redirect: self.redirect,
             no_cache: self.no_cache,
             upvote: self.upvote.clone(),
-            features: self.features.clone(),
+            banner: self.banner,
+            math: self.math,
             date: self.date,
         }
     }
@@ -161,17 +156,9 @@ impl std::fmt::Debug for PageInfo {
 macro_rules! alias {
     ($slug:expr => $target:expr) => {
         PageInfo {
-            handler: None,
             slug: $slug,
-            title: "",
-            description: "",
-            keywords: "",
-            legacy_hit_count_id: "",
             redirect: Some($target),
-            no_cache: false,
-            upvote: None,
-            features: Features { banner: None, math: false },
-            date: None,
+            ..PageInfo::DEFAULT
         }
     };
 }
@@ -179,9 +166,10 @@ pub(crate) use alias;
 
 /// Helper macro for defining regular pages WITH a handler implementation.
 /// Required: handler (first!), slug, title, description, keywords, legacy_hit_count_id, upvote
-/// Optional: no_cache (defaults to false), features (defaults to None)
+/// Optional (in any order after upvote): no_cache, features, date
 ///
-/// The handler field takes a module path (e.g., `about` or `research::my_page`) which expands to `&pages::about::Handler`.
+/// The handler field takes a module path (e.g., `about` or `research::my_page`)
+/// which expands to `&pages::about::Handler`.
 macro_rules! page {
     (
         handler: $($handler:ident)::+,
@@ -190,7 +178,8 @@ macro_rules! page {
         description: $description:expr,
         keywords: $keywords:expr,
         legacy_hit_count_id: $legacy_hit_count_id:expr,
-        upvote: $upvote:expr $(,)?
+        upvote: $upvote:expr
+        $(, $field:ident : $value:expr)* $(,)?
     ) => {
         PageInfo {
             handler: Some(&crate::pages::$($handler)::+::Handler),
@@ -199,110 +188,9 @@ macro_rules! page {
             description: $description,
             keywords: $keywords,
             legacy_hit_count_id: $legacy_hit_count_id,
-            redirect: None,
-            no_cache: false,
             upvote: $upvote,
-            features: Features { banner: None, math: false },
-            date: None,
-        }
-    };
-    (
-        handler: $($handler:ident)::+,
-        slug: $slug:expr,
-        title: $title:expr,
-        description: $description:expr,
-        keywords: $keywords:expr,
-        legacy_hit_count_id: $legacy_hit_count_id:expr,
-        upvote: $upvote:expr,
-        no_cache: $no_cache:expr $(,)?
-    ) => {
-        PageInfo {
-            handler: Some(&crate::pages::$($handler)::+::Handler),
-            slug: $slug,
-            title: $title,
-            description: $description,
-            keywords: $keywords,
-            legacy_hit_count_id: $legacy_hit_count_id,
-            redirect: None,
-            no_cache: $no_cache,
-            upvote: $upvote,
-            features: Features { banner: None, math: false },
-            date: None,
-        }
-    };
-    (
-        handler: $($handler:ident)::+,
-        slug: $slug:expr,
-        title: $title:expr,
-        description: $description:expr,
-        keywords: $keywords:expr,
-        legacy_hit_count_id: $legacy_hit_count_id:expr,
-        upvote: $upvote:expr,
-        features: $features:expr $(,)?
-    ) => {
-        PageInfo {
-            handler: Some(&crate::pages::$($handler)::+::Handler),
-            slug: $slug,
-            title: $title,
-            description: $description,
-            keywords: $keywords,
-            legacy_hit_count_id: $legacy_hit_count_id,
-            redirect: None,
-            no_cache: false,
-            upvote: $upvote,
-            features: $features,
-            date: None,
-        }
-    };
-    // Arm 4: date (no features override)
-    (
-        handler: $($handler:ident)::+,
-        slug: $slug:expr,
-        title: $title:expr,
-        description: $description:expr,
-        keywords: $keywords:expr,
-        legacy_hit_count_id: $legacy_hit_count_id:expr,
-        upvote: $upvote:expr,
-        date: $date:expr $(,)?
-    ) => {
-        PageInfo {
-            handler: Some(&crate::pages::$($handler)::+::Handler),
-            slug: $slug,
-            title: $title,
-            description: $description,
-            keywords: $keywords,
-            legacy_hit_count_id: $legacy_hit_count_id,
-            redirect: None,
-            no_cache: false,
-            upvote: $upvote,
-            features: Features { banner: None, math: false },
-            date: $date,
-        }
-    };
-    // Arm 5: date + features
-    (
-        handler: $($handler:ident)::+,
-        slug: $slug:expr,
-        title: $title:expr,
-        description: $description:expr,
-        keywords: $keywords:expr,
-        legacy_hit_count_id: $legacy_hit_count_id:expr,
-        upvote: $upvote:expr,
-        date: $date:expr,
-        features: $features:expr $(,)?
-    ) => {
-        PageInfo {
-            handler: Some(&crate::pages::$($handler)::+::Handler),
-            slug: $slug,
-            title: $title,
-            description: $description,
-            keywords: $keywords,
-            legacy_hit_count_id: $legacy_hit_count_id,
-            redirect: None,
-            no_cache: false,
-            upvote: $upvote,
-            features: $features,
-            date: $date,
+            $( $field: $value, )*
+            ..PageInfo::DEFAULT
         }
     };
 }
@@ -315,6 +203,23 @@ pub fn datetime(s: &str) -> Option<DateTime<FixedOffset>> {
 }
 
 impl PageInfo {
+    /// Default values for all fields. Used with struct update syntax (`..PageInfo::DEFAULT`)
+    /// in the `page!` and `alias!` macros so that optional fields don't need explicit arms.
+    pub const DEFAULT: Self = PageInfo {
+        handler: None,
+        slug: "",
+        title: "",
+        description: "",
+        keywords: "",
+        legacy_hit_count_id: "",
+        redirect: None,
+        no_cache: false,
+        upvote: None,
+        banner: None,
+        math: false,
+        date: None,
+    };
+
     /// Format the date for display (e.g. "August 11, 2023").
     /// Displays in the original timezone of the stored datetime.
     pub fn formatted_date(&self) -> Option<String> {
@@ -374,17 +279,9 @@ pub const DEFAULT_META_KEYWORDS: &str = "defuse security, encryption, privacy, p
 
 /// Page info for the 404 Not Found page
 pub static NOT_FOUND_PAGE_INFO: PageInfo = PageInfo {
-    handler: None, // 404 handler is called directly by dispatcher, not via trait
     slug: "404",
     title: "Page Not Found - Defuse Security",
-    description: "",
-    keywords: "",
-    legacy_hit_count_id: "",
-    redirect: None,
-    no_cache: false,
-    upvote: None,
-    features: Features { banner: None, math: false },
-    date: None,
+    ..PageInfo::DEFAULT
 };
 
 /// Look up a page by name/slug (case-insensitive)
