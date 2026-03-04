@@ -135,9 +135,25 @@ assert_eq!(body, "<h1>Welcome to the dashboard</h1>");
 
 ### Security
 
-Prefer secure-by-default designs over manual discipline at every call site. For example,
-use a templating engine that escapes all outputs by default rather than remembering to
-escape at every output site. Use parameterized queries, not string concatenation for SQL.
+Write code to high-assurance standards. Code involving cryptography, authentication,
+parsing untrusted input, crossing FFI boundaries, spawning processes, file system
+access, or concurrency requires extra care and scrutiny.
+
+Prefer secure-by-default designs over manual discipline at every call site — e.g.
+use a templating engine that escapes all outputs by default rather than escaping at
+every output site, or parameterized queries rather than string concatenation for SQL.
+
+For cryptography: do not implement primitives or protocols — use established, audited
+libraries. Assume side channels exist: use constant-time operations for all
+secret-dependent comparisons, and never expose key material in error messages, logs,
+or debug output.
+
+Adding a dependency means trusting its authors with arbitrary code execution. Only use
+well-known, actively-maintained crates (e.g. serde, tokio, clap). For anything less
+established, ask the user before adding it.
+
+Think adversarially about your own designs and code, trying to break them like an
+attacker would.
 
 ### Style
 
@@ -158,8 +174,11 @@ Make clear, atomic commits for every logical unit of work. Don't batch unrelated
 - Start the message with a verb: Add, Fix, Update, Remove, Refactor
 - Be concise but specific: `Add email validation to signup form` not `Update code`
 - Commit before moving on to the next task
-- After each commit, review the diff for security issues (injection, auth bypass,
-  secrets, unsafe input handling) and report any findings to the user before continuing.
+- After each commit, review the diff for security issues relevant to the code being
+  changed — e.g. XSS in HTML templates, SQL injection in queries, command injection
+  in process spawning, path traversal in file operations, nonce reuse or timing
+  side-channels in cryptography, missing auth checks in API handlers, hardcoded
+  secrets anywhere. Report any findings to the user before continuing.
 
 ### When In Doubt, Ask
 
