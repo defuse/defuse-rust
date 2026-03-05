@@ -131,3 +131,11 @@ report:
 cargo llvm-cov report --release --html
 # Report is at target/llvm-cov-target/html/index.html
 ```
+
+### AI Use Policy
+
+AI tools were used to assist with building this website. All code has been fully
+reviewed, and rewritten for clarity when necessary, by myself (a human). If you
+would like to submit a PR, using AI is fine, but you must stand by the
+correctness of your submission as strongly as you would if you had written the
+code yourself.
