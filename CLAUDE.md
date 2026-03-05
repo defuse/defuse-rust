@@ -118,6 +118,9 @@ behavior — vague assertions are worse than no test because they give false con
   error path in the code being tested.
 - If a function should panic on bad input, test that with
   `#[should_panic(expected = "...")]`.
+- Never make a test pass by weakening its assertions. If a test fails, report the
+  failure — do not silently fix the code or loosen the test. Test failures are
+  information: discuss with the user before changing either the test or the code.
 - You may run automated tests yourself. Do NOT start servers, databases, or long-running
   processes — ask the user to do that and tell you when it's ready.
 
