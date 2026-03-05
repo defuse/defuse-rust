@@ -149,6 +149,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "#pdftribute",
             legacy_hit_count_id: "pages/pdftribute.php",
             upvote: None,
+            date: datetime("2013-01-15T04:51:55+00:00"),
         },
 
         // ===== Services =====
@@ -474,6 +475,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Instruction Filters as an Exploitation Defense"),
                 description: Some("Disabling CPU instructions to thwart ROP and other attacks."),
             }),
+            date: datetime("2014-01-02T06:46:02-07:00"),
         },
         page! {
             handler: research::is_security_local,
@@ -543,6 +545,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "hall of shame, password hall of shame, plaintext, password restrictions, maximum password length, restriction, insecure",
             legacy_hit_count_id: "pages/research/hallofshame.php",
             upvote: None,
+            date: datetime("2011-07-07T23:23:54+00:00"),
         },
         alias!("pphos" => "password-policy-hall-of-shame"),
         page! {
@@ -751,6 +754,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Centripetal Acceleration"),
                 description: Some("Deriving the centripetal acceleration equation."),
             }),
+            date: datetime("2014-04-29T20:31:56-06:00"),
         },
         page! {
             handler: misc::contributors,
@@ -827,6 +831,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
             keywords: "formal logic introduction, meaning of if, what if means",
             legacy_hit_count_id: "pages/misc/the-meaning-of-if.php",
             upvote: None,
+            date: datetime("2013-03-30T20:56:53+00:00"),
         },
         page! {
             handler: misc::the_universe_is_made_of_cheese,
@@ -841,6 +846,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("The Cheese Universe Paradox"),
                 description: Some("A formal proof that the universe is made entirely of cheese."),
             }),
+            date: datetime("2013-03-11T20:50:04+00:00"),
         },
         page! {
             handler: misc::truecrypt_7_1a_hashes,
@@ -871,6 +877,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("How to configure X-Plane 10 for combat."),
             }),
             banner: Some("<div class=\"deprecated-banner\">This page is outdated.</div>"),
+            date: datetime("2013-07-19T22:43:46-06:00"),
         },
         page! {
             handler: misc::claude_statusline,
@@ -919,6 +926,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A Ruby script for spoofing email to SMTP servers."),
             }),
             banner: Some(DEPRECATED_BANNER),
+            date: datetime("2012-10-30T22:40:44+00:00"),
         },
         page! {
             handler: projects::force_print_background,
@@ -933,6 +941,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Forcing HTML/CSS Background Color to Print"),
                 description: Some("How to force browsers to print the background color of HTML elements (using images)."),
             }),
+            date: datetime("2011-11-04T23:05:19+00:00"),
         },
         page! {
             handler: projects::generating_random_passwords,
@@ -948,6 +957,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("How to generate unbiased passwords in PHP (plus some common mistakes)."),
             }),
             banner: Some(DEPRECATED_BANNER),
+            date: datetime("2012-02-29T22:53:11+00:00"),
         },
         page! {
             handler: projects::gnutls_psk_client_server_example,
@@ -963,6 +973,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("How to establish an SSL/TLS connection with GnuTLS and PSK authentication."),
             }),
             banner: Some(DEPRECATED_BANNER),
+            date: datetime("2013-04-18T20:54:53+00:00"),
         },
         page! {
             handler: projects::online_free_computer_science_education,
@@ -977,6 +988,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Computer Science Video Lecture Collection"),
                 description: Some("A collection of computer science related videos from various universities."),
             }),
+            date: datetime("2013-02-09T02:21:25+00:00"),
         },
         page! {
             handler: projects::php_hit_counter,
@@ -1007,6 +1019,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A fast implementation of the PBKDF2 key stretching function in PHP."),
             }),
             banner: Some(DEPRECATED_BANNER),
+            date: datetime("2011-09-06T16:23:32+00:00"),
         },
         page! {
             handler: projects::projects,
@@ -1031,6 +1044,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("The right way to encrypt data in PHP."),
             }),
             banner: Some("<div class=\"deprecated-banner\">While the PHP encryption library linked below is still maintained, you probably want to use <a href=\"https://github.com/paragonie/halite\">Halite</a> instead.</div>"),
+            date: datetime("2012-11-14T02:40:15+00:00"),
         },
         page! {
             handler: projects::syntax_highlighting_in_php_with_vim,
@@ -1046,6 +1060,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("Generate syntax-highlighted code automatically in PHP with Vim."),
             }),
             banner: Some(DEPRECATED_BANNER),
+            date: datetime("2012-08-24T06:01:06+00:00"),
         },
         page! {
             handler: projects::web_browser_negative_feedback,
@@ -1061,6 +1076,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("Should web browser interfaces provide negative feedback when the connection is insecure?"),
             }),
             banner: Some("<div class=\"deprecated-banner\">This article is outdated.</div>"),
+            date: datetime("2014-03-06T13:04:19-07:00"),
         },
         page! {
             handler: projects::dawr,
@@ -1106,6 +1122,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A Ruby script that compares two directories and reports the differences."),
             }),
             banner: Some("<div class=\"deprecated-banner\">This page has been deprecated. The code/information below may no longer be maintained.<br />There&#039;s a new, better version of this tool: <a href=\"/vfy-backup-tester.htm\"><span class=\"monowb\">$ vfy</span> Directory Comparison Tool</a>.</div>"),
+            date: datetime("2012-07-29T00:45:14+00:00"),
         },
         page! {
             handler: software::vfy_backup_tester,
@@ -1160,6 +1177,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 description: Some("A script for cracking hashes when all you have is PHP."),
             }),
             banner: Some(DEPRECATED_BANNER),
+            date: datetime("2012-04-03T00:59:19+00:00"),
         },
         page! {
             handler: software::sockstress,
@@ -1174,6 +1192,7 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
                 title: Some("Sockstress DoS Tool"),
                 description: Some("A public domain C implementation of the sockstress DoS attack."),
             }),
+            date: datetime("2012-04-15T06:28:33+00:00"),
         },
         page! {
             handler: software::passgen,
