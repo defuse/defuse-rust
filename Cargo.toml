@@ -7,7 +7,7 @@ edition = "2021"
 # Web framework
 axum = "0.7"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "time", "signal"] }
-tower = "0.4"
+tower = { version = "0.4", features = ["limit", "load-shed"] }
 tower-http = { version = "0.5", features = ["fs", "catch-panic"] }
 
 # Templating

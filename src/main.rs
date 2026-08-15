@@ -14,7 +14,11 @@
 //! You should have received a copy of the GNU Affero General Public License
 //! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use axum::{extract::DefaultBodyLimit, middleware as axum_middleware, routing::{any, get, get_service, post}, Router};
+use axum::{
+    error_handling::HandleErrorLayer, extract::DefaultBodyLimit,
+    middleware as axum_middleware, routing::{any, get, get_service, post}, BoxError, Router,
+};
+use tower::{limit::GlobalConcurrencyLimitLayer, load_shed::LoadShedLayer, ServiceBuilder};
 use tower_http::{catch_panic::CatchPanicLayer, services::ServeDir};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -48,13 +52,42 @@ fn redirect_301(location: &'static str) -> Response {
         .into_response()
 }
 
+/// Size of Tokio's blocking thread pool (the default is 512).
+///
+/// Every request runs its handler on one of these (see `blocking_middleware`), so
+/// this is the ceiling on threads the request path can consume.
+const MAX_BLOCKING_THREADS: usize = 4096;
+
+/// How many requests may be in the blocking middleware at once.
+///
+/// **This is a correctness bound, not a tuning knob.** The pool is used
+/// re-entrantly: a request holds one thread for its whole lifetime, and the
+/// handler stack running inside it draws a *second* thread from the same pool.
+/// Every `ServeDir` probes the filesystem through `tokio::fs`, which is
+/// `spawn_blocking`; the reCAPTCHA call resolves DNS the same way; the time
+/// capsule and TRENT handlers read and write files with `tokio::fs`; and the
+/// checksums page calls `spawn_blocking` explicitly, holding its nested thread
+/// for as long as it takes to hash the upload. Every one of those is sequential
+/// within a request, so at most one is outstanding at a time and peak demand is
+/// `2 * MAX_CONCURRENT_REQUESTS`.
+///
+/// If that can reach `MAX_BLOCKING_THREADS`, the pool deadlocks *permanently*:
+/// every thread ends up parked waiting on a nested task queued behind it in the
+/// same FIFO, and none of the escapes apply — tokio will not exceed the cap
+/// (`blocking/pool.rs`: the at-cap branch is empty, the task simply waits), a
+/// thread inside `task.run()` is never counted idle so the keep-alive timer never
+/// reaps it, and `spawn_blocking` closures cannot be cancelled, so client
+/// disconnects and proxy timeouts free nothing. The process must be restarted, and
+/// it still completes TCP handshakes meanwhile, so connect-based health checks
+/// pass while the site answers nothing.
+///
+/// Keeping this at a quarter of the pool leaves peak demand at half the cap.
+const MAX_CONCURRENT_REQUESTS: usize = MAX_BLOCKING_THREADS / 4;
+
 fn main() {
-    // Build runtime with a higher blocking thread pool limit (default is 512).
-    // Every request runs on a blocking thread (via blocking_middleware), so this
-    // effectively limits max concurrent requests.
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
-        .max_blocking_threads(4096)
+        .max_blocking_threads(MAX_BLOCKING_THREADS)
         .build()
         .expect("failed to build Tokio runtime");
 
@@ -192,6 +225,21 @@ async fn async_main() {
         // starve all other requests.
         .layer(axum_middleware::from_fn(blocking_middleware))
         .with_state(state.clone())
+
+        // Admission control, immediately outside the blocking middleware so that it
+        // gates entry to the pool and nothing else. See MAX_CONCURRENT_REQUESTS: the
+        // limit is what makes the pool's re-entrant use safe. LoadShed turns the
+        // concurrency limit's backpressure into an immediate 503 rather than an
+        // unbounded queue, and HandleError maps that back into a response, since
+        // axum's router requires an infallible service.
+        .layer(
+            ServiceBuilder::new()
+                .layer(HandleErrorLayer::new(|_: BoxError| async {
+                    StatusCode::SERVICE_UNAVAILABLE
+                }))
+                .layer(LoadShedLayer::new())
+                .layer(GlobalConcurrencyLimitLayer::new(MAX_CONCURRENT_REQUESTS)),
+        )
 
         // Upvote POST fallback - handles votes when JS is disabled, redirects after
         .layer(axum_middleware::from_fn_with_state(
