@@ -283,14 +283,14 @@ pub static PAGE_REGISTRY: LazyLock<HashMap<&'static str, PageInfo>> = LazyLock::
         page! {
             handler: research::auditician,
             slug: "auditician",
-            title: "Auditician: Automated Security Audits with Claude",
+            title: "Auditician: Automated Security Audits with Claude Code",
             description: "Claude Code agents and audit process descriptions for performing security audits automatically.",
             keywords: "auditician, automated security audit, claude code, ai security audit, agents",
             legacy_hit_count_id: "auditician",
             upvote: Some(UpvoteConfig {
                 id: "auditician",
                 category: "defuse_research",
-                title: Some("Auditician: Automated Security Audits with Claude"),
+                title: Some("Auditician: Automated Security Audits with Claude Code"),
                 description: Some("Claude Code agents and audit process descriptions for performing security audits automatically."),
             }),
             date: datetime("2026-08-15T12:58:50-06:00"),
