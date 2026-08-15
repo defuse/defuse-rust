@@ -27,4 +27,8 @@ echo "Downloading claude-statusline README..."
 curl -sS -o static/markdown/claude-statusline-readme.md \
     https://raw.githubusercontent.com/defuse/claude-statusline/main/README.md
 
+echo "Downloading auditician README..."
+curl -sS -o static/markdown/auditician-readme.md \
+    https://raw.githubusercontent.com/defuse/auditician/main/README.md
+
 echo "Done."

@@ -1,4 +1,5 @@
 pub mod asuskeyboarddefect;
+pub mod auditician;
 pub mod bitcoin_pool_ddos;
 pub mod blind_birthday_attack;
 pub mod bochs_hacking_guide;
