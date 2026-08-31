@@ -69,7 +69,7 @@ pub async fn upvote_post_middleware(
         .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
         .0
         .ip();
-    let client_ip = client_ip(connection_ip, request.headers());
+    let client_ip = client_ip(connection_ip, request.headers()).to_string();
 
     // Get the redirect URL (current page)
     let redirect_url = request.uri().to_string();

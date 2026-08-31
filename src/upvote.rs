@@ -34,7 +34,7 @@ pub async fn post(
         return xml_response("fail", "N", "N", 0);
     }
 
-    let client_ip = client_ip(addr.ip(), &headers);
+    let client_ip = client_ip(addr.ip(), &headers).to_string();
 
     // Process the vote
     let result = match state

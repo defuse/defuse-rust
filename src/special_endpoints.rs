@@ -43,7 +43,7 @@ pub async fn ip_insecure_php(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
 ) -> Html<String> {
-    let ip = html_escape(&client_ip(addr.ip(), &headers));
+    let ip = html_escape(&client_ip(addr.ip(), &headers).to_string());
     Html(format!(
         r#"<html>
 <head>
@@ -73,16 +73,12 @@ pub async fn getmyip_php(
 ) -> Html<String> {
     let ip = client_ip(addr.ip(), &headers);
 
-    // Reverse DNS lookup for hostname
-    let hostname = match tokio::net::lookup_host(format!("{}:0", ip)).await {
-        Ok(_) => {
-            // Try to get the hostname via reverse lookup
-            match dns_lookup::lookup_addr(&ip.parse().unwrap_or(addr.ip())) {
-                Ok(host) => host,
-                Err(_) => ip.clone(),
-            }
-        }
-        Err(_) => ip.clone(),
+    // Reverse DNS lookup for hostname. `client_ip` returns a parsed address, so the
+    // forward `lookup_host` that used to guard this is gone -- it existed to survive a
+    // non-address string, and its real effect was to resolve requester-chosen text.
+    let hostname = match dns_lookup::lookup_addr(&ip) {
+        Ok(host) => host,
+        Err(_) => ip.to_string(),
     };
 
     // Get user agent from headers
@@ -110,7 +106,7 @@ IP address: <br />{}
 </body>
 </html>
 "#,
-        html_escape(&ip),
+        html_escape(&ip.to_string()),
         html_escape(&hostname),
         html_escape(user_agent)
     ))

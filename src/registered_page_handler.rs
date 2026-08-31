@@ -46,7 +46,7 @@ pub async fn handle(State(state): State<AppState>, request: Request<Body>) -> Re
         .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
         .0
         .ip();
-    let client_ip = client_ip(connection_ip, request.headers());
+    let client_ip = client_ip(connection_ip, request.headers()).to_string();
 
     let dnt_enabled = request
         .headers()
@@ -283,7 +283,7 @@ pub async fn not_found_handler(request: Request<Body>) -> Response {
         .expect("BUG: ConnectInfo not available - is into_make_service_with_connect_info set up?")
         .0
         .ip();
-    let client_ip = client_ip(connection_ip, request.headers());
+    let client_ip = client_ip(connection_ip, request.headers()).to_string();
     let dnt_enabled = request
         .headers()
         .get(header::DNT)
