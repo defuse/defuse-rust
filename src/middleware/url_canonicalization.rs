@@ -29,6 +29,37 @@ pub const MASTER_HOST: &str = "defuse.ca";
 ///
 /// DO NOT add the real domain name (e.g. "defuse.ca") since that would cause
 /// security_headers.rs to not add HSTS headers when it should.
+///
+/// # DEPLOYMENT CONTRACT: this list is only safe behind Caddy
+///
+/// Matching a host here turns off four protections and widens one boundary:
+///
+/// * `url_canonicalization.rs` skips host canonicalization, so the site answers on
+///   whatever host asked instead of redirecting to `MASTER_HOST`;
+/// * it skips HTTPS enforcement, so plain HTTP is served;
+/// * `security_headers.rs` omits `Strict-Transport-Security`;
+/// * `registered_page_handler.rs` builds absolute URLs with `http://`;
+/// * `csrf.rs::is_accepted_host` treats the name as a legitimate request host, which
+///   is the check that exists to stop DNS rebinding. That one is a security control,
+///   not transport hardening.
+///
+/// The first two entries below are the exact `Host` values nginx's default
+/// `proxy_pass` and Apache without `ProxyPreserveHost On` send upstream. Behind such a
+/// front end every production request would match this list and run the whole site in
+/// dev mode -- no misconfiguration required, just a different proxy.
+///
+/// That does not happen today because of two properties of the deployment, both
+/// measured against real Caddy rather than assumed:
+///
+/// 1. Caddy's `reverse_proxy` preserves the client `Host`, so a request for
+///    `defuse.ca` arrives here as `defuse.ca` and never as the upstream address.
+/// 2. `operations/containers/defuse-rust/config/Caddyfile` uses *named* site blocks,
+///    so a request carrying any other `Host` -- including every name below -- is
+///    answered by Caddy and never proxied. The dev branch is unreachable from
+///    outside.
+///
+/// Neither property is written down anywhere but here. Changing the front end, or
+/// adding a catch-all site block to the Caddyfile, re-arms this list.
 pub const DEV_HOSTS: &[&str] = &[
     "localhost",
     "localhost:3000",
