@@ -162,6 +162,10 @@ async fn async_main() {
     // Validate required env vars that aren't checked by the above connections
     std::env::var("RECAPTCHA_SECRET_KEY").expect("RECAPTCHA_SECRET_KEY must be set");
 
+    // Build the captcha HTTP client now rather than on the first POST, so a TLS backend
+    // that cannot initialise is a boot failure instead of a mystery error later.
+    libs::recaptcha::http_client();
+
     // Create application state
     let state = AppState::new(phpcount, upvotes);
 
