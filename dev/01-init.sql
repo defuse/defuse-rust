@@ -50,6 +50,12 @@ GRANT ALL PRIVILEGES ON `upvotes`.* TO 'upvotes'@'%';
 
 USE `upvotes`;
 
+-- UNIQUE KEY (`permanent_id`) is the identity every vote query uses: all six vote
+-- UPDATEs and the DELETE filter on `permanent_id` alone, so `KEY (category,
+-- permanent_id)` cannot serve them -- permanent_id is not its leftmost column. It also
+-- enforces what `ensure_page`'s INSERT ... WHERE NOT EXISTS was upholding by
+-- convention: two rows for one page would have every UPDATE increment both while the
+-- page displays one, the same failure the `hits` primary key prevents.
 CREATE TABLE IF NOT EXISTS `counts` (
   `category` varchar(255) NOT NULL,
   `permanent_id` varchar(255) NOT NULL,
@@ -58,14 +64,19 @@ CREATE TABLE IF NOT EXISTS `counts` (
   `canonical_url` text NOT NULL,
   `upvotes` int(11) NOT NULL,
   `downvotes` int(11) NOT NULL,
+  UNIQUE KEY `permanent_id` (`permanent_id`),
   KEY `category` (`category`,`permanent_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+-- KEY (`time_added`) keeps `remove_old_vote_history` off a full table scan. It runs
+-- from `get_vote_state`, so it is on every page render that shows vote buttons, not
+-- just on votes -- the same shape as the `nodupes` sweep and on a hotter path.
 CREATE TABLE IF NOT EXISTS `history` (
   `hash` varchar(255) NOT NULL,
   `action` varchar(10) NOT NULL,
   `time_added` bigint(20) NOT NULL,
-  UNIQUE KEY `hash` (`hash`)
+  UNIQUE KEY `hash` (`hash`),
+  KEY `time_added` (`time_added`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- ============================================================================

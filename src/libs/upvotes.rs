@@ -289,8 +289,9 @@ impl UpvoteService {
         description: &str,
         canonical_url: &str,
     ) -> Result<(), sqlx::Error> {
-        // Atomic insert-if-not-exists to avoid race condition creating duplicate rows
-        // (the counts table has no UNIQUE constraint on permanent_id)
+        // Atomic insert-if-not-exists. `counts` now also has UNIQUE (permanent_id), so
+        // this is belt and braces rather than the only thing preventing duplicate rows --
+        // kept because it inserts without ever provoking a constraint error.
         let result = sqlx::query(
             "INSERT INTO counts (permanent_id, category, title, description, canonical_url, upvotes, downvotes)
              SELECT ?, ?, ?, ?, ?, 0, 0
@@ -721,7 +722,12 @@ impl UpvoteService {
         Ok(())
     }
 
-    /// Remove old vote history entries (> 24 hours)
+    /// Remove old vote history entries, older than `VOTE_OLD_AFTER_SECONDS` (30 days).
+    ///
+    /// Called from `get_vote_state`, so this runs on every page render showing vote
+    /// buttons, not only on votes. `history` carries `KEY (time_added)` to keep it an
+    /// index range scan; without it this is a full scan under a MyISAM table write lock
+    /// on every such request.
     async fn remove_old_vote_history(&self) -> Result<(), sqlx::Error> {
         let cutoff = Self::now() - VOTE_OLD_AFTER_SECONDS;
 
