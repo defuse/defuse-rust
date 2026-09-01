@@ -14,17 +14,29 @@ GRANT ALL PRIVILEGES ON `phpcount`.* TO 'phpcount'@'%';
 
 USE `phpcount`;
 
+-- PRIMARY KEY (`pageid`, `isunique`) is upstream PHPCount's, and it is load-bearing:
+-- `create_counts_if_not_present` is a check-then-insert, so without a unique constraint
+-- two concurrent first-hits on a page each insert a counter row. The duplicate is
+-- permanent, `count_hit` increments every matching row forever, and `get_hit_counts`
+-- reads whichever one LIMIT 1 returns. With the key the losing INSERT fails instead,
+-- which is logged and dropped -- the behaviour the code was written against.
 CREATE TABLE IF NOT EXISTS `hits` (
   `pageid` varchar(100) NOT NULL,
   `isunique` tinyint(1) NOT NULL,
   `hitcount` int(10) unsigned NOT NULL,
-  KEY `pageid` (`pageid`)
+  PRIMARY KEY (`pageid`, `isunique`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+-- KEY (`time`) is what keeps the expiry sweep off a full table scan. `cleanup` runs
+-- `DELETE FROM nodupes WHERE time < ?` on every counted page view, under a MyISAM
+-- table-level write lock, so without it the whole site serialises behind that scan.
+-- Measured on crackstation's equivalent table, 23 MB over ~200k live rows: 20 ms
+-- without the index, 1 ms with it.
 CREATE TABLE IF NOT EXISTS `nodupes` (
   `ids_hash` char(64) NOT NULL,
   `time` bigint(20) unsigned NOT NULL,
-  PRIMARY KEY (`ids_hash`)
+  PRIMARY KEY (`ids_hash`),
+  KEY `time` (`time`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- ============================================================================

@@ -370,43 +370,46 @@ impl PhpCountService {
     ///
     /// # If the site is mysteriously slow, start here
     ///
-    /// This runs on **every counted page view**, and it is a full table scan holding a
-    /// **table-level write lock** -- so the cost is not per-page, it serialises the whole
-    /// site. `nodupes` is MyISAM with `PRIMARY KEY (ids_hash)` and **no index on
-    /// `time`**, which is the only column this filters on.
+    /// This runs on **every counted page view**, and on MyISAM it holds a **table-level
+    /// write lock** -- so its cost is not per-page, it serialises the whole site.
     ///
-    /// The cost tracks how many rows the table has *ever* held, not how many it holds
-    /// now. MyISAM flags a deleted row and links its slot onto a free list; the data
-    /// file never shrinks, and a scan walks slots by offset, holes included. So a one-off
-    /// flood makes every later request slower, permanently, with nothing in
-    /// `SELECT COUNT(*)` to show for it -- which is exactly what makes this hard to
-    /// diagnose from the application side.
+    /// `nodupes` should carry `KEY (time)` alongside `PRIMARY KEY (ids_hash)`, which
+    /// makes the sweep an index range scan over just the expired rows -- usually none.
+    /// Without it the sweep is a full scan of every slot the table has ever held.
     ///
-    /// Measured on a dev table: 41 live rows swept in 0.1 ms; after inserting and then
-    /// deleting 200k rows, sweeping the *same 41 live rows* took 3.7 ms, a 37x
-    /// regression, with `Data_free` at 14.6 MB. `OPTIMIZE TABLE` returned it to 0.2 ms.
+    /// Measured on crackstation's `csnodupes`, which is this table under another name,
+    /// on 2026-09-01 with a 23 MB data file over ~200k live rows:
     ///
-    /// Confirm it:
+    /// | state | sweep |
+    /// | --- | --- |
+    /// | full scan, 8 MB of holes | 20 ms |
+    /// | after `OPTIMIZE TABLE` | 14 ms |
+    /// | after `ADD KEY (time)` | 1 ms |
+    ///
+    /// At 20 ms under a table lock that was a ceiling of roughly 50 counted page views a
+    /// second for the entire site. The index is what removed it; `OPTIMIZE` alone only
+    /// shrank the scan.
+    ///
+    /// So the first question is whether the index is there and being used -- a schema
+    /// restored from a dump predating it would not have it:
     ///
     /// ```sql
+    /// SHOW INDEX FROM nodupes;                     -- expect a `time` key
+    /// EXPLAIN DELETE FROM nodupes WHERE time < 1;  -- type=range, not type=ALL
     /// SHOW TABLE STATUS LIKE 'nodupes';            -- Data_free large while Rows is small
-    /// EXPLAIN DELETE FROM nodupes WHERE time < 1;  -- type=ALL means full scan
     /// ```
     ///
-    /// Fix it, in ascending order of effort and effect:
+    /// If it is missing: `ALTER TABLE nodupes ADD KEY (time);`
     ///
-    /// ```sql
-    /// OPTIMIZE TABLE nodupes;              -- reclaims the holes; one-off, fixes the symptom
-    /// ALTER TABLE nodupes ADD KEY (time);  -- makes the sweep an index range scan
-    /// ALTER TABLE nodupes ENGINE=InnoDB;   -- removes the site-wide write lock
-    /// ```
+    /// The second question is `Data_free`. MyISAM flags a deleted row and links its slot
+    /// onto a free list; the data file never shrinks. That no longer costs a full scan
+    /// per request once the index exists, but it still inflates any scan the optimiser
+    /// does choose -- and it will choose one when a large enough fraction of rows is
+    /// expired at once, such as after an outage. `OPTIMIZE TABLE nodupes;` reclaims the
+    /// holes, and needs repeating, since they come back as rows age out.
     ///
-    /// Accepted rather than fixed (2026-08-31), because filling the table needs many
-    /// distinct client addresses and `client_ip` now returns the one the proxy vouched
-    /// for rather than one the requester chose -- so a client gets one row per page, not
-    /// unlimited. The remaining way in is an IPv6 client with a /64, whose addresses are
-    /// all legitimately distinct; keying the counter on the /64 would close that. See
-    /// `hit-counter-db-work-on-every-request-enables-cheap-dos.md` in the audit.
+    /// Still available if it ever matters: `ALTER TABLE nodupes ENGINE=InnoDB;` removes
+    /// the site-wide write lock entirely.
     async fn cleanup(&self) -> Result<(), sqlx::Error> {
         let cutoff = Self::now() - HIT_OLD_AFTER_SECONDS;
 
