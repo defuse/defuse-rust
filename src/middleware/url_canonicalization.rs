@@ -11,6 +11,7 @@
 use axum::{
     body::Body,
     extract::ConnectInfo,
+    http::uri::Authority,
     http::{header, Request, Response, StatusCode},
 };
 use std::net::SocketAddr;
@@ -129,7 +130,9 @@ where
                 .unwrap_or("")
                 .to_string();
 
-            let host_without_port = host.split(':').next().unwrap_or("").to_lowercase();
+            // `None` here means the header is not a valid authority at all, which the
+            // Host check below turns into a 400 rather than guessing at it.
+            let host_without_port = host_name(&host).unwrap_or_default();
 
             let connection_ip = req.extensions()
                 .get::<ConnectInfo<SocketAddr>>()
@@ -171,8 +174,12 @@ where
             }
 
             // Step 3: URL canonicalization
-            // By this point, Step 1 guarantees host is MASTER_HOST or a dev host,
-            // so reusing it here is safe (no open redirect).
+            //
+            // Step 1 guarantees `host` is MASTER_HOST or a dev host, so echoing it here
+            // is safe -- but only because `host_name` parses the header as an authority.
+            // While that guarantee rested on `split(':')`, it did not hold:
+            // `defuse.ca:@evil.com` passed step 1 and this line built a Location pointing
+            // at evil.com.
             if let Some(canonical_path) = canonicalize_url(path, query) {
                 let redirect_url = build_redirect_url(is_https, &host, &canonical_path, None);
                 return Ok(redirect_301(&redirect_url));
@@ -182,6 +189,28 @@ where
             inner.call(req).await
         })
     }
+}
+
+/// The host name from a `Host` header value, lowercased, or `None` if it is not a valid
+/// authority.
+///
+/// The header is `uri-host [ ":" port ]`, which is not what `split(':').next()` returns.
+/// That shortcut was wrong in three ways, and one of them was exploitable:
+///
+/// * `defuse.ca:@evil.com` split to `defuse.ca` and so matched `MASTER_HOST`, skipping
+///   the canonicalisation redirect -- while the real host is `evil.com`, because
+///   everything before `@` is userinfo. The raw header then reached the `Location` of the
+///   URL-canonicalisation redirect, giving an open redirect from this site's own origin.
+/// * `user@defuse.ca` split to `user@defuse.ca`, which matches nothing.
+/// * `[::1]:8080` split to `[`. Every IPv6 literal was mangled.
+///
+/// `Authority` is the parser for this grammar and gets all three right. It does not
+/// lowercase, so that is done here: host comparison is case-insensitive (RFC 9110), and
+/// every caller compares against a lowercase constant.
+pub(crate) fn host_name(host_header: &str) -> Option<String> {
+    Authority::try_from(host_header)
+        .ok()
+        .map(|authority| authority.host().to_lowercase())
 }
 
 /// Check if a host is in the dev hosts list (localhost, dev hosts, etc.)
@@ -292,6 +321,47 @@ fn redirect_301(url: &str) -> Response<Body> {
 
 #[cfg(test)]
 mod tests {
+    use super::host_name;
+
+    /// The gadget this parser closes. Everything before `@` in an authority is userinfo,
+    /// so the real host is `evil.com` -- but `split(':').next()` returned `defuse.ca`,
+    /// which matched MASTER_HOST, skipped the canonical-host redirect, and let the raw
+    /// header reach a `Location`.
+    #[test]
+    fn userinfo_does_not_disguise_the_real_host() {
+        assert_eq!(host_name("defuse.ca:@evil.com").as_deref(), Some("evil.com"));
+        assert_eq!(host_name("defuse.ca:8443@evil.com").as_deref(), Some("evil.com"));
+        assert_eq!(host_name("user@defuse.ca").as_deref(), Some("defuse.ca"));
+    }
+
+    /// `split(':')` returned `[` for every IPv6 literal.
+    #[test]
+    fn ipv6_literals_survive() {
+        assert_eq!(host_name("[::1]:8080").as_deref(), Some("[::1]"));
+        assert_eq!(host_name("[2001:db8::1]:443").as_deref(), Some("[2001:db8::1]"));
+    }
+
+    #[test]
+    fn plain_hosts_and_ports_are_unchanged() {
+        assert_eq!(host_name("defuse.ca").as_deref(), Some("defuse.ca"));
+        assert_eq!(host_name("defuse.ca:443").as_deref(), Some("defuse.ca"));
+        assert_eq!(host_name("localhost:3000").as_deref(), Some("localhost"));
+    }
+
+    /// Host comparison is case-insensitive and callers compare against lowercase
+    /// constants, so the parser must lowercase -- `Authority` does not.
+    #[test]
+    fn the_host_is_lowercased() {
+        assert_eq!(host_name("DEFUSE.CA").as_deref(), Some("defuse.ca"));
+    }
+
+    #[test]
+    fn an_invalid_authority_is_rejected() {
+        assert_eq!(host_name(""), None);
+        assert_eq!(host_name("not a host"), None);
+        assert_eq!(host_name("defuse.ca/path"), None);
+    }
+
     use super::*;
 
     #[test]

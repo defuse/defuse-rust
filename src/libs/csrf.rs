@@ -85,7 +85,7 @@ fn hosts_match(origin_host: &str, request_host: &str) -> bool {
     let request_name = strip_port(request_host);
 
     // Origin matches the request host
-    origin_name.eq_ignore_ascii_case(request_name)
+    origin_name.eq_ignore_ascii_case(&request_name)
         // Or origin is the master host (e.g. origin=defuse.ca, host=localhost:3000)
         || origin_name.eq_ignore_ascii_case(MASTER_HOST)
 }
@@ -97,8 +97,8 @@ fn is_accepted_host(host: &str) -> bool {
 }
 
 /// Strip port from a host string: "localhost:3000" -> "localhost"
-fn strip_port(host: &str) -> &str {
-    host.split(':').next().unwrap_or(host)
+fn strip_port(host: &str) -> String {
+    crate::middleware::url_canonicalization::host_name(host).unwrap_or_default()
 }
 
 #[cfg(test)]
