@@ -8,7 +8,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script type="text/javascript" src="/js/upvote.js"></script>
-{% block head_extra %}{% endblock %}{% if ctx.page_info.math %}<link rel="stylesheet" type="text/css" href="/katex/katex.min.css" />
+{% block head_extra %}{% endblock %}{% if ctx.page_info.math %}<link rel="stylesheet" type="text/css" href="/katex/katex.min.css?v=0.19.1" />
 {% endif %}<link rel="stylesheet" media="all" type="text/css" href="/main.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/mainmenu.css" />
 <link rel="stylesheet" media="all" type="text/css" href="/vimhl.css" />
@@ -676,9 +676,12 @@
     });
 })();
 </script>
-{% if ctx.page_info.math %}
-<script defer src="/katex/katex.min.js"></script>
-<script defer src="/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});"></script>
+{% if ctx.page_info.math %}{# The ?v= on the three KaTeX URLs (two here, one in <head>) is the
+   vendored KaTeX version. Static files are served without Cache-Control, so browsers cache
+   them heuristically; bumping ?v= when static/katex/ is upgraded makes them fetch the new
+   JS and CSS together instead of mixing versions or running a stale copy. #}
+<script defer src="/katex/katex.min.js?v=0.19.1"></script>
+<script defer src="/katex/contrib/auto-render.min.js?v=0.19.1" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]});"></script>
 {% endif %}
 </body>
 </html>
